@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+
+interface FormData {
+  emailOrUsername: string;
+  password: string;
+}
 
 function LoginPage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     emailOrUsername: '',
     password: '',
   });
@@ -9,13 +14,13 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (error) setError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
