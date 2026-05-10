@@ -173,7 +173,7 @@ export const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8">
         <div className="container-custom text-center">
-          <p>&copy; 2024 Browns Company. All rights reserved.</p>
+          <p>&copy; 2024 Browns Company. All rights reserved. <span className="text-xs opacity-50 ml-2">v1.0.1</span></p>
         </div>
       </footer>
     </div>
