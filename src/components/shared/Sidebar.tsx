@@ -1,6 +1,5 @@
 import React from "react";
 import { FiMenu, FiX } from "react-icons/fi";
-import { useState } from "react";
 
 interface SidebarProps {
   isOpen: boolean;

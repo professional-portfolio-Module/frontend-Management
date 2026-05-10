@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiSettings } from "react-icons/fi";
+import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -95,7 +95,7 @@ export const ManagerDashboard: React.FC = () => {
               {
                 key: "id",
                 label: "Actions",
-                render: (val) => (
+                render: (_val) => (
                   <div className="flex gap-2">
                     <Button size="sm" variant="primary">Approve</Button>
                     <Button size="sm" variant="danger">Reject</Button>

@@ -1,4 +1,3 @@
-import apiClient from "./api";
 import { WorkItem, Schedule, Notification, Message, SystemLog, Activity } from "../mock/data";
 import {
   mockWorkItems,

@@ -5,7 +5,7 @@ import { mockSchedules } from "../../mock/data";
 import { mockUsers } from "../../mock/users";
 
 export const SchedulesPage: React.FC = () => {
-  const { user } = useAuth();
+  useAuth();
   const [filterRole, setFilterRole] = useState<string>("all");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"week" | "month">("week");

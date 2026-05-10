@@ -1,4 +1,3 @@
-import apiClient from "./api";
 import { mockUsers } from "../mock/users";
 import { AuthUser } from "../mock/users";
 
@@ -55,7 +54,7 @@ export const authService = {
   },
 
   // Verify token (for protected routes)
-  async verifyToken(token: string): Promise<AuthUser> {
+  async verifyToken(_token: string): Promise<AuthUser> {
     await simulateDelay(300);
     
     // Mock verification - in production:
