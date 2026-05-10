@@ -71,7 +71,11 @@ export const LandingPage: React.FC = () => {
               <Button onClick={() => navigate("/login")} size="lg">
                 Get Started <FiArrowRight />
               </Button>
-              <Button onClick={() => navigate("/login")} variant="secondary" size="lg">
+              <Button 
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} 
+                variant="secondary" 
+                size="lg"
+              >
                 Learn More
               </Button>
             </div>
@@ -92,7 +96,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <section id="features" className="py-20 bg-white">
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Powerful Features</h2>

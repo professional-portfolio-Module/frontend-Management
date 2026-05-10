@@ -6,6 +6,12 @@ import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Form";
 import { Alert } from "../components/common/Alert";
 
+const mockCredentials = [
+  { email: "manager@browns.com", password: "123456", role: "Manager" },
+  { email: "engineer@browns.com", password: "123456", role: "Engineer" },
+  { email: "staff@browns.com", password: "123456", role: "Staff" },
+];
+
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +22,7 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError("");
     setLoading(true);
 
@@ -29,11 +36,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const mockCredentials = [
-    { email: "manager@browns.com", password: "123456", role: "Manager" },
-    { email: "engineer@browns.com", password: "123456", role: "Engineer" },
-    { email: "staff@browns.com", password: "123456", role: "Staff" },
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 to-blue-800 flex items-center justify-center p-4">
@@ -85,6 +87,7 @@ export const LoginPage: React.FC = () => {
               {mockCredentials.map((cred, index) => (
                 <button
                   key={index}
+                  type="button"
                   onClick={() => {
                     setEmail(cred.email);
                     setPassword(cred.password);
