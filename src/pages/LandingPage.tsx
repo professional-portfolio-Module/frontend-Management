@@ -71,7 +71,11 @@ export const LandingPage: React.FC = () => {
               <Button onClick={() => navigate("/login")} size="lg">
                 Get Started <FiArrowRight />
               </Button>
-              <Button onClick={() => navigate("/login")} variant="secondary" size="lg">
+              <Button 
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} 
+                variant="secondary" 
+                size="lg"
+              >
                 Learn More
               </Button>
             </div>
@@ -92,7 +96,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <section id="features" className="py-20 bg-white">
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Powerful Features</h2>
@@ -173,7 +177,7 @@ export const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8">
         <div className="container-custom text-center">
-          <p>&copy; 2024 Browns Company. All rights reserved.</p>
+          <p>&copy; 2024 Browns Company. All rights reserved. <span className="text-xs opacity-50 ml-2">v1.0.1</span></p>
         </div>
       </footer>
     </div>
