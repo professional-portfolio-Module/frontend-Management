@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiCheckCircle, FiClock, FiMessageSquare, FiFileText } from "react-icons/fi";
+import { FiCheckCircle, FiClock, FiMessageSquare, FiFileText, FiClipboard } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -8,6 +8,7 @@ import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
 import { useAuth } from "../../context/AuthContext";
 import { mockWorkItems, mockSchedules, mockNotifications } from "../../mock/data";
+import { ReportsPage } from "./ReportsPage";
 
 export const EngineerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export const EngineerDashboard: React.FC = () => {
   const sidebarItems = [
     { icon: <FiCheckCircle />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
     { icon: <FiFileText />, label: "Work Items", active: activeTab === "work-items", onClick: () => setActiveTab("work-items"), badge: workItemStats.pending },
+    { icon: <FiClipboard />, label: "Reports", active: activeTab === "reports", onClick: () => setActiveTab("reports") },
     { icon: <FiClock />, label: "Schedule", active: activeTab === "schedule", onClick: () => navigate("/schedules") },
     { icon: <FiCheckCircle />, label: "Notifications", active: activeTab === "notifications", onClick: () => setActiveTab("notifications"), badge: unreadNotifications.length },
     { icon: <FiMessageSquare />, label: "Messages", active: activeTab === "messages", onClick: () => navigate("/messages") },
@@ -93,6 +95,9 @@ export const EngineerDashboard: React.FC = () => {
           />
         </Card>
       )}
+
+      {/* Reports Tab */}
+      {activeTab === "reports" && <ReportsPage />}
 
       {/* Schedule Tab */}
       {activeTab === "schedule" && (
