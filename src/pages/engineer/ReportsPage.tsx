@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from "react";
 import {
   FiSearch,
-  FiFilter,
-  FiChevronDown,
   FiFileText,
   FiUser,
   FiCalendar,
@@ -11,7 +9,6 @@ import {
   FiClock,
   FiX,
   FiDownload,
-  FiMessageSquare,
   FiChevronLeft,
   FiChevronRight,
   FiMessageCircle,
@@ -21,7 +18,6 @@ import { Modal } from "../../components/common/Modal";
 import { Button } from "../../components/common/Button";
 import { Input, TextArea, Select } from "../../components/common/Form";
 import { mockReports, Report } from "../../mock/data";
-import { mockStaff } from "../../mock/users";
 
 export const ReportsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -386,8 +382,15 @@ export const ReportsPage: React.FC = () => {
                     onClick={() => openReportModal(report)}
                   >
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900 truncate">
-                        {report.reportTitle}
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium text-gray-900 truncate">
+                          {report.reportTitle}
+                        </div>
+                        {isReviewed && (
+                          <span className="text-green-600 flex-shrink-0" title="Reviewed">
+                            <FiCheckCircle size={14} />
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-gray-500">{report.reportId}</div>
                     </td>

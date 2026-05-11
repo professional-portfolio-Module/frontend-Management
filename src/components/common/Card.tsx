@@ -4,11 +4,18 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   hover?: boolean;
+  onClick?: () => void;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = "", hover = true }) => {
+export const Card: React.FC<CardProps> = ({
+  children,
+  className = "",
+  hover = true,
+  onClick,
+}) => {
   return (
     <div
+      onClick={onClick}
       className={`bg-white rounded-lg border border-gray-200 p-6 shadow-elevation-2 transition-all duration-300 ${
         hover ? "card-hover" : ""
       } ${className}`}
