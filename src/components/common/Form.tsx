@@ -1,4 +1,5 @@
 import React from "react";
+import { FiAlertCircle } from "react-icons/fi";
 
 interface InputProps {
   label?: string;
@@ -26,25 +27,30 @@ export const Input: React.FC<InputProps> = ({
   icon,
 }) => {
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
+    <div className={`flex flex-col gap-2.5 ${className}`}>
       {label && (
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-sm font-semibold text-gray-700 tracking-tight">
           {label}
           {required && <span className="text-red-600 ml-1">*</span>}
         </label>
       )}
       <div className="relative">
-        {icon && <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">{icon}</div>}
+        {icon && <div className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors">{icon}</div>}
         <input
           type={type}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
           disabled={disabled}
-          className={`input-field ${icon ? "pl-10" : ""} ${error ? "border-red-500 focus:ring-red-500" : ""}`}
+          className={`input-field ${icon ? "pl-11" : ""} ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-gray-50" : ""}`}
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-600 flex items-center gap-1.5">
+          <FiAlertCircle size={16} className="flex-shrink-0" />
+          {error}
+        </p>
+      )}
     </div>
   );
 };
@@ -73,9 +79,9 @@ export const TextArea: React.FC<TextAreaProps> = ({
   className = "",
 }) => {
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
+    <div className={`flex flex-col gap-2.5 ${className}`}>
       {label && (
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-sm font-semibold text-gray-700 tracking-tight">
           {label}
           {required && <span className="text-red-600 ml-1">*</span>}
         </label>
@@ -86,9 +92,14 @@ export const TextArea: React.FC<TextAreaProps> = ({
         onChange={onChange}
         disabled={disabled}
         rows={rows}
-        className={`input-field resize-none ${error ? "border-red-500 focus:ring-red-500" : ""}`}
+        className={`input-field resize-none ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-gray-50" : ""}`}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-600 flex items-center gap-1.5">
+          <FiAlertCircle size={16} className="flex-shrink-0" />
+          {error}
+        </p>
+      )}
     </div>
   );
 };
@@ -115,9 +126,9 @@ export const Select: React.FC<SelectProps> = ({
   className = "",
 }) => {
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
+    <div className={`flex flex-col gap-2.5 ${className}`}>
       {label && (
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-sm font-semibold text-gray-700 tracking-tight">
           {label}
           {required && <span className="text-red-600 ml-1">*</span>}
         </label>
@@ -126,7 +137,7 @@ export const Select: React.FC<SelectProps> = ({
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className={`input-field ${error ? "border-red-500 focus:ring-red-500" : ""}`}
+        className={`input-field cursor-pointer ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-gray-50 cursor-not-allowed" : ""}`}
       >
         <option value="">Select an option</option>
         {options.map((option) => (
@@ -135,7 +146,12 @@ export const Select: React.FC<SelectProps> = ({
           </option>
         ))}
       </select>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-600 flex items-center gap-1.5">
+          <FiAlertCircle size={16} className="flex-shrink-0" />
+          {error}
+        </p>
+      )}
     </div>
   );
 };

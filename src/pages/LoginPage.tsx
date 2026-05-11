@@ -38,28 +38,35 @@ export const LoginPage: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 to-blue-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-blue-700 to-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: "2s" }}></div>
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="bg-white rounded-2xl shadow-elevation-4 p-8 backdrop-blur-xl">
+          {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
+            <div className="w-16 h-16 rounded-lg gradient-primary flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-elevation-2 transform transition-transform duration-300 hover:scale-105">
               BM
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-            <p className="text-gray-600 mt-2">Browns Maintenance System</p>
+            <p className="text-gray-600 mt-2 font-medium">Browns Maintenance System</p>
           </div>
 
+          {/* Error Alert */}
           {error && (
-            <div className="mb-6">
+            <div className="mb-6 animate-slide-in-left">
               <Alert type="error" message={error} dismissible onClose={() => setError("")} />
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <Input
-              label="Email"
+              label="Email Address"
               type="email"
-              placeholder="Enter your email"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -69,7 +76,7 @@ export const LoginPage: React.FC = () => {
             <Input
               label="Password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -81,9 +88,13 @@ export const LoginPage: React.FC = () => {
             </Button>
           </form>
 
+          {/* Demo Credentials Section */}
           <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-sm text-gray-600 font-semibold mb-4">Demo Credentials</p>
-            <div className="space-y-2">
+            <p className="text-sm text-gray-700 font-semibold mb-4 flex items-center gap-2">
+              <FiAlertCircle size={16} />
+              Demo Credentials
+            </p>
+            <div className="space-y-2.5">
               {mockCredentials.map((cred, index) => (
                 <button
                   key={index}
@@ -92,21 +103,19 @@ export const LoginPage: React.FC = () => {
                     setEmail(cred.email);
                     setPassword(cred.password);
                   }}
-                  className="w-full p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition text-left"
+                  className="w-full p-3.5 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-blue-50 transition-all duration-200 text-left group"
                 >
-                  <p className="text-sm font-medium text-gray-900">{cred.role}</p>
-                  <p className="text-xs text-gray-500">{cred.email}</p>
+                  <p className="text-sm font-semibold text-gray-900 group-hover:text-primary-600">{cred.role}</p>
+                  <p className="text-xs text-gray-500 group-hover:text-gray-700">{cred.email}</p>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="mt-6 p-4 rounded-lg bg-blue-50 border border-blue-200 flex gap-3">
-            <FiAlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-blue-800">
-              Click any demo credential to auto-fill and test the system
-            </p>
-          </div>
+          {/* Footer */}
+          <p className="text-center text-xs text-gray-500 mt-8">
+            This is a demo application. Use the credentials above to log in.
+          </p>
         </div>
       </div>
     </div>

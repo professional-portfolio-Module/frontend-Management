@@ -4,12 +4,19 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   hover?: boolean;
+  onClick?: () => void;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = "", hover = true }) => {
+export const Card: React.FC<CardProps> = ({
+  children,
+  className = "",
+  hover = true,
+  onClick,
+}) => {
   return (
     <div
-      className={`bg-white rounded-lg border border-gray-200 p-6 card-shadow ${
+      onClick={onClick}
+      className={`bg-white rounded-lg border border-gray-200 p-6 shadow-elevation-2 transition-all duration-300 ${
         hover ? "card-hover" : ""
       } ${className}`}
     >
@@ -43,18 +50,19 @@ export const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <Card className="hover">
-      <div className="flex items-start justify-between">
+    <Card hover>
+      <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
-          <p className="text-gray-600 text-sm font-medium">{label}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+          <p className="text-gray-600 text-xs font-semibold uppercase tracking-wide">{label}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-3">{value}</p>
           {trendValue && (
-            <p className={`text-sm mt-2 font-medium ${trend === "up" ? "text-green-600" : "text-red-600"}`}>
-              {trend === "up" ? "↑" : "↓"} {trendValue}
+            <p className={`text-sm mt-3 font-medium flex items-center gap-1 ${trend === "up" ? "text-green-600" : "text-red-600"}`}>
+              <span>{trend === "up" ? "↑" : "↓"}</span>
+              <span>{trendValue}</span>
             </p>
           )}
         </div>
-        <div className={`w-12 h-12 rounded-lg ${colorClasses[color]} flex items-center justify-center text-xl`}>
+        <div className={`w-14 h-14 rounded-lg ${colorClasses[color]} flex items-center justify-center text-2xl flex-shrink-0`}>
           {icon}
         </div>
       </div>

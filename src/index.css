@@ -18,7 +18,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f9fafb;
+  background-color: #f5f7fa;
   color: #1f2937;
 }
 
@@ -28,12 +28,13 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #eef2f5;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 4px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -45,6 +46,7 @@ body {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
+/* Gradients */
 .gradient-primary {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 }
@@ -53,35 +55,104 @@ body {
   background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
 }
 
-.card-shadow {
+/* Shadow Elevations */
+.shadow-elevation-1 {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+}
+
+.shadow-elevation-2 {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.card-hover {
-  transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
+.shadow-elevation-3 {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+.shadow-elevation-4 {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.card-shadow {
+  @apply shadow-elevation-2;
+}
+
+.card-hover {
+  @apply transition-all duration-300 ease-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  @apply shadow-elevation-4;
+}
+
+/* Button Styles */
 .btn-primary {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-white transition-all duration-200 bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-white transition-all duration-200 bg-primary-600 hover:bg-primary-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 shadow-elevation-1;
+}
+
+.btn-primary:hover {
+  @apply shadow-elevation-2;
+}
+
+.btn-primary:disabled {
+  @apply opacity-50 cursor-not-allowed hover:shadow-elevation-1 active:scale-100;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-primary-600 transition-all duration-200 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-primary-600 transition-all duration-200 bg-primary-100 hover:bg-primary-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+}
+
+.btn-secondary:disabled {
+  @apply opacity-50 cursor-not-allowed active:scale-100;
 }
 
 .btn-accent {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-gray-900 transition-all duration-200 bg-accent-400 hover:bg-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2;
+  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-gray-900 transition-all duration-200 bg-accent-400 hover:bg-accent-500 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-elevation-1;
 }
 
+.btn-accent:hover {
+  @apply shadow-elevation-2;
+}
+
+.btn-accent:disabled {
+  @apply opacity-50 cursor-not-allowed hover:shadow-elevation-1 active:scale-100;
+}
+
+.btn-danger {
+  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-white transition-all duration-200 bg-red-600 hover:bg-red-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-elevation-1;
+}
+
+.btn-danger:hover {
+  @apply shadow-elevation-2;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-gray-700 transition-all duration-200 bg-transparent hover:bg-gray-100 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2;
+}
+
+/* Input Fields */
 .input-field {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+  @apply w-full px-3.5 py-2.5 border border-gray-300 rounded-lg font-normal text-base focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all duration-200;
 }
 
+.input-field:disabled {
+  @apply bg-gray-50 text-gray-500 cursor-not-allowed;
+}
+
+.input-field::placeholder {
+  @apply text-gray-400;
+}
+
+.input-field:focus {
+  @apply border-primary-500 bg-white;
+}
+
+/* Input with error state */
+.input-field.error {
+  @apply border-red-500 focus:ring-red-400 focus:border-transparent;
+}
+
+/* Text Gradient */
 .text-gradient {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   -webkit-background-clip: text;
@@ -89,18 +160,169 @@ body {
   background-clip: text;
 }
 
+/* Gradient Primary */
+.gradient-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+/* Gradient Secondary */
+.gradient-secondary {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+/* Badge Styles */
+.badge-base {
+  @apply inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200;
+}
+
 .badge-success {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800;
+  @apply badge-base bg-green-100 text-green-800;
+}
+
+.badge-success:hover {
+  @apply bg-green-200;
 }
 
 .badge-warning {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800;
+  @apply badge-base bg-yellow-100 text-yellow-800;
+}
+
+.badge-warning:hover {
+  @apply bg-yellow-200;
 }
 
 .badge-danger {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800;
+  @apply badge-base bg-red-100 text-red-800;
+}
+
+.badge-danger:hover {
+  @apply bg-red-200;
 }
 
 .badge-info {
-  @apply px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800;
+  @apply badge-base bg-blue-100 text-blue-800;
+}
+
+.badge-info:hover {
+  @apply bg-blue-200;
+}
+
+.badge-neutral {
+  @apply badge-base bg-gray-100 text-gray-800;
+}
+
+.badge-neutral:hover {
+  @apply bg-gray-200;
+}
+
+/* Transitions */
+.transition-smooth {
+  @apply transition-all duration-300 ease-out;
+}
+
+.transition-fast {
+  @apply transition-all duration-200 ease-out;
+}
+
+/* Focus Visible Utility */
+.focus-visible-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+}
+
+/* Animation Classes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes softBounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.animate-soft-bounce {
+  animation: softBounce 0.6s ease-in-out;
+}
+
+/* Scrollbar Styling */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth transitions for elements */
+* {
+  @apply transition-colors duration-200;
+}
+
+button, a, input, select, textarea {
+  @apply transition-all duration-200;
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode support (for future use) */
+@media (prefers-color-scheme: dark) {
+  body {
+    color-scheme: dark;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background-color: white;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
 }

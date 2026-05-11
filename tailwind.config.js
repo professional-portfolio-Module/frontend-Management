@@ -64,6 +64,10 @@ export default {
         lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
         xl: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
         "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        "elevation-1": "0 2px 4px rgba(0, 0, 0, 0.08)",
+        "elevation-2": "0 4px 8px rgba(0, 0, 0, 0.12)",
+        "elevation-3": "0 8px 16px rgba(0, 0, 0, 0.15)",
+        "elevation-4": "0 12px 24px rgba(0, 0, 0, 0.18)",
       },
       borderRadius: {
         none: "0",
@@ -82,6 +86,9 @@ export default {
         shake: "shake 0.5s ease-in-out",
         bounce: "bounce 1s infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "fade-in-up": "fadeInUp 0.3s ease-out",
+        "slide-in-left": "slideInLeft 0.3s ease-out",
+        "soft-bounce": "softBounce 0.6s ease-in-out",
       },
       keyframes: {
         fadeIn: {
@@ -101,6 +108,18 @@ export default {
           "25%": { transform: "translateX(-4px)" },
           "50%": { transform: "translateX(4px)" },
           "75%": { transform: "translateX(-4px)" },
+        },
+        fadeInUp: {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        slideInLeft: {
+          "0%": { opacity: "0", transform: "translateX(-20px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        softBounce: {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.02)" },
         },
       },
     },

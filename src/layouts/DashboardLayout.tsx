@@ -32,7 +32,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -53,8 +53,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         />
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="container-custom py-6">{children}</div>
+        <main className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          <div className="container-custom py-8">
+            {children}
+          </div>
         </main>
       </div>
     </div>
