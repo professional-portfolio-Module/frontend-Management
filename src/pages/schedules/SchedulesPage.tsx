@@ -116,10 +116,10 @@ export const SchedulesPage: React.FC = () => {
         </div>
 
         {/* Controls */}
-        <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm p-5 mb-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm p-4 sm:p-5 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             {/* Filter */}
-            <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               <FiFilter className="text-slate-600" size={20} />
               <select
                 value={filterRole}
@@ -142,7 +142,7 @@ export const SchedulesPage: React.FC = () => {
                   viewMode === "week"
                     ? "bg-primary-500 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
+                } text-sm`}
               >
                 Week
               </button>
@@ -152,7 +152,7 @@ export const SchedulesPage: React.FC = () => {
                   viewMode === "month"
                     ? "bg-primary-500 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
+                } text-sm`}
               >
                 Month
               </button>
@@ -184,7 +184,7 @@ export const SchedulesPage: React.FC = () => {
         {/* Calendar View */}
         {viewMode === "week" ? (
           // Week View
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3 sm:gap-4">
             {weekDays.map((day, index) => {
               const daySchedules = getSchedulesForDate(day);
               const isToday =
@@ -273,14 +273,15 @@ export const SchedulesPage: React.FC = () => {
         ) : (
           // Month View
           <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm overflow-hidden">
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-0 border-collapse">
+            {/* Calendar Grid - scrollable on mobile */}
+            <div className="overflow-x-auto">
+            <div className="grid grid-cols-7 gap-0 border-collapse min-w-[640px]">
               {/* Day Headers */}
               {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
                 (day) => (
                   <div
                     key={day}
-                    className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 text-center font-semibold"
+                    className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-2 sm:p-4 text-center font-semibold text-xs sm:text-sm"
                   >
                     {day}
                   </div>
@@ -351,11 +352,12 @@ export const SchedulesPage: React.FC = () => {
                 );
               })}
             </div>
+            </div>
           </div>
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-8">
           <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-blue-100 rounded-lg">

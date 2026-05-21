@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiSearch, FiSend, FiMoreVertical, FiPhone, FiVideo, FiPlus } from "react-icons/fi";
+import { FiSearch, FiSend, FiMoreVertical, FiPhone, FiVideo, FiPlus, FiArrowLeft } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import { mockUsers } from "../../mock/users";
 import { mockMessages } from "../../mock/data";
@@ -45,7 +45,12 @@ export const MessagingPage: React.FC = () => {
   return (
     <div className="flex h-[calc(100vh-56px)] bg-slate-50">
       {/* Sidebar - Conversations List */}
-      <div className="w-full sm:w-80 bg-white border-r border-slate-200/80 flex flex-col">
+      {/* On mobile: show full-width when no chat selected, hide when chat is open */}
+      <div
+        className={`bg-white border-r border-slate-200/80 flex flex-col w-full sm:w-80 sm:flex-shrink-0 ${
+          selectedChat ? "hidden sm:flex" : "flex"
+        }`}
+      >
         {/* Header */}
         <div className="p-4 border-b border-slate-200/80">
           <h1 className="text-base font-semibold text-slate-900 mb-3">Messages</h1>
@@ -103,11 +108,20 @@ export const MessagingPage: React.FC = () => {
       </div>
 
       {/* Chat Area */}
+      {/* On mobile: show full-width when chat is selected */}
       {selectedChat ? (
-        <div className="flex-1 flex flex-col bg-white">
+        <div className={`flex-1 flex flex-col bg-white ${selectedChat ? "flex" : "hidden sm:flex"}`}>
           {/* Chat Header */}
-          <div className="px-5 py-3 border-b border-slate-200/80 flex items-center justify-between">
+          <div className="px-4 sm:px-5 py-3 border-b border-slate-200/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Back button - mobile only */}
+              <button
+                onClick={() => setSelectedChat(null)}
+                className="p-1.5 hover:bg-slate-100 rounded-md transition-colors sm:hidden"
+                aria-label="Back to conversations"
+              >
+                <FiArrowLeft size={18} className="text-slate-600" />
+              </button>
               <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold text-xs">
                 {selectedUser?.name.charAt(0)}
               </div>
@@ -117,10 +131,10 @@ export const MessagingPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button className="p-2 hover:bg-slate-50 rounded-md transition-colors duration-150">
+              <button className="p-2 hover:bg-slate-50 rounded-md transition-colors duration-150 hidden sm:block">
                 <FiPhone size={16} className="text-slate-400" />
               </button>
-              <button className="p-2 hover:bg-slate-50 rounded-md transition-colors duration-150">
+              <button className="p-2 hover:bg-slate-50 rounded-md transition-colors duration-150 hidden sm:block">
                 <FiVideo size={16} className="text-slate-400" />
               </button>
               <button className="p-2 hover:bg-slate-50 rounded-md transition-colors duration-150">
@@ -130,7 +144,7 @@ export const MessagingPage: React.FC = () => {
           </div>
 
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-3 scrollbar-thin bg-slate-50/50">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 scrollbar-thin bg-slate-50/50">
             {chatMessages.length === 0 ? (
               <div className="flex items-center justify-center h-full text-slate-400">
                 <div className="text-center">
@@ -147,7 +161,7 @@ export const MessagingPage: React.FC = () => {
                   className={`flex ${msg.senderId === user?.id ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-xs px-3.5 py-2 rounded-lg text-sm ${
+                    className={`max-w-[80%] sm:max-w-xs px-3.5 py-2 rounded-lg text-sm ${
                       msg.senderId === user?.id
                         ? "bg-primary-600 text-white rounded-br-sm"
                         : "bg-white border border-slate-200 text-slate-900 rounded-bl-sm shadow-sm"
@@ -164,7 +178,7 @@ export const MessagingPage: React.FC = () => {
           </div>
 
           {/* Message Input */}
-          <div className="p-4 border-t border-slate-200/80 bg-white">
+          <div className="p-3 sm:p-4 border-t border-slate-200/80 bg-white">
             <div className="flex gap-2 items-center">
               <input
                 type="text"
@@ -190,7 +204,7 @@ export const MessagingPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center bg-slate-50">
+        <div className="flex-1 hidden sm:flex items-center justify-center bg-slate-50">
           <div className="text-center text-slate-400">
             <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
               <FiSend size={24} className="text-slate-300" />

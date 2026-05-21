@@ -100,7 +100,7 @@ export const LandingPage: React.FC = () => {
             <p className="text-sm text-slate-500 max-w-md mx-auto">Each role has a dedicated dashboard with relevant tools and data</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
             {[
               {
                 role: "System Administration",

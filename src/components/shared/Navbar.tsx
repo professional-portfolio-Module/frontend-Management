@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiBell, FiMessageSquare, FiLogOut, FiUser, FiChevronDown } from "react-icons/fi";
+import { FiBell, FiMessageSquare, FiLogOut, FiUser, FiChevronDown, FiCalendar } from "react-icons/fi";
 
 interface NavbarProps {
   userName?: string;
@@ -38,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-md transition-all duration-150"
             title="View Schedules"
           >
-            📅
+            <FiCalendar size={18} />
           </button>
 
           {/* Messages */}
