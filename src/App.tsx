@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { RoleBasedRedirect } from "./routes/RoleBasedRedirect";
@@ -13,6 +13,7 @@ import { StaffDashboard } from "./pages/staff/StaffDashboard";
 import { MessagingPage } from "./pages/messaging/MessagingPage";
 import { SchedulesPage } from "./pages/schedules/SchedulesPage";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 const App: React.FC = () => {
   return (
@@ -28,7 +29,14 @@ const App: React.FC = () => {
               </RoleBasedRedirect>
             }
           />
-          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/login"
+            element={
+              <RoleBasedRedirect>
+                <LoginPage />
+              </RoleBasedRedirect>
+            }
+          />
 
           {/* Admin Routes */}
           <Route
@@ -90,8 +98,8 @@ const App: React.FC = () => {
             }
           />
 
-          {/* Catch All */}
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* 404 - Page Not Found */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

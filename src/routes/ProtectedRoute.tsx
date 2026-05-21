@@ -23,7 +23,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   }
 
   if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/" />;
+    // Redirect to the user's own dashboard instead of root to avoid loops
+    const roleRoutes: Record<string, string> = {
+      admin: "/admin",
+      manager: "/manager",
+      engineer: "/engineer",
+      staff: "/staff",
+    };
+    return <Navigate to={roleRoutes[user.role] || "/"} replace />;
   }
 
   return <>{children}</>;
