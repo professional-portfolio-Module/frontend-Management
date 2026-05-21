@@ -42,7 +42,7 @@ export const StaffDashboard: React.FC = () => {
 
           <div className="grid lg:grid-cols-2 gap-6">
             <Card>
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Upcoming Schedule</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Upcoming Schedule</h2>
               <Table
                 columns={[
                   { key: "date", label: "Date" },
@@ -55,7 +55,7 @@ export const StaffDashboard: React.FC = () => {
             </Card>
 
             <Card>
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Notifications</h2>
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Recent Notifications</h2>
               <div className="space-y-3">
                 {unreadNotifications.slice(0, 5).map((notif) => (
                   <div key={notif.id} className="p-3 rounded-lg bg-blue-50 border border-blue-200">
@@ -63,7 +63,7 @@ export const StaffDashboard: React.FC = () => {
                     <p className="text-xs text-blue-700 mt-1">{notif.message}</p>
                   </div>
                 ))}
-                {unreadNotifications.length === 0 && <p className="text-gray-500 text-sm">No new notifications</p>}
+                {unreadNotifications.length === 0 && <p className="text-slate-500 text-sm">No new notifications</p>}
               </div>
             </Card>
           </div>
@@ -73,7 +73,7 @@ export const StaffDashboard: React.FC = () => {
       {/* Schedule Tab */}
       {activeTab === "schedule" && (
         <Card>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">My Schedule</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">My Schedule</h2>
           <Table
             columns={[
               { key: "date", label: "Date" },
@@ -91,12 +91,12 @@ export const StaffDashboard: React.FC = () => {
       {/* Notifications Tab */}
       {activeTab === "notifications" && (
         <Card>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Notifications</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Notifications</h2>
           <div className="space-y-2">
             {mockNotifications.filter((n) => n.userId === user?.id).map((notif) => (
-              <div key={notif.id} className={`p-4 rounded-lg border ${notif.read ? "bg-gray-50 border-gray-200" : "bg-blue-50 border-blue-200"}`}>
-                <p className={`font-semibold ${notif.read ? "text-gray-900" : "text-blue-900"}`}>{notif.title}</p>
-                <p className={`text-sm mt-1 ${notif.read ? "text-gray-600" : "text-blue-700"}`}>{notif.message}</p>
+              <div key={notif.id} className={`p-4 rounded-lg border ${notif.read ? "bg-slate-50 border-slate-200" : "bg-blue-50 border-blue-200"}`}>
+                <p className={`font-semibold ${notif.read ? "text-slate-900" : "text-blue-900"}`}>{notif.title}</p>
+                <p className={`text-sm mt-1 ${notif.read ? "text-slate-600" : "text-blue-700"}`}>{notif.message}</p>
               </div>
             ))}
           </div>
@@ -106,13 +106,13 @@ export const StaffDashboard: React.FC = () => {
       {/* Messages Tab */}
       {activeTab === "messages" && (
         <Card>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Messages</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Messages</h2>
           <Table
             columns={[
               { key: "subject", label: "Subject" },
               { key: "senderId", label: "From", render: (val) => `User ${val}` },
               { key: "createdAt", label: "Date", render: (val) => new Date(val).toLocaleDateString() },
-              { key: "read", label: "Status", render: (val) => <span className={val ? "text-gray-500" : "font-bold text-primary-600"}>{ val ? "Read" : "Unread"}</span> },
+              { key: "read", label: "Status", render: (val) => <span className={val ? "text-slate-500" : "font-bold text-primary-600"}>{ val ? "Read" : "Unread"}</span> },
             ]}
             data={myMessages}
           />
@@ -123,7 +123,7 @@ export const StaffDashboard: React.FC = () => {
       <Modal isOpen={showProfileModal} title="Edit Profile" onClose={() => setShowProfileModal(false)}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
             <input
               type="text"
               value={profileName}
@@ -132,7 +132,7 @@ export const StaffDashboard: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
             <input
               type="tel"
               value={profilePhone}

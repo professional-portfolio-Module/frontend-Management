@@ -29,20 +29,20 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className={`flex flex-col gap-2.5 ${className}`}>
       {label && (
-        <label className="text-sm font-semibold text-gray-700 tracking-tight">
+        <label className="text-sm font-semibold text-slate-700 tracking-tight">
           {label}
           {required && <span className="text-red-600 ml-1">*</span>}
         </label>
       )}
       <div className="relative">
-        {icon && <div className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors">{icon}</div>}
+        {icon && <div className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 transition-colors">{icon}</div>}
         <input
           type={type}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
           disabled={disabled}
-          className={`input-field ${icon ? "pl-11" : ""} ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-gray-50" : ""}`}
+          className={`input-field ${icon ? "pl-11" : ""} ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-slate-50" : ""}`}
         />
       </div>
       {error && (
@@ -81,7 +81,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
   return (
     <div className={`flex flex-col gap-2.5 ${className}`}>
       {label && (
-        <label className="text-sm font-semibold text-gray-700 tracking-tight">
+        <label className="text-sm font-semibold text-slate-700 tracking-tight">
           {label}
           {required && <span className="text-red-600 ml-1">*</span>}
         </label>
@@ -92,7 +92,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
         onChange={onChange}
         disabled={disabled}
         rows={rows}
-        className={`input-field resize-none ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-gray-50" : ""}`}
+        className={`input-field resize-none ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-slate-50" : ""}`}
       />
       {error && (
         <p className="text-sm text-red-600 flex items-center gap-1.5">
@@ -128,7 +128,7 @@ export const Select: React.FC<SelectProps> = ({
   return (
     <div className={`flex flex-col gap-2.5 ${className}`}>
       {label && (
-        <label className="text-sm font-semibold text-gray-700 tracking-tight">
+        <label className="text-sm font-semibold text-slate-700 tracking-tight">
           {label}
           {required && <span className="text-red-600 ml-1">*</span>}
         </label>
@@ -137,7 +137,7 @@ export const Select: React.FC<SelectProps> = ({
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className={`input-field cursor-pointer ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-gray-50 cursor-not-allowed" : ""}`}
+        className={`input-field cursor-pointer ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-slate-50 cursor-not-allowed" : ""}`}
       >
         <option value="">Select an option</option>
         {options.map((option) => (

@@ -49,17 +49,17 @@ export const ManagerDashboard: React.FC = () => {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Recent Activities */}
             <Card className="lg:col-span-2">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Activities</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Activities</h2>
               <div className="space-y-4">
                 {mockActivities.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex gap-4 pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
+                  <div key={activity.id} className="flex gap-4 pb-4 border-b border-slate-200 last:border-b-0 last:pb-0">
                     <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 flex-shrink-0">
                       🔔
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-900">{activity.action}</p>
-                      <p className="text-sm text-gray-600">{activity.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
+                      <p className="font-semibold text-slate-900">{activity.action}</p>
+                      <p className="text-sm text-slate-600">{activity.description}</p>
+                      <p className="text-xs text-slate-500 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -68,7 +68,7 @@ export const ManagerDashboard: React.FC = () => {
 
             {/* Notifications */}
             <Card>
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Notifications</h2>
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Notifications</h2>
               <div className="space-y-3">
                 {unreadNotifications.map((notif) => (
                   <div key={notif.id} className="p-3 rounded-lg bg-blue-50 border border-blue-200">
@@ -76,7 +76,7 @@ export const ManagerDashboard: React.FC = () => {
                     <p className="text-xs text-blue-700 mt-1">{notif.message}</p>
                   </div>
                 ))}
-                {unreadNotifications.length === 0 && <p className="text-gray-500 text-sm">No notifications</p>}
+                {unreadNotifications.length === 0 && <p className="text-slate-500 text-sm">No notifications</p>}
               </div>
             </Card>
           </div>
@@ -86,7 +86,7 @@ export const ManagerDashboard: React.FC = () => {
       {/* Verification Tab */}
       {activeTab === "verification" && (
         <Card>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Employee Verification</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Employee Verification</h2>
           <Table
             columns={[
               { key: "name", label: "Name" },
@@ -112,10 +112,10 @@ export const ManagerDashboard: React.FC = () => {
       {activeTab === "work-items" && (
         <Card>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Manage Work Items</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Manage Work Items</h2>
             <Button onClick={() => navigate("/manager/create-work-item")}>+ New Work Item</Button>
           </div>
-          <p className="text-gray-600">View and manage all work items assigned to your team members.</p>
+          <p className="text-slate-600">View and manage all work items assigned to your team members.</p>
         </Card>
       )}
 
@@ -123,26 +123,26 @@ export const ManagerDashboard: React.FC = () => {
       {activeTab === "schedules" && (
         <Card>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Manage Schedules</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Manage Schedules</h2>
             <Button onClick={() => navigate("/manager/create-schedule")}>+ New Schedule</Button>
           </div>
-          <p className="text-gray-600">View and manage team schedules and assignments.</p>
+          <p className="text-slate-600">View and manage team schedules and assignments.</p>
         </Card>
       )}
 
       {/* Messages Tab */}
       {activeTab === "messages" && (
         <Card>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Messages</h2>
-          <p className="text-gray-600">Messaging system for internal communication.</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Messages</h2>
+          <p className="text-slate-600">Messaging system for internal communication.</p>
         </Card>
       )}
 
       {/* System Logs Tab */}
       {activeTab === "logs" && (
         <Card>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">System Logs</h2>
-          <p className="text-gray-600">View system activity and audit logs.</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">System Logs</h2>
+          <p className="text-slate-600">View system activity and audit logs.</p>
         </Card>
       )}
 
@@ -150,7 +150,7 @@ export const ManagerDashboard: React.FC = () => {
       <Modal isOpen={showProfileModal} title="Edit Profile" onClose={() => setShowProfileModal(false)}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
             <input
               type="text"
               value={profileName}
@@ -159,7 +159,7 @@ export const ManagerDashboard: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
             <input
               type="tel"
               value={profilePhone}

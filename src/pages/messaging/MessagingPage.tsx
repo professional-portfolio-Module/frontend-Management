@@ -12,15 +12,11 @@ export const MessagingPage: React.FC = () => {
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState(mockMessages);
 
-  // Get unique conversations
   const conversations = mockUsers.filter((u) => u.id !== user?.id);
-
-  // Filter conversations based on search
   const filteredConversations = conversations.filter((conv) =>
     conv.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Get messages for selected chat
   const chatMessages = selectedChat
     ? messages.filter(
         (msg) =>
@@ -31,10 +27,8 @@ export const MessagingPage: React.FC = () => {
 
   const selectedUser = conversations.find((u) => u.id === selectedChat);
 
-  // Handle send message
   const handleSendMessage = () => {
     if (!messageText.trim() || !selectedChat) return;
-
     const newMessage = {
       id: Math.random().toString(36).substr(2, 9),
       senderId: user?.id || "",
@@ -44,58 +38,55 @@ export const MessagingPage: React.FC = () => {
       read: false,
       createdAt: new Date().toISOString(),
     };
-
     setMessages([...messages, newMessage]);
     setMessageText("");
   };
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-gray-50">
+    <div className="flex h-[calc(100vh-56px)] bg-slate-50">
       {/* Sidebar - Conversations List */}
-      <div className="w-full sm:w-96 bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-full sm:w-80 bg-white border-r border-slate-200/80 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Messages</h1>
+        <div className="p-4 border-b border-slate-200/80">
+          <h1 className="text-base font-semibold text-slate-900 mb-3">Messages</h1>
           <div className="relative">
-            <FiSearch className="absolute left-3 top-3 text-gray-400" />
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
             <input
               type="text"
-              placeholder="Search conversations..."
+              placeholder="Search conversations…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-150"
             />
           </div>
         </div>
 
         {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
           {filteredConversations.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              <p>No conversations found</p>
+            <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+              No conversations found
             </div>
           ) : (
             filteredConversations.map((conversation) => (
               <div
                 key={conversation.id}
                 onClick={() => setSelectedChat(conversation.id)}
-                className={`p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 ${
+                className={`px-4 py-3 cursor-pointer transition-all duration-100 border-b border-slate-100/80 ${
                   selectedChat === conversation.id
-                    ? "bg-blue-50 border-l-4 border-l-blue-500"
-                    : "hover:bg-gray-50"
+                    ? "bg-primary-50/60 border-l-2 border-l-primary-500"
+                    : "hover:bg-slate-50"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  {/* Avatar */}
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
                     {conversation.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm">{conversation.name}</p>
-                    <p className="text-xs text-gray-500 capitalize">{conversation.role}</p>
+                    <p className="text-sm font-medium text-slate-900 truncate">{conversation.name}</p>
+                    <p className="text-xs text-slate-500 capitalize">{conversation.role}</p>
                   </div>
-                  {/* Status Indicator */}
-                  <div className="w-3 h-3 rounded-full bg-green-500 flex-shrink-0"></div>
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
                 </div>
               </div>
             ))
@@ -103,9 +94,9 @@ export const MessagingPage: React.FC = () => {
         </div>
 
         {/* New Message Button */}
-        <div className="p-4 border-t border-gray-200">
-          <Button fullWidth className="gap-2 items-center justify-center">
-            <FiPlus size={18} />
+        <div className="p-3 border-t border-slate-200/80">
+          <Button fullWidth variant="secondary" className="gap-2">
+            <FiPlus size={16} />
             New Message
           </Button>
         </div>
@@ -115,36 +106,38 @@ export const MessagingPage: React.FC = () => {
       {selectedChat ? (
         <div className="flex-1 flex flex-col bg-white">
           {/* Chat Header */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100">
+          <div className="px-5 py-3 border-b border-slate-200/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold">
+              <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold text-xs">
                 {selectedUser?.name.charAt(0)}
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{selectedUser?.name}</p>
-                <p className="text-xs text-green-600 font-medium">Active now</p>
+                <p className="text-sm font-semibold text-slate-900">{selectedUser?.name}</p>
+                <p className="text-xs text-emerald-600 font-medium">Active now</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button className="p-2 hover:bg-blue-200 rounded-lg transition-colors duration-200">
-                <FiPhone size={20} className="text-blue-600" />
+            <div className="flex items-center gap-1">
+              <button className="p-2 hover:bg-slate-50 rounded-md transition-colors duration-150">
+                <FiPhone size={16} className="text-slate-400" />
               </button>
-              <button className="p-2 hover:bg-blue-200 rounded-lg transition-colors duration-200">
-                <FiVideo size={20} className="text-blue-600" />
+              <button className="p-2 hover:bg-slate-50 rounded-md transition-colors duration-150">
+                <FiVideo size={16} className="text-slate-400" />
               </button>
-              <button className="p-2 hover:bg-blue-200 rounded-lg transition-colors duration-200">
-                <FiMoreVertical size={20} className="text-gray-600" />
+              <button className="p-2 hover:bg-slate-50 rounded-md transition-colors duration-150">
+                <FiMoreVertical size={16} className="text-slate-400" />
               </button>
             </div>
           </div>
 
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-5 space-y-3 scrollbar-thin bg-slate-50/50">
             {chatMessages.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="flex items-center justify-center h-full text-slate-400">
                 <div className="text-center">
-                  <div className="text-4xl mb-2">💬</div>
-                  <p>No messages yet. Start the conversation!</p>
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                    <FiSend className="text-slate-400" size={20} />
+                  </div>
+                  <p className="text-sm">No messages yet. Start the conversation!</p>
                 </div>
               </div>
             ) : (
@@ -154,14 +147,14 @@ export const MessagingPage: React.FC = () => {
                   className={`flex ${msg.senderId === user?.id ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-xs px-4 py-2 rounded-lg ${
+                    className={`max-w-xs px-3.5 py-2 rounded-lg text-sm ${
                       msg.senderId === user?.id
-                        ? "bg-blue-500 text-white rounded-br-none"
-                        : "bg-gray-200 text-gray-900 rounded-bl-none"
+                        ? "bg-primary-600 text-white rounded-br-sm"
+                        : "bg-white border border-slate-200 text-slate-900 rounded-bl-sm shadow-sm"
                     }`}
                   >
-                    <p className="text-sm">{msg.content}</p>
-                    <p className={`text-xs mt-1 ${msg.senderId === user?.id ? "text-blue-100" : "text-gray-600"}`}>
+                    <p>{msg.content}</p>
+                    <p className={`text-[10px] mt-1 ${msg.senderId === user?.id ? "text-primary-200" : "text-slate-400"}`}>
                       {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
@@ -171,11 +164,11 @@ export const MessagingPage: React.FC = () => {
           </div>
 
           {/* Message Input */}
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <div className="p-4 border-t border-slate-200/80 bg-white">
             <div className="flex gap-2 items-center">
               <input
                 type="text"
-                placeholder="Type a message..."
+                placeholder="Type a message…"
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyPress={(e) => {
@@ -184,23 +177,25 @@ export const MessagingPage: React.FC = () => {
                     handleSendMessage();
                   }
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-150"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!messageText.trim()}
-                className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <FiSend size={20} />
+                <FiSend size={16} />
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
-          <div className="text-center text-gray-500">
-            <div className="text-6xl mb-4">💭</div>
-            <p className="text-lg">Select a conversation to start messaging</p>
+        <div className="flex-1 flex items-center justify-center bg-slate-50">
+          <div className="text-center text-slate-400">
+            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <FiSend size={24} className="text-slate-300" />
+            </div>
+            <p className="text-sm font-medium">Select a conversation to start messaging</p>
           </div>
         </div>
       )}

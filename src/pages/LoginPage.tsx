@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiMail, FiLock, FiAlertCircle } from "react-icons/fi";
+import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Form";
 import { Alert } from "../components/common/Alert";
 
 const mockCredentials = [
-  { email: "manager@browns.com", password: "123456", role: "Manager" },
-  { email: "engineer@browns.com", password: "123456", role: "Engineer" },
-  { email: "staff@browns.com", password: "123456", role: "Staff" },
+  { email: "manager@browns.com", password: "123456", role: "Manager", icon: "👔" },
+  { email: "engineer@browns.com", password: "123456", role: "Engineer", icon: "⚙️" },
+  { email: "staff@browns.com", password: "123456", role: "Staff", icon: "👤" },
 ];
 
 export const LoginPage: React.FC = () => {
@@ -36,41 +36,72 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-blue-700 to-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: "2s" }}></div>
+    <div className="min-h-screen flex">
+      {/* Left Panel - Branding */}
+      <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] gradient-primary relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 400 800" fill="none">
+            <circle cx="300" cy="100" r="200" fill="white" fillOpacity="0.1" />
+            <circle cx="100" cy="600" r="250" fill="white" fillOpacity="0.08" />
+            <circle cx="350" cy="500" r="150" fill="white" fillOpacity="0.05" />
+          </svg>
+        </div>
+        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
+          <div>
+            <div className="flex items-center gap-3 mb-16">
+              <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-sm">
+                BM
+              </div>
+              <div>
+                <p className="font-semibold leading-none">Browns</p>
+                <p className="text-xs text-white/70">Maintenance System</p>
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold leading-tight mb-4">
+              Streamline Your Maintenance Operations
+            </h2>
+            <p className="text-base text-white/80 leading-relaxed max-w-sm">
+              A complete management system for your team — track work items, manage schedules, and collaborate seamlessly.
+            </p>
+          </div>
+          <p className="text-xs text-white/50">© 2024 Browns Company. All rights reserved.</p>
+        </div>
+      </div>
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="bg-white rounded-2xl shadow-elevation-4 p-8 backdrop-blur-xl">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-lg gradient-primary flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-elevation-2 transform transition-transform duration-300 hover:scale-105">
+      {/* Right Panel - Login Form */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50">
+        <div className="w-full max-w-[400px]">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center gap-2.5 mb-10">
+            <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center text-white font-bold text-xs shadow-sm">
               BM
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-            <p className="text-gray-600 mt-2 font-medium">Browns Maintenance System</p>
+            <span className="text-sm font-semibold text-slate-900">Browns Maintenance</span>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-slate-900">Sign in</h1>
+            <p className="text-sm text-slate-500 mt-1">Enter your credentials to access the dashboard</p>
           </div>
 
           {/* Error Alert */}
           {error && (
-            <div className="mb-6 animate-slide-in-left">
+            <div className="mb-6 animate-fade-in-up">
               <Alert type="error" message={error} dismissible onClose={() => setError("")} />
             </div>
           )}
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Email Address"
+              label="Email"
               type="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              icon={<FiMail />}
+              icon={<FiMail size={16} />}
             />
 
             <Input
@@ -80,21 +111,19 @@ export const LoginPage: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              icon={<FiLock />}
+              icon={<FiLock size={16} />}
             />
 
-            <Button fullWidth type="submit" loading={loading} size="lg">
-              {loading ? "Signing In..." : "Sign In"}
+            <Button fullWidth type="submit" loading={loading} size="lg" className="mt-2">
+              {loading ? "Signing in…" : "Sign in"}
+              {!loading && <FiArrowRight size={16} />}
             </Button>
           </form>
 
-          {/* Demo Credentials Section */}
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-sm text-gray-700 font-semibold mb-4 flex items-center gap-2">
-              <FiAlertCircle size={16} />
-              Demo Credentials
-            </p>
-            <div className="space-y-2.5">
+          {/* Demo Credentials */}
+          <div className="mt-8 pt-6 border-t border-slate-200">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Quick Access</p>
+            <div className="grid gap-2">
               {mockCredentials.map((cred, index) => (
                 <button
                   key={index}
@@ -103,19 +132,18 @@ export const LoginPage: React.FC = () => {
                     setEmail(cred.email);
                     setPassword(cred.password);
                   }}
-                  className="w-full p-3.5 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-blue-50 transition-all duration-200 text-left group"
+                  className="flex items-center gap-3 w-full p-3 rounded-lg border border-slate-200 hover:border-primary-300 hover:bg-primary-50/50 transition-all duration-150 text-left group"
                 >
-                  <p className="text-sm font-semibold text-gray-900 group-hover:text-primary-600">{cred.role}</p>
-                  <p className="text-xs text-gray-500 group-hover:text-gray-700">{cred.email}</p>
+                  <span className="text-lg">{cred.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 group-hover:text-primary-700">{cred.role}</p>
+                    <p className="text-xs text-slate-500 truncate">{cred.email}</p>
+                  </div>
+                  <FiArrowRight size={14} className="text-slate-300 group-hover:text-primary-500 transition-colors" />
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Footer */}
-          <p className="text-center text-xs text-gray-500 mt-8">
-            This is a demo application. Use the credentials above to log in.
-          </p>
         </div>
       </div>
     </div>

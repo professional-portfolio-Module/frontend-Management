@@ -79,7 +79,7 @@ export const SchedulesPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "scheduled":
-        return "bg-blue-100 text-blue-700";
+        return "bg-blue-100 text-primary-700";
       case "in-progress":
         return "bg-yellow-100 text-yellow-700";
       case "completed":
@@ -87,7 +87,7 @@ export const SchedulesPage: React.FC = () => {
       case "cancelled":
         return "bg-red-100 text-red-700";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-slate-100 text-slate-700";
     }
   };
 
@@ -107,24 +107,24 @@ export const SchedulesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Schedules</h1>
-          <p className="text-gray-600">Manage and view team schedules</p>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Schedules</h1>
+          <p className="text-sm text-slate-500">Manage and view team schedules</p>
         </div>
 
         {/* Controls */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm p-5 mb-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Filter */}
             <div className="flex items-center gap-4 w-full md:w-auto">
-              <FiFilter className="text-gray-600" size={20} />
+              <FiFilter className="text-slate-600" size={20} />
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-150 shadow-sm"
               >
                 <option value="all">All Roles</option>
                 <option value="engineer">Engineers</option>
@@ -139,8 +139,8 @@ export const SchedulesPage: React.FC = () => {
                 onClick={() => setViewMode("week")}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
                   viewMode === "week"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-primary-500 text-white"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
                 Week
@@ -149,8 +149,8 @@ export const SchedulesPage: React.FC = () => {
                 onClick={() => setViewMode("month")}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
                   viewMode === "month"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-primary-500 text-white"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
                 Month
@@ -161,18 +161,18 @@ export const SchedulesPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={goToPreviousPeriod}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200"
               >
                 <FiChevronLeft size={20} />
               </button>
-              <span className="text-sm font-semibold text-gray-700 min-w-fit">
+              <span className="text-sm font-semibold text-slate-700 min-w-fit">
                 {viewMode === "week"
                   ? `${weekStart.toLocaleDateString()} - ${new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}`
                   : currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </span>
               <button
                 onClick={goToNextPeriod}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200"
               >
                 <FiChevronRight size={20} />
               </button>
@@ -192,9 +192,9 @@ export const SchedulesPage: React.FC = () => {
               return (
                 <div
                   key={index}
-                  className={`rounded-xl shadow-lg overflow-hidden transition-all duration-200 ${
+                  className={`rounded-lg border border-slate-200/80 shadow-sm overflow-hidden transition-all duration-200 ${
                     isToday
-                      ? "border-2 border-blue-500 bg-blue-50"
+                      ? "border-2 border-primary-500 bg-primary-50"
                       : "bg-white"
                   }`}
                 >
@@ -202,8 +202,8 @@ export const SchedulesPage: React.FC = () => {
                   <div
                     className={`p-4 ${
                       isToday
-                        ? "bg-blue-500 text-white"
-                        : "bg-gradient-to-r from-gray-100 to-gray-50"
+                        ? "bg-primary-500 text-white"
+                        : "bg-gradient-to-r from-slate-100 to-slate-50"
                     }`}
                   >
                     <p className="font-semibold">
@@ -211,7 +211,7 @@ export const SchedulesPage: React.FC = () => {
                         weekday: "short",
                       })}
                     </p>
-                    <p className={`text-2xl font-bold ${isToday ? "" : "text-gray-900"}`}>
+                    <p className={`text-2xl font-bold ${isToday ? "" : "text-slate-900"}`}>
                       {day.getDate()}
                     </p>
                   </div>
@@ -219,7 +219,7 @@ export const SchedulesPage: React.FC = () => {
                   {/* Schedules */}
                   <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
                     {daySchedules.length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-4">
+                      <p className="text-slate-500 text-sm text-center py-4">
                         No schedules
                       </p>
                     ) : (
@@ -230,7 +230,7 @@ export const SchedulesPage: React.FC = () => {
                         return (
                           <div
                             key={schedule.id}
-                            className={`p-3 rounded-lg text-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer ${getStatusColor(
+                            className={`p-3 rounded-lg text-sm border border-slate-200 hover:shadow-md transition-shadow duration-200 cursor-pointer ${getStatusColor(
                               schedule.status
                             )}`}
                           >
@@ -271,7 +271,7 @@ export const SchedulesPage: React.FC = () => {
           </div>
         ) : (
           // Month View
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm overflow-hidden">
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-0 border-collapse">
               {/* Day Headers */}
@@ -279,7 +279,7 @@ export const SchedulesPage: React.FC = () => {
                 (day) => (
                   <div
                     key={day}
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 text-center font-semibold"
+                    className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 text-center font-semibold"
                   >
                     {day}
                   </div>
@@ -292,7 +292,7 @@ export const SchedulesPage: React.FC = () => {
                   return (
                     <div
                       key={`empty-${index}`}
-                      className="bg-gray-50 p-4 min-h-24 border border-gray-200"
+                      className="bg-slate-50 p-4 min-h-24 border border-slate-200"
                     />
                   );
 
@@ -302,21 +302,21 @@ export const SchedulesPage: React.FC = () => {
                 return (
                   <div
                     key={day.toISOString()}
-                    className={`p-4 min-h-24 border border-gray-200 ${
+                    className={`p-4 min-h-24 border border-slate-200 ${
                       isToday
-                        ? "bg-blue-50 border-2 border-blue-500"
+                        ? "bg-primary-50 border-2 border-primary-500"
                         : day.getMonth() !== currentDate.getMonth()
-                        ? "bg-gray-50"
-                        : "hover:bg-gray-50"
+                        ? "bg-slate-50"
+                        : "hover:bg-slate-50"
                     }`}
                   >
                     <p
                       className={`font-semibold mb-2 ${
                         isToday
-                          ? "text-blue-600"
+                          ? "text-primary-600"
                           : day.getMonth() !== currentDate.getMonth()
-                          ? "text-gray-400"
-                          : "text-gray-900"
+                          ? "text-slate-400"
+                          : "text-slate-900"
                       }`}
                     >
                       {day.getDate()}
@@ -341,7 +341,7 @@ export const SchedulesPage: React.FC = () => {
                         );
                       })}
                       {daySchedules.length > 2 && (
-                        <p className="text-xs text-gray-500 px-2">
+                        <p className="text-xs text-slate-500 px-2">
                           +{daySchedules.length - 2} more
                         </p>
                       )}
@@ -355,28 +355,28 @@ export const SchedulesPage: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-blue-100 rounded-lg">
-                <FiCalendar size={24} className="text-blue-600" />
+                <FiCalendar size={24} className="text-primary-600" />
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Total Schedules</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-slate-600 text-sm">Total Schedules</p>
+                <p className="text-2xl font-bold text-slate-900">
                   {filteredSchedules.length}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-green-100 rounded-lg">
                 <FiUsers size={24} className="text-green-600" />
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Scheduled Today</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-slate-600 text-sm">Scheduled Today</p>
+                <p className="text-2xl font-bold text-slate-900">
                   {
                     filteredSchedules.filter(
                       (s) =>
@@ -389,14 +389,14 @@ export const SchedulesPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-yellow-100 rounded-lg">
                 <FiClock size={24} className="text-yellow-600" />
               </div>
               <div>
-                <p className="text-gray-600 text-sm">In Progress</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-slate-600 text-sm">In Progress</p>
+                <p className="text-2xl font-bold text-slate-900">
                   {
                     filteredSchedules.filter((s) => s.status === "in-progress")
                       .length
@@ -406,14 +406,14 @@ export const SchedulesPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-green-100 rounded-lg">
                 <FiCheckCircle size={24} className="text-green-600" />
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-slate-600 text-sm">Completed</p>
+                <p className="text-2xl font-bold text-slate-900">
                   {
                     filteredSchedules.filter((s) => s.status === "completed")
                       .length

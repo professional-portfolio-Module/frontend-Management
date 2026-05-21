@@ -32,7 +32,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100">
+    <div className="flex h-screen bg-slate-50">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -43,7 +43,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </Sidebar>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Navbar */}
         <Navbar
           userName={user?.name}
@@ -53,8 +53,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         />
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-          <div className="container-custom py-8">
+        <main className="flex-1 overflow-y-auto scrollbar-thin">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {children}
           </div>
         </main>

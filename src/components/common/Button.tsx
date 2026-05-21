@@ -23,20 +23,20 @@ export const Button: React.FC<ButtonProps> = ({
   className = "",
   type = "button",
 }) => {
-  const baseClass = "font-medium rounded-lg transition-all duration-200 inline-flex items-center justify-center gap-2";
+  const baseClass = "font-medium rounded-md transition-all duration-150 inline-flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2";
 
   const variantClasses = {
-    primary: "bg-primary-600 text-white hover:bg-primary-700 active:scale-95 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 shadow-elevation-1 hover:shadow-elevation-2",
-    secondary: "bg-primary-100 text-primary-600 hover:bg-primary-200 active:scale-95 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
-    accent: "bg-accent-400 text-gray-900 hover:bg-accent-500 active:scale-95 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-elevation-1 hover:shadow-elevation-2",
-    danger: "bg-red-600 text-white hover:bg-red-700 active:scale-95 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-elevation-1 hover:shadow-elevation-2",
-    ghost: "bg-transparent text-gray-700 hover:bg-gray-100 active:scale-95 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2",
+    primary: "bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus:ring-primary-500 shadow-sm hover:shadow",
+    secondary: "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 active:bg-slate-100 focus:ring-primary-500 shadow-sm",
+    accent: "bg-accent-600 text-white hover:bg-accent-700 active:bg-accent-800 focus:ring-accent-500 shadow-sm hover:shadow",
+    danger: "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 shadow-sm hover:shadow",
+    ghost: "bg-transparent text-slate-600 hover:bg-slate-100 active:bg-slate-200 focus:ring-slate-400",
   };
 
   const sizeClasses = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2.5 text-base",
-    lg: "px-6 py-3 text-lg",
+    sm: "px-3 py-1.5 text-xs",
+    md: "px-4 py-2 text-sm",
+    lg: "px-5 py-2.5 text-sm",
   };
 
   return (
@@ -49,11 +49,16 @@ export const Button: React.FC<ButtonProps> = ({
         ${variantClasses[variant]}
         ${sizeClasses[size]}
         ${fullWidth ? "w-full" : ""}
-        ${disabled || loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+        ${disabled || loading ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"}
         ${className}
       `}
     >
-      {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>}
+      {loading && (
+        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      )}
       {children}
     </button>
   );

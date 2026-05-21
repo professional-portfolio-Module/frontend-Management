@@ -140,8 +140,8 @@ export const ReportsPage: React.FC = () => {
     <div className="space-y-6 pb-6">
       {/* Page Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Technician Reports</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-slate-900">Technician Reports</h1>
+        <p className="text-slate-600">
           Review and manage reports submitted by technicians for device maintenance and repairs
         </p>
       </div>
@@ -220,7 +220,7 @@ export const ReportsPage: React.FC = () => {
               className={`px-4 py-2 rounded-lg transition-all ${
                 viewMode === "cards"
                   ? "bg-primary-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
               Card View
@@ -230,7 +230,7 @@ export const ReportsPage: React.FC = () => {
               className={`px-4 py-2 rounded-lg transition-all ${
                 viewMode === "table"
                   ? "bg-primary-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
               Table View
@@ -240,7 +240,7 @@ export const ReportsPage: React.FC = () => {
       </Card>
 
       {/* Results Summary */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-slate-600">
         Showing {paginatedReports.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{" "}
         {Math.min(currentPage * itemsPerPage, filteredReports.length)} of{" "}
         {filteredReports.length} reports
@@ -250,9 +250,9 @@ export const ReportsPage: React.FC = () => {
       {filteredReports.length === 0 ? (
         // Empty State
         <Card className="flex flex-col items-center justify-center py-12">
-          <div className="text-5xl text-gray-300 mb-4">📋</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Reports Found</h3>
-          <p className="text-gray-600 mb-6">
+          <div className="text-5xl text-slate-300 mb-4">📋</div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Reports Found</h3>
+          <p className="text-slate-600 mb-6">
             Try adjusting your search filters or check back later for new reports
           </p>
           <Button
@@ -284,10 +284,10 @@ export const ReportsPage: React.FC = () => {
                 {/* Card Header */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
+                    <h3 className="font-semibold text-slate-900 text-sm line-clamp-2">
                       {report.reportTitle}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1">{report.reportId}</p>
+                    <p className="text-xs text-slate-500 mt-1">{report.reportId}</p>
                   </div>
                   <span
                     className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-2 ${getPriorityColor(
@@ -307,34 +307,34 @@ export const ReportsPage: React.FC = () => {
                 {/* Device Info */}
                 <div className="space-y-3 mb-4 text-sm">
                   <div className="flex items-start gap-2">
-                    <span className="text-gray-500 font-medium min-w-fit">Device:</span>
-                    <span className="text-gray-900 line-clamp-1">{report.deviceName}</span>
+                    <span className="text-slate-500 font-medium min-w-fit">Device:</span>
+                    <span className="text-slate-900 line-clamp-1">{report.deviceName}</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-gray-500 font-medium min-w-fit">Type:</span>
-                    <span className="inline-block px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs">
+                    <span className="text-slate-500 font-medium min-w-fit">Type:</span>
+                    <span className="inline-block px-2 py-1 rounded bg-slate-100 text-slate-800 text-xs">
                       {report.deviceType}
                     </span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <FiUser size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-900 text-sm">{report.technicianName}</span>
+                    <FiUser size={16} className="text-slate-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-900 text-sm">{report.technicianName}</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <FiCalendar size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-600 text-sm">
+                    <FiCalendar size={16} className="text-slate-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-600 text-sm">
                       {new Date(report.uploadedDate).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
 
                 {/* Issue Description */}
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg text-sm">
-                  <p className="text-gray-600 line-clamp-2">{report.issueDescription}</p>
+                <div className="mb-4 p-3 bg-slate-50 rounded-lg text-sm">
+                  <p className="text-slate-600 line-clamp-2">{report.issueDescription}</p>
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -358,15 +358,15 @@ export const ReportsPage: React.FC = () => {
         // Table View
         <Card className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Report</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Device</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Technician</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Status</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Priority</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-900">Date</th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-900">Action</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Report</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Device</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Technician</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Status</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Priority</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Date</th>
+                <th className="px-4 py-3 text-center font-semibold text-slate-900">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -378,12 +378,12 @@ export const ReportsPage: React.FC = () => {
                 return (
                   <tr
                     key={report.id}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition cursor-pointer"
+                    className="border-b border-slate-200 hover:bg-slate-50 transition cursor-pointer"
                     onClick={() => openReportModal(report)}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="font-medium text-gray-900 truncate">
+                        <div className="font-medium text-slate-900 truncate">
                           {report.reportTitle}
                         </div>
                         {isReviewed && (
@@ -392,12 +392,12 @@ export const ReportsPage: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500">{report.reportId}</div>
+                      <div className="text-xs text-slate-500">{report.reportId}</div>
                     </td>
-                    <td className="px-4 py-3 text-gray-900 truncate">
+                    <td className="px-4 py-3 text-slate-900 truncate">
                       {report.deviceName}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="px-4 py-3 text-slate-900">
                       {report.technicianName}
                     </td>
                     <td className="px-4 py-3">
@@ -411,7 +411,7 @@ export const ReportsPage: React.FC = () => {
                         {report.priority.charAt(0).toUpperCase() + report.priority.slice(1)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-slate-600">
                       {new Date(report.uploadedDate).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -436,14 +436,14 @@ export const ReportsPage: React.FC = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <Card className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-slate-600">
             Page {currentPage} of {totalPages}
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="p-2 hover:bg-gray-100 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 hover:bg-slate-100 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FiChevronLeft size={20} />
             </button>
@@ -454,7 +454,7 @@ export const ReportsPage: React.FC = () => {
                 className={`px-3 py-2 rounded-lg transition ${
                   page === currentPage
                     ? "bg-primary-600 text-white"
-                    : "hover:bg-gray-100 text-gray-900"
+                    : "hover:bg-slate-100 text-slate-900"
                 }`}
               >
                 {page}
@@ -463,7 +463,7 @@ export const ReportsPage: React.FC = () => {
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 hover:bg-gray-100 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 hover:bg-slate-100 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FiChevronRight size={20} />
             </button>
@@ -481,19 +481,19 @@ export const ReportsPage: React.FC = () => {
         {selectedReport && (
           <div className="space-y-6">
             {/* Report Header */}
-            <div className="space-y-3 pb-4 border-b border-gray-200">
+            <div className="space-y-3 pb-4 border-b border-slate-200">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-2xl font-bold text-slate-900">
                     {selectedReport.reportTitle}
                   </h2>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-slate-500 mt-1">
                     {selectedReport.reportId}
                   </p>
                 </div>
                 <button
                   onClick={closeReportModal}
-                  className="p-1 hover:bg-gray-100 rounded-lg transition"
+                  className="p-1 hover:bg-slate-100 rounded-lg transition"
                 >
                   <FiX size={20} />
                 </button>
@@ -529,34 +529,34 @@ export const ReportsPage: React.FC = () => {
             {/* Report Details Grid */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase">
+                <p className="text-xs font-semibold text-slate-500 uppercase">
                   Device Name
                 </p>
-                <p className="text-gray-900 font-medium mt-1">
+                <p className="text-slate-900 font-medium mt-1">
                   {selectedReport.deviceName}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase">
+                <p className="text-xs font-semibold text-slate-500 uppercase">
                   Device Type
                 </p>
-                <p className="text-gray-900 font-medium mt-1">
+                <p className="text-slate-900 font-medium mt-1">
                   {selectedReport.deviceType}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase">
+                <p className="text-xs font-semibold text-slate-500 uppercase">
                   Technician
                 </p>
-                <p className="text-gray-900 font-medium mt-1">
+                <p className="text-slate-900 font-medium mt-1">
                   {selectedReport.technicianName}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase">
+                <p className="text-xs font-semibold text-slate-500 uppercase">
                   Uploaded Date
                 </p>
-                <p className="text-gray-900 font-medium mt-1">
+                <p className="text-slate-900 font-medium mt-1">
                   {new Date(selectedReport.uploadedDate).toLocaleDateString()} at{" "}
                   {new Date(selectedReport.uploadedDate).toLocaleTimeString()}
                 </p>
@@ -565,20 +565,20 @@ export const ReportsPage: React.FC = () => {
 
             {/* Issue Description */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
+              <p className="text-xs font-semibold text-slate-500 uppercase mb-2">
                 Issue Description
               </p>
-              <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+              <p className="text-slate-900 bg-slate-50 p-3 rounded-lg">
                 {selectedReport.issueDescription}
               </p>
             </div>
 
             {/* Repair Summary */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
+              <p className="text-xs font-semibold text-slate-500 uppercase mb-2">
                 Repair Summary
               </p>
-              <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+              <p className="text-slate-900 bg-slate-50 p-3 rounded-lg">
                 {selectedReport.repairSummary}
               </p>
             </div>
@@ -586,8 +586,8 @@ export const ReportsPage: React.FC = () => {
             {/* Engineer Remarks */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <FiMessageCircle size={16} className="text-gray-600" />
-                <p className="text-sm font-semibold text-gray-900">
+                <FiMessageCircle size={16} className="text-slate-600" />
+                <p className="text-sm font-semibold text-slate-900">
                   Engineer Remarks
                 </p>
               </div>
@@ -612,7 +612,7 @@ export const ReportsPage: React.FC = () => {
             {/* Attachments Preview */}
             {(selectedReport.attachments?.length || 0) > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-2">
                   Attachments
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -621,7 +621,7 @@ export const ReportsPage: React.FC = () => {
                       key={idx}
                       href="#"
                       onClick={(e) => e.preventDefault()}
-                      className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-sm text-gray-700"
+                      className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition text-sm text-slate-700"
                     >
                       <FiDownload size={14} />
                       {file}
@@ -632,7 +632,7 @@ export const ReportsPage: React.FC = () => {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <div className="flex gap-3 pt-4 border-t border-slate-200">
               <Button
                 onClick={handleSaveRemarks}
                 disabled={isRemarksSaving}
