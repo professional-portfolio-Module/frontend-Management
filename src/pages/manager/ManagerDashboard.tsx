@@ -26,8 +26,9 @@ export const ManagerDashboard: React.FC = () => {
   const unreadNotifications = mockNotifications.filter((n) => !n.read && n.userId === user?.id);
 
   const sidebarItems = [
-    { icon: <FiCheckCircle />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
-    { icon: <FiUsers />, label: "Verification", active: activeTab === "verification", onClick: () => setActiveTab("verification"), badge: pendingUsers.length },
+    { icon: <FiActivity />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
+    { icon: <FiUsers />, label: "User Management", active: activeTab === "users", onClick: () => setActiveTab("users") },
+    { icon: <FiCheckCircle />, label: "Verification", active: activeTab === "verification", onClick: () => setActiveTab("verification"), badge: pendingUsers.length },
     { icon: <FiFileText />, label: "Work Items", active: activeTab === "work-items", onClick: () => setActiveTab("work-items") },
     { icon: <FiClock />, label: "Schedules", active: activeTab === "schedules", onClick: () => navigate("/schedules") },
     { icon: <FiMessageSquare />, label: "Messages", active: activeTab === "messages", onClick: () => navigate("/messages") },
@@ -88,15 +89,7 @@ export const ManagerDashboard: React.FC = () => {
       {/* Verification Tab */}
       {activeTab === "verification" && (
         <Card>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Employee Verification & Users</h2>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-md transition-colors"
-            >
-              + Add User
-            </button>
-          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Employee Verification</h2>
           <Table
             columns={[
               { key: "name", label: "Name" },
@@ -114,6 +107,49 @@ export const ManagerDashboard: React.FC = () => {
               },
             ]}
             data={pendingUsers.map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role }))}
+          />
+        </Card>
+      )}
+
+      {/* User Management Tab */}
+      {activeTab === "users" && (
+        <Card padding="none">
+          <div className="p-5 border-b border-slate-200 flex justify-between items-center">
+            <h2 className="text-sm font-semibold text-slate-900">Team Directory</h2>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-md transition-colors"
+            >
+              + Add User
+            </button>
+          </div>
+          <Table
+            columns={[
+              { key: "name", label: "Name" },
+              { key: "email", label: "Email" },
+              { key: "role", label: "Role", render: (val) => <span className="capitalize">{val}</span> },
+              { key: "department", label: "Department" },
+              {
+                key: "status",
+                label: "Status",
+                render: (value: string) => (
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                      ${
+                        value === "active"
+                          ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
+                          : value === "inactive"
+                          ? "bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-500/10"
+                          : "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20"
+                      }
+                    `}
+                  >
+                    {value}
+                  </span>
+                ),
+              },
+            ]}
+            data={mockUsers.filter((u) => u.role !== "admin")}
           />
         </Card>
       )}
