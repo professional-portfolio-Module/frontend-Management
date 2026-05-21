@@ -7,6 +7,7 @@ import { Input } from "../components/common/Form";
 import { Alert } from "../components/common/Alert";
 
 const demoAccounts = [
+  { email: "admin@browns.com", password: "123456", role: "Admin" },
   { email: "manager@browns.com", password: "123456", role: "Manager" },
   { email: "engineer@browns.com", password: "123456", role: "Engineer" },
   { email: "staff@browns.com", password: "123456", role: "Staff" },

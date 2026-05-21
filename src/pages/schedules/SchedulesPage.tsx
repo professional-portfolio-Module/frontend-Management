@@ -127,6 +127,7 @@ export const SchedulesPage: React.FC = () => {
                 className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-150 shadow-sm"
               >
                 <option value="all">All Roles</option>
+                <option value="admin">Admins</option>
                 <option value="engineer">Engineers</option>
                 <option value="staff">Staff Members</option>
                 <option value="manager">Managers</option>

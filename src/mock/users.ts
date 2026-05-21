@@ -3,7 +3,7 @@ export interface User {
   email: string;
   password: string;
   name: string;
-  role: "manager" | "engineer" | "staff";
+  role: "admin" | "manager" | "engineer" | "staff";
   phone?: string;
   profilePhoto?: string;
   department?: string;
@@ -76,8 +76,21 @@ export const mockUsers: User[] = [
     createdAt: "2024-04-01",
     profilePhoto: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
   },
+  {
+    id: "6",
+    email: "admin@browns.com",
+    password: "123456",
+    name: "System Admin",
+    role: "admin",
+    phone: "+1-800-999-0000",
+    department: "System Administration",
+    status: "active",
+    createdAt: "2023-12-01",
+    profilePhoto: "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin",
+  },
 ];
 
 export const mockManagers = mockUsers.filter((u) => u.role === "manager");
 export const mockEngineers = mockUsers.filter((u) => u.role === "engineer");
 export const mockStaff = mockUsers.filter((u) => u.role === "staff");
+export const mockAdmins = mockUsers.filter((u) => u.role === "admin");

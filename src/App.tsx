@@ -12,6 +12,7 @@ import { EngineerDashboard } from "./pages/engineer/EngineerDashboard";
 import { StaffDashboard } from "./pages/staff/StaffDashboard";
 import { MessagingPage } from "./pages/messaging/MessagingPage";
 import { SchedulesPage } from "./pages/schedules/SchedulesPage";
+import { AdminDashboard } from "./pages/admin/AdminDashboard";
 
 const App: React.FC = () => {
   return (
@@ -28,6 +29,16 @@ const App: React.FC = () => {
             }
           />
           <Route path="/login" element={<LoginPage />} />
+
+          {/* Admin Routes */}
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Manager Routes */}
           <Route

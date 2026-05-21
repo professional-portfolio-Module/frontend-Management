@@ -103,6 +103,11 @@ export const LandingPage: React.FC = () => {
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {[
               {
+                role: "System Administration",
+                desc: "Platform configuration",
+                perms: ["System configuration & settings", "Global user management", "System health & monitoring", "Global activity auditing"],
+              },
+              {
                 role: "Management",
                 desc: "Full system oversight",
                 perms: ["Employee verification & onboarding", "Work order creation & assignment", "Schedule management & approval", "Activity logs & audit trail"],
