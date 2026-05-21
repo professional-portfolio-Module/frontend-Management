@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiCheckCircle, FiClock, FiMessageSquare, FiFileText, FiClipboard } from "react-icons/fi";
+import { FiCheckCircle, FiClock, FiMessageSquare, FiFileText, FiClipboard, FiBell } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -44,10 +44,10 @@ export const EngineerDashboard: React.FC = () => {
       {activeTab === "overview" && (
         <div className="space-y-8">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard icon="📋" label="Pending Tasks" value={workItemStats.pending} color="blue" />
-            <StatCard icon="⏳" label="In Progress" value={workItemStats.inProgress} color="yellow" />
-            <StatCard icon="✅" label="Completed" value={workItemStats.completed} color="green" />
-            <StatCard icon="🛑" label="On Hold" value={workItemStats.onHold} color="red" />
+            <StatCard icon={<FiClipboard size={18} />} label="Pending Tasks" value={workItemStats.pending} color="blue" />
+            <StatCard icon={<FiClock size={18} />} label="In Progress" value={workItemStats.inProgress} color="yellow" />
+            <StatCard icon={<FiCheckCircle size={18} />} label="Completed" value={workItemStats.completed} color="green" />
+            <StatCard icon={<FiBell size={18} />} label="On Hold" value={workItemStats.onHold} color="red" />
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
@@ -67,9 +67,9 @@ export const EngineerDashboard: React.FC = () => {
               <h2 className="text-lg font-bold text-slate-900 mb-4">Notifications</h2>
               <div className="space-y-3">
                 {unreadNotifications.map((notif) => (
-                  <div key={notif.id} className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-                    <p className="font-semibold text-blue-900 text-sm">{notif.title}</p>
-                    <p className="text-xs text-blue-700 mt-1">{notif.message}</p>
+                  <div key={notif.id} className="p-3 rounded-md bg-primary-50/50 border border-primary-100">
+                    <p className="text-sm font-medium text-slate-900">{notif.title}</p>
+                    <p className="text-xs text-slate-500 mt-1">{notif.message}</p>
                   </div>
                 ))}
                 {unreadNotifications.length === 0 && <p className="text-slate-500 text-sm">No new notifications</p>}

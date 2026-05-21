@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare } from "react-icons/fi";
+import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiBell, FiActivity } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -39,27 +39,27 @@ export const ManagerDashboard: React.FC = () => {
         <div className="space-y-8">
           {/* Statistics */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard icon="👥" label="Total Engineers" value={engineers.length} color="blue" />
-            <StatCard icon="👔" label="Staff Members" value={staff.length} color="green" />
-            <StatCard icon="⏳" label="Pending Verification" value={pendingUsers.length} color="yellow" trend="up" trendValue="2 this week" />
-            <StatCard icon="🔔" label="Notifications" value={unreadNotifications.length} color="red" />
+            <StatCard icon={<FiUsers size={18} />} label="Total Engineers" value={engineers.length} color="blue" />
+            <StatCard icon={<FiCheckCircle size={18} />} label="Staff Members" value={staff.length} color="green" />
+            <StatCard icon={<FiClock size={18} />} label="Pending Verification" value={pendingUsers.length} color="yellow" trend="up" trendValue="2 this week" />
+            <StatCard icon={<FiBell size={18} />} label="Notifications" value={unreadNotifications.length} color="red" />
           </div>
 
           {/* Content Grid */}
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Recent Activities */}
             <Card className="lg:col-span-2">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Activities</h2>
+              <h2 className="text-sm font-semibold text-slate-900 mb-5">Recent Activities</h2>
               <div className="space-y-4">
                 {mockActivities.slice(0, 5).map((activity) => (
                   <div key={activity.id} className="flex gap-4 pb-4 border-b border-slate-200 last:border-b-0 last:pb-0">
-                    <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 flex-shrink-0">
-                      🔔
+                    <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 flex-shrink-0">
+                      <FiActivity size={14} />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-slate-900">{activity.action}</p>
-                      <p className="text-sm text-slate-600">{activity.description}</p>
-                      <p className="text-xs text-slate-500 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
+                      <p className="text-sm font-medium text-slate-900">{activity.action}</p>
+                      <p className="text-xs text-slate-500">{activity.description}</p>
+                      <p className="text-[11px] text-slate-400 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -68,12 +68,12 @@ export const ManagerDashboard: React.FC = () => {
 
             {/* Notifications */}
             <Card>
-              <h2 className="text-lg font-bold text-slate-900 mb-4">Notifications</h2>
+              <h2 className="text-sm font-semibold text-slate-900 mb-4">Notifications</h2>
               <div className="space-y-3">
                 {unreadNotifications.map((notif) => (
-                  <div key={notif.id} className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-                    <p className="font-semibold text-blue-900 text-sm">{notif.title}</p>
-                    <p className="text-xs text-blue-700 mt-1">{notif.message}</p>
+                  <div key={notif.id} className="p-3 rounded-md bg-primary-50/50 border border-primary-100">
+                    <p className="text-sm font-medium text-slate-900">{notif.title}</p>
+                    <p className="text-xs text-slate-500 mt-1">{notif.message}</p>
                   </div>
                 ))}
                 {unreadNotifications.length === 0 && <p className="text-slate-500 text-sm">No notifications</p>}
