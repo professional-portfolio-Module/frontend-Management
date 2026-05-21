@@ -9,6 +9,7 @@ import { Modal } from "../../components/common/Modal";
 import { useAuth } from "../../context/AuthContext";
 import { mockActivities, mockNotifications } from "../../mock/data";
 import { mockUsers } from "../../mock/users";
+import { CreateAccountModal } from "../../components/common/CreateAccountModal";
 
 export const ManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export const ManagerDashboard: React.FC = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileName, setProfileName] = useState(user?.name || "");
   const [profilePhone, setProfilePhone] = useState(user?.phone || "");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const pendingUsers = mockUsers.filter((u) => u.status === "pending");
   const engineers = mockUsers.filter((u) => u.role === "engineer");
@@ -86,7 +88,15 @@ export const ManagerDashboard: React.FC = () => {
       {/* Verification Tab */}
       {activeTab === "verification" && (
         <Card>
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Employee Verification</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">Employee Verification & Users</h2>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-md transition-colors"
+            >
+              + Add User
+            </button>
+          </div>
           <Table
             columns={[
               { key: "name", label: "Name" },
@@ -173,6 +183,21 @@ export const ManagerDashboard: React.FC = () => {
           <Button fullWidth variant="secondary" onClick={() => setShowProfileModal(false)}>Cancel</Button>
         </div>
       </Modal>
+
+      <CreateAccountModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        allowedRoles={[
+          { value: "manager", label: "Manager" },
+          { value: "engineer", label: "Engineer" },
+          { value: "staff", label: "Staff" },
+        ]}
+        onSubmit={async (data) => {
+          // Mock API call
+          console.log("Manager creating user:", data);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }}
+      />
     </DashboardLayout>
   );
 };

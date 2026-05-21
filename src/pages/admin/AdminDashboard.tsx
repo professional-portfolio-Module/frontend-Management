@@ -4,11 +4,13 @@ import { FiUsers, FiServer, FiActivity, FiSettings, FiDatabase, FiShield, FiAler
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
+import { CreateAccountModal } from "../../components/common/CreateAccountModal";
 import { mockUsers } from "../../mock/users";
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "settings">("overview");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Mock admin data
   const totalUsers = mockUsers.length;
@@ -201,13 +203,30 @@ export const AdminDashboard: React.FC = () => {
         <Card padding="none">
           <div className="p-5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-sm font-semibold text-slate-900">Global User Directory</h2>
-            <button className="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-md transition-colors">
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-md transition-colors"
+            >
               + Add User
             </button>
           </div>
           <Table columns={userColumns} data={mockUsers} />
         </Card>
       )}
+
+      <CreateAccountModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        allowedRoles={[
+          { value: "admin", label: "Admin" },
+          { value: "manager", label: "Manager" },
+        ]}
+        onSubmit={async (data) => {
+          // In a real app, this would be an API call
+          console.log("Creating user:", data);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }}
+      />
 
       {activeTab === "settings" && (
         <Card>
