@@ -1,6 +1,15 @@
 import { User, mockUsers, mockEngineers, mockStaff } from "../mock/users";
+import apiClient from "./api";
 
 const simulateDelay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export interface CreateUserPayload {
+  name: string;
+  email: string;
+  mobileNumber: string;
+  role: string;
+  hotelId: string;
+}
 
 export const userService = {
   // Get all users
@@ -25,17 +34,44 @@ export const userService = {
 
   // Get pending users (for verification)
   async getPendingUsers(): Promise<User[]> {
-    await simulateDelay(300);
-    return mockUsers.filter((u) => u.status === "pending");
+    try {
+      const response = await apiClient.get("/admin/api/users/pending");
+      if (response.data && response.data.success) {
+        return response.data.data.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role ? u.role.toLowerCase() : "",
+          status: "pending",
+          phone: u.mobileNumber,
+          createdAt: u.createdAt
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error("Failed to fetch pending users", error);
+      return [];
+    }
   },
 
-  // Verify user account
-  async verifyUser(userId: string): Promise<User> {
-    await simulateDelay(400);
-    const user = mockUsers.find((u) => u.id === userId);
-    if (!user) throw new Error("User not found");
-    user.status = "active";
-    return user;
+  // Approve user account
+  async verifyUser(userId: string): Promise<void> {
+    try {
+      const response = await apiClient.put(`/admin/api/users/${userId}/approve`);
+      if (!response.data.success && response.data.success !== undefined) {
+        throw new Error(response.data.message || "Failed to approve user");
+      }
+    } catch (error: any) {
+      let message = "Failed to approve user";
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          try { message = JSON.parse(error.response.data).message || message; } catch (e) { }
+        } else if (error.response.data.message) {
+          message = error.response.data.message;
+        }
+      }
+      throw new Error(message);
+    }
   },
 
   // Reject user account
@@ -93,7 +129,7 @@ export const userService = {
     return newManager;
   },
 
-  // Create user (admin/manager)
+  // Create user (admin/manager mock)
   async createUser(data: Omit<User, "id" | "createdAt">): Promise<User> {
     await simulateDelay(400);
     const newUser: User = {
@@ -103,6 +139,26 @@ export const userService = {
     };
     mockUsers.push(newUser);
     return newUser;
+  },
+
+  // Create real internal user via API
+  async createInternalUser(data: CreateUserPayload): Promise<void> {
+    try {
+      const response = await apiClient.post("/admin/api/users/internal", data);
+      if (!response.data.success && response.data.success !== undefined) {
+        throw new Error(response.data.message || "Failed to create user");
+      }
+    } catch (error: any) {
+      let message = "Failed to create user";
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          try { message = JSON.parse(error.response.data).message || message; } catch (e) { }
+        } else if (error.response.data.message) {
+          message = error.response.data.message;
+        }
+      }
+      throw new Error(message);
+    }
   },
 
   // Delete user

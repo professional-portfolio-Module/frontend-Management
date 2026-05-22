@@ -10,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import { mockActivities, mockNotifications } from "../../mock/data";
 import { mockUsers } from "../../mock/users";
 import { CreateAccountModal } from "../../components/common/CreateAccountModal";
+import { userService } from "../../services/userService";
 
 export const ManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +21,16 @@ export const ManagerDashboard: React.FC = () => {
   const [profilePhone, setProfilePhone] = useState(user?.phone || "");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const pendingUsers = mockUsers.filter((u) => u.status === "pending");
+  const [pendingUsers, setPendingUsers] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (activeTab === "verification") {
+      userService.getPendingUsers().then((users) => {
+        setPendingUsers(users);
+      });
+    }
+  }, [activeTab]);
+
   const engineers = mockUsers.filter((u) => u.role === "engineer");
   const staff = mockUsers.filter((u) => u.role === "staff");
   const unreadNotifications = mockNotifications.filter((n) => !n.read && n.userId === user?.id);
@@ -98,9 +108,23 @@ export const ManagerDashboard: React.FC = () => {
               {
                 key: "id",
                 label: "Actions",
-                render: (_val) => (
+                render: (val) => (
                   <div className="flex gap-2">
-                    <Button size="sm" variant="primary">Approve</Button>
+                    <Button 
+                      size="sm" 
+                      variant="primary" 
+                      onClick={async () => {
+                        try {
+                          await userService.verifyUser(val as string);
+                          setPendingUsers(prev => prev.filter(u => u.id !== val));
+                          alert("User approved successfully!");
+                        } catch (e: any) {
+                          alert(e.message || "Failed to approve user");
+                        }
+                      }}
+                    >
+                      Approve
+                    </Button>
                     <Button size="sm" variant="danger">Reject</Button>
                   </div>
                 ),
@@ -224,14 +248,18 @@ export const ManagerDashboard: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         allowedRoles={[
-          { value: "manager", label: "Manager" },
-          { value: "engineer", label: "Engineer" },
-          { value: "staff", label: "Staff" },
+          { value: "ENGINEER", label: "Engineer" },
+          { value: "STAFF", label: "Staff" },
         ]}
         onSubmit={async (data) => {
-          // Mock API call
-          console.log("Manager creating user:", data);
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const { name, email, mobileNumber, role, hotelId } = data;
+          await userService.createInternalUser({
+            name,
+            email,
+            mobileNumber,
+            role,
+            hotelId
+          });
         }}
       />
     </DashboardLayout>

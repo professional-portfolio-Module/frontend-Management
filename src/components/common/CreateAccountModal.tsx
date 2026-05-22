@@ -3,6 +3,7 @@ import { Modal } from "./Modal";
 import { Input, Select } from "./Form";
 import { Button } from "./Button";
 import { FiUserPlus } from "react-icons/fi";
+import { HOTELS } from "../../constants/hotels";
 
 interface CreateAccountModalProps {
   isOpen: boolean;
@@ -20,8 +21,9 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    mobileNumber: "",
     role: allowedRoles[0]?.value || "",
-    department: "",
+    hotelId: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -32,7 +34,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email || !formData.role) {
+    if (!formData.name || !formData.email || !formData.mobileNumber || !formData.role || !formData.hotelId) {
       setError("Please fill in all required fields.");
       return;
     }
@@ -43,19 +45,20 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
       setSuccessMessage("");
       await onSubmit(formData);
       
-      setSuccessMessage(`Account created! An email with a temporary password has been sent to ${formData.email}.`);
+      setSuccessMessage(`Account created for ${formData.name}!`);
       
       // Reset form
       setTimeout(() => {
         setFormData({
           name: "",
           email: "",
+          mobileNumber: "",
           role: allowedRoles[0]?.value || "",
-          department: "",
+          hotelId: "",
         });
         setSuccessMessage("");
         onClose();
-      }, 3000);
+      }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create account.");
     } finally {
@@ -102,7 +105,6 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
               </svg>
             </div>
             <p className="font-medium">{successMessage}</p>
-            <p className="text-xs text-emerald-600 opacity-80">The user will be prompted to set a new password upon first login.</p>
           </div>
         ) : (
           <>
@@ -121,6 +123,13 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
               onChange={(e) => handleChange("email", e.target.value)}
               required
             />
+            <Input
+              label="Mobile Number"
+              placeholder="e.g. 0987654325"
+              value={formData.mobileNumber}
+              onChange={(e) => handleChange("mobileNumber", e.target.value)}
+              required
+            />
             <Select
               label="Account Role"
               options={allowedRoles}
@@ -128,17 +137,13 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
               onChange={(e) => handleChange("role", e.target.value)}
               required
             />
-            <Input
-              label="Department"
-              placeholder="e.g. Maintenance"
-              value={formData.department}
-              onChange={(e) => handleChange("department", e.target.value)}
+            <Select
+              label="Hotel"
+              options={HOTELS.map(h => ({ value: h.id, label: `${h.name} - ${h.city}` }))}
+              value={formData.hotelId}
+              onChange={(e) => handleChange("hotelId", e.target.value)}
+              required
             />
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-              <p className="text-xs text-slate-500 leading-relaxed">
-                <strong className="text-slate-700">Note:</strong> A temporary password will be automatically generated. The user will receive an email with activation instructions to set their permanent password.
-              </p>
-            </div>
           </>
         )}
       </div>

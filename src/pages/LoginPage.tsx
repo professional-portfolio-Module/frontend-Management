@@ -1,37 +1,108 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
+import { FiMail, FiLock, FiArrowRight, FiKey } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
+import { authService } from "../services/authService";
 import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Form";
 import { Alert } from "../components/common/Alert";
 
-const demoAccounts = [
-  { email: "admin@browns.com", password: "123456", role: "Admin" },
-  { email: "manager@browns.com", password: "123456", role: "Manager" },
-  { email: "engineer@browns.com", password: "123456", role: "Engineer" },
-  { email: "staff@browns.com", password: "123456", role: "Staff" },
-];
-
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // Forgot Password State
+  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
+  const [resetStep, setResetStep] = useState<1 | 2>(1);
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const navigateToDashboard = (role: string) => {
+    switch (role?.toLowerCase()) {
+      case 'admin':
+        navigate("/admin");
+        break;
+      case 'manager':
+        navigate("/manager");
+        break;
+      case 'engineer':
+        navigate("/engineer");
+        break;
+      case 'staff':
+        navigate("/staff");
+        break;
+      default:
+        navigate("/");
+    }
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     setError("");
     setLoading(true);
 
     try {
-      await login({ email, password });
-      navigate("/");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid credentials. Please try again.");
+      const authUser = await login({ email, password });
+      navigateToDashboard(authUser.role);
+    } catch (err: any) {
+      setError(err.message || "Invalid credentials. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (loading) return;
+    setError("");
+    setSuccessMessage("");
+    setLoading(true);
+    try {
+      const message = await authService.forgotPassword(email);
+      setSuccessMessage(message);
+    } catch (err: any) {
+      setError(err.message || "Failed to resend OTP.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    setError("");
+    setSuccessMessage("");
+    setLoading(true);
+
+    try {
+      if (resetStep === 1) {
+        // Request OTP
+        const message = await authService.forgotPassword(email);
+        setSuccessMessage(message);
+        setResetStep(2);
+      } else {
+        // Validate passwords match
+        if (newPassword !== confirmPassword) {
+          throw new Error("Passwords do not match.");
+        }
+        // Reset Password
+        await authService.resetPassword(email, otp, newPassword);
+        setSuccessMessage("Password reset successful. Logging you in...");
+        
+        // Automatically login with new credentials
+        const authUser = await login({ email, password: newPassword });
+        navigateToDashboard(authUser.role);
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred.");
     } finally {
       setLoading(false);
     }
@@ -69,7 +140,7 @@ export const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Panel - Login Form */}
+      {/* Right Panel - Auth Forms */}
       <div className="flex-1 flex items-center justify-center p-6 bg-slate-50">
         <div className="w-full max-w-[380px]">
           {/* Mobile Logo */}
@@ -81,68 +152,149 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-slate-900">Sign in</h1>
-            <p className="text-sm text-slate-500 mt-1">Enter your credentials to continue</p>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {isForgotPasswordMode ? (resetStep === 1 ? "Reset Password" : "Enter OTP") : "Sign in"}
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              {isForgotPasswordMode 
+                ? (resetStep === 1 ? "Enter your email to receive an OTP" : "Enter the OTP sent to your email and your new password") 
+                : "Enter your credentials to continue"}
+            </p>
           </div>
 
-          {/* Error Alert */}
+          {/* Alerts */}
           {error && (
             <div className="mb-5 animate-fade-in-up">
               <Alert type="error" message={error} dismissible onClose={() => setError("")} />
             </div>
           )}
+          {successMessage && (
+            <div className="mb-5 animate-fade-in-up">
+              <Alert type="success" message={successMessage} dismissible onClose={() => setSuccessMessage("")} />
+            </div>
+          )}
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              placeholder="name@browns.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              icon={<FiMail size={16} />}
-            />
+          {/* Form */}
+          {!isForgotPasswordMode ? (
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <Input
+                label="Email"
+                type="email"
+                placeholder="name@browns.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                icon={<FiMail size={16} />}
+              />
 
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              icon={<FiLock size={16} />}
-            />
+              <div>
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  icon={<FiLock size={16} />}
+                />
+                <div className="flex justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPasswordMode(true);
+                      setError("");
+                      setSuccessMessage("");
+                    }}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              </div>
 
-            <Button fullWidth type="submit" loading={loading} size="lg" className="mt-1">
-              {loading ? "Signing in…" : "Sign in"}
-              {!loading && <FiArrowRight size={16} />}
-            </Button>
-          </form>
+              <Button fullWidth type="submit" loading={loading} size="lg" className="mt-1">
+                {loading ? "Signing in…" : "Sign in"}
+                {!loading && <FiArrowRight size={16} />}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
+              {resetStep === 1 ? (
+                <Input
+                  label="Email"
+                  type="email"
+                  placeholder="name@browns.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  icon={<FiMail size={16} />}
+                />
+              ) : (
+                <>
+                  <Input
+                    label="OTP Code"
+                    type="text"
+                    placeholder="Enter 6-digit OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    required
+                    icon={<FiKey size={16} />}
+                  />
+                  <Input
+                    label="New Password"
+                    type="password"
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    icon={<FiLock size={16} />}
+                  />
+                  <Input
+                    label="Confirm Password"
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    icon={<FiLock size={16} />}
+                  />
+                </>
+              )}
 
-          {/* Test Accounts - only visible in development */}
-          <div className="mt-8 pt-6 border-t border-slate-200">
-            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-3">Test Accounts</p>
-            <div className="grid gap-1.5">
-              {demoAccounts.map((cred, index) => (
+              <Button fullWidth type="submit" loading={loading} size="lg" className="mt-1">
+                {loading ? "Processing…" : (resetStep === 1 ? "Send OTP" : "Reset & Login")}
+              </Button>
+
+              <div className="flex flex-col items-center gap-2 mt-4">
+                {resetStep === 2 && (
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={loading}
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                  >
+                    Resend OTP
+                  </button>
+                )}
                 <button
-                  key={index}
                   type="button"
                   onClick={() => {
-                    setEmail(cred.email);
-                    setPassword(cred.password);
+                    setIsForgotPasswordMode(false);
+                    setResetStep(1);
+                    setError("");
+                    setSuccessMessage("");
+                    setOtp("");
+                    setNewPassword("");
+                    setConfirmPassword("");
                   }}
-                  className="flex items-center justify-between w-full px-3 py-2 rounded-md border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-150 text-left group"
+                  className="text-sm font-medium text-slate-500 hover:text-slate-700"
                 >
-                  <div>
-                    <p className="text-xs font-medium text-slate-700">{cred.role}</p>
-                    <p className="text-[11px] text-slate-400">{cred.email}</p>
-                  </div>
-                  <span className="text-[10px] text-slate-300 group-hover:text-slate-400">Use →</span>
+                  Back to Sign in
                 </button>
-              ))}
-            </div>
-          </div>
+              </div>
+            </form>
+          )}
+
         </div>
       </div>
     </div>

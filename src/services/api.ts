@@ -7,24 +7,48 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Add request interceptor to include auth token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+// Request interceptor to attach token from localStorage
+apiClient.interceptors.request.use((config) => {
+  // Do not attach token for login or forgot password requests
+  if (config.url && (config.url.includes('/auth/login') || config.url.includes('/auth/forgot-password') || config.url.includes('/auth/sign-up') || config.url.includes('/auth/reset-forgotten-password'))) {
+    // Explicitly remove it in case it was set in defaults
+    if (config.headers) {
+      delete config.headers.Authorization;
     }
     return config;
-  },
-  (error) => {
-    return Promise.reject(error);
   }
-);
+
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    if (config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } else {
+    // Fallback for older localStorage format
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.token && user.token !== "cookie") {
+          if (config.headers) {
+            config.headers.Authorization = `Bearer ${user.token}`;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse user from local storage", e);
+      }
+    }
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
 
 // Add response interceptor
 apiClient.interceptors.response.use(

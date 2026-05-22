@@ -42,7 +42,7 @@ export const Input: React.FC<InputProps> = ({
           value={value}
           onChange={onChange}
           disabled={disabled}
-          className={`input-field ${icon ? "pl-11" : ""} ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-slate-50" : ""}`}
+          className={`input-field ${icon ? "!pl-10" : ""} ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-slate-50" : ""}`}
         />
       </div>
       {error && (

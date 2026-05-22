@@ -6,6 +6,7 @@ import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
 import { CreateAccountModal } from "../../components/common/CreateAccountModal";
 import { mockUsers } from "../../mock/users";
+import { userService } from "../../services/userService";
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -218,13 +219,19 @@ export const AdminDashboard: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         allowedRoles={[
-          { value: "admin", label: "Admin" },
-          { value: "manager", label: "Manager" },
+          { value: "MANAGER", label: "Manager" },
+          { value: "ENGINEER", label: "Engineer" },
+          { value: "STAFF", label: "Staff" },
         ]}
         onSubmit={async (data) => {
-          // In a real app, this would be an API call
-          console.log("Creating user:", data);
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const { name, email, mobileNumber, role, hotelId } = data;
+          await userService.createInternalUser({
+            name,
+            email,
+            mobileNumber,
+            role,
+            hotelId
+          });
         }}
       />
 

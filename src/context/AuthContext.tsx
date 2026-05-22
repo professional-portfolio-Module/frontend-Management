@@ -6,7 +6,7 @@ interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<AuthUser>;
   logout: () => Promise<void>;
   updateProfile: (name: string, phone: string) => void;
 }
@@ -27,14 +27,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
-    setIsLoading(true);
-    try {
-      const authUser = await authService.login(credentials);
-      authService.setAuthData(authUser);
-      setUser(authUser);
-    } finally {
-      setIsLoading(false);
-    }
+    // DO NOT use setIsLoading here. It causes RoleBasedRedirect to unmount LoginPage
+    // and destroys local component state (like error messages)
+    const authUser = await authService.login(credentials);
+    authService.setAuthData(authUser);
+    setUser(authUser);
+    return authUser;
   };
 
   const logout = async () => {
