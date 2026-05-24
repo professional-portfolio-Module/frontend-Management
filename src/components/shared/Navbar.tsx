@@ -47,10 +47,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   useEffect(() => {
     fetchNotifications();
-
-    // Poll every 15 seconds
-    const interval = setInterval(fetchNotifications, 15000);
-    return () => clearInterval(interval);
   }, [user?.id]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -161,8 +157,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="relative">
             <button
               onClick={() => {
-                setShowNotifications(!showNotifications);
+                const nextState = !showNotifications;
+                setShowNotifications(nextState);
                 setShowMenu(false);
+                if (nextState) {
+                  fetchNotifications();
+                }
               }}
               className={`relative p-2 rounded-md transition-all duration-150 ${
                 showNotifications 
