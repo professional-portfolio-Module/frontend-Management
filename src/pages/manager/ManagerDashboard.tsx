@@ -57,6 +57,13 @@ export const ManagerDashboard: React.FC = () => {
   });
   const [assetError, setAssetError] = useState("");
 
+  // Assets filters and pagination state
+  const [assetSearch, setAssetSearch] = useState("");
+  const [assetCategory, setAssetCategory] = useState("");
+  const [assetStatus, setAssetStatus] = useState("");
+  const [assetPage, setAssetPage] = useState(1);
+  const [assetTotalPages, setAssetTotalPages] = useState(1);
+
   const fetchCategories = async () => {
     setCategoriesLoading(true);
     try {
@@ -72,8 +79,15 @@ export const ManagerDashboard: React.FC = () => {
   const fetchAssets = async () => {
     setAssetsLoading(true);
     try {
-      const response = await assetService.getAssets({ limit: 100 });
+      const response = await assetService.getAssets({
+        page: assetPage,
+        limit: 10,
+        search: assetSearch || undefined,
+        category_id: assetCategory || undefined,
+        status: assetStatus || undefined,
+      });
       setAssets(response.items);
+      setAssetTotalPages(response.pagination.totalPages);
     } catch (err: any) {
       console.error("Failed to fetch assets:", err);
     } finally {
@@ -86,13 +100,16 @@ export const ManagerDashboard: React.FC = () => {
       userService.getPendingUsers().then((users) => {
         setPendingUsers(users);
       });
-    } else if (activeTab === "categories") {
+    } else if (activeTab === "categories" || activeTab === "assets") {
       fetchCategories();
-    } else if (activeTab === "assets") {
-      fetchCategories();
-      fetchAssets();
     }
   }, [activeTab]);
+
+  React.useEffect(() => {
+    if (activeTab === "assets") {
+      fetchAssets();
+    }
+  }, [activeTab, assetPage, assetSearch, assetCategory, assetStatus]);
 
   const engineers = mockUsers.filter((u) => u.role === "engineer");
   const staff = mockUsers.filter((u) => u.role === "staff");
@@ -406,7 +423,7 @@ export const ManagerDashboard: React.FC = () => {
       {/* Assets Tab */}
       {activeTab === "assets" && (
         <Card padding="none">
-          <div className="p-5 border-b border-slate-200 flex justify-between items-center">
+          <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-white">
             <h2 className="text-sm font-semibold text-slate-900">Assets Inventory</h2>
             <button
               onClick={() => {
@@ -430,6 +447,60 @@ export const ManagerDashboard: React.FC = () => {
               + Add Asset
             </button>
           </div>
+
+          {/* Filters Panel */}
+          <div className="p-5 bg-slate-50 border-b border-slate-200 grid md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Search</label>
+              <input
+                type="text"
+                placeholder="Search card no, description, location..."
+                value={assetSearch}
+                onChange={(e) => {
+                  setAssetSearch(e.target.value);
+                  setAssetPage(1);
+                }}
+                className="input-field text-sm bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Category</label>
+              <select
+                value={assetCategory}
+                onChange={(e) => {
+                  setAssetCategory(e.target.value);
+                  setAssetPage(1);
+                }}
+                className="input-field text-sm bg-white cursor-pointer"
+              >
+                <option value="">All Categories</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Status</label>
+              <select
+                value={assetStatus}
+                onChange={(e) => {
+                  setAssetStatus(e.target.value);
+                  setAssetPage(1);
+                }}
+                className="input-field text-sm bg-white cursor-pointer"
+              >
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="under_maintainace">Under Maintenance</option>
+                <option value="breakdown">Breakdown</option>
+                <option value="retired">Retired</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
           <Table
             loading={assetsLoading}
             columns={[
@@ -479,6 +550,31 @@ export const ManagerDashboard: React.FC = () => {
             ]}
             data={assets}
           />
+
+          {/* Pagination Controls */}
+          <div className="p-4 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white">
+            <span className="text-sm text-slate-500 font-medium">
+              Showing Page {assetTotalPages === 0 ? 0 : assetPage} of {assetTotalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={assetPage <= 1 || assetTotalPages === 0}
+                onClick={() => setAssetPage((prev) => Math.max(1, prev - 1))}
+              >
+                Previous
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={assetPage >= assetTotalPages || assetTotalPages === 0}
+                onClick={() => setAssetPage((prev) => Math.min(assetTotalPages, prev + 1))}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </Card>
       )}
 
