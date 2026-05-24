@@ -1,14 +1,61 @@
-import React, { useState } from "react";
-import { FiCalendar, FiClock, FiMapPin, FiUsers, FiFilter, FiChevronLeft, FiChevronRight, FiCheckCircle } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiCalendar, FiClock, FiMapPin, FiUsers, FiFilter, FiChevronLeft, FiChevronRight, FiCheckCircle, FiActivity, FiFolder, FiHardDrive, FiFileText, FiMessageSquare, FiBell, FiClipboard } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import { mockSchedules } from "../../mock/data";
 import { mockUsers } from "../../mock/users";
+import { DashboardLayout } from "../../layouts/DashboardLayout";
+import { useNavigate } from "react-router-dom";
 
 export const SchedulesPage: React.FC = () => {
-  useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [filterRole, setFilterRole] = useState<string>("all");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.role === "manager") {
+      import("../../services/userService").then(({ userService }) => {
+        userService.getPendingUsers().then((users) => setPendingCount(users.length)).catch(() => {});
+      });
+    }
+  }, [user]);
+
+  const getSidebarItems = () => {
+    if (user?.role === "manager") {
+      return [
+        { icon: <FiActivity />, label: "Dashboard", active: false, onClick: () => navigate("/manager", { state: { activeTab: "overview" } }) },
+        { icon: <FiUsers />, label: "User Management", active: false, onClick: () => navigate("/manager", { state: { activeTab: "users" } }) },
+        { icon: <FiCheckCircle />, label: "Verification", active: false, onClick: () => navigate("/manager", { state: { activeTab: "verification" } }), badge: pendingCount },
+        { icon: <FiFolder />, label: "Categories", active: false, onClick: () => navigate("/manager", { state: { activeTab: "categories" } }) },
+        { icon: <FiHardDrive />, label: "Assets", active: false, onClick: () => navigate("/manager", { state: { activeTab: "assets" } }) },
+        { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/manager", { state: { activeTab: "work-items" } }) },
+        { icon: <FiClock />, label: "Schedules", active: true, onClick: () => navigate("/schedules") },
+        { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
+        { icon: <FiFileText />, label: "System Logs", active: false, onClick: () => navigate("/manager", { state: { activeTab: "logs" } }) },
+      ];
+    } else if (user?.role === "engineer") {
+      return [
+        { icon: <FiCheckCircle />, label: "Dashboard", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "overview" } }) },
+        { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "work-items" } }) },
+        { icon: <FiClipboard />, label: "Reports", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "reports" } }) },
+        { icon: <FiClock />, label: "Schedule", active: true, onClick: () => navigate("/schedules") },
+        { icon: <FiCheckCircle />, label: "Notifications", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "notifications" } }) },
+        { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
+      ];
+    } else if (user?.role === "staff") {
+      return [
+        { icon: <FiBell />, label: "Dashboard", active: false, onClick: () => navigate("/staff", { state: { activeTab: "overview" } }) },
+        { icon: <FiClock />, label: "My Schedule", active: true, onClick: () => navigate("/schedules") },
+        { icon: <FiBell />, label: "Notifications", active: false, onClick: () => navigate("/staff", { state: { activeTab: "notifications" } }) },
+        { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
+      ];
+    }
+    return [];
+  };
+
+  const sidebarItems = getSidebarItems();
 
   // Get schedules for the selected role
   const filteredSchedules =
@@ -107,8 +154,7 @@ export const SchedulesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+    <DashboardLayout sidebarItems={sidebarItems}>
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-900 mb-1">Schedules</h1>
@@ -426,8 +472,7 @@ export const SchedulesPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

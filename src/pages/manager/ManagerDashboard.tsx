@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiBell, FiActivity, FiFolder, FiHardDrive } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
@@ -18,8 +18,11 @@ import { HOTELS } from "../../constants/hotels";
 
 export const ManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => {
+    return location.state?.activeTab || "overview";
+  });
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileName, setProfileName] = useState(user?.name || "");
   const [profilePhone, setProfilePhone] = useState(user?.phone || "");

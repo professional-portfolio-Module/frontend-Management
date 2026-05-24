@@ -1,16 +1,63 @@
-import React, { useState } from "react";
-import { FiSearch, FiSend, FiMoreVertical, FiPhone, FiVideo, FiPlus, FiArrowLeft } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiSearch, FiSend, FiMoreVertical, FiPhone, FiVideo, FiPlus, FiArrowLeft, FiActivity, FiUsers, FiCheckCircle, FiFolder, FiHardDrive, FiFileText, FiClock, FiMessageSquare, FiBell, FiClipboard } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import { mockUsers } from "../../mock/users";
 import { mockMessages } from "../../mock/data";
 import { Button } from "../../components/common/Button";
+import { DashboardLayout } from "../../layouts/DashboardLayout";
+import { useNavigate } from "react-router-dom";
 
 export const MessagingPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState(mockMessages);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.role === "manager") {
+      import("../../services/userService").then(({ userService }) => {
+        userService.getPendingUsers().then((users) => setPendingCount(users.length)).catch(() => {});
+      });
+    }
+  }, [user]);
+
+  const getSidebarItems = () => {
+    if (user?.role === "manager") {
+      return [
+        { icon: <FiActivity />, label: "Dashboard", active: false, onClick: () => navigate("/manager", { state: { activeTab: "overview" } }) },
+        { icon: <FiUsers />, label: "User Management", active: false, onClick: () => navigate("/manager", { state: { activeTab: "users" } }) },
+        { icon: <FiCheckCircle />, label: "Verification", active: false, onClick: () => navigate("/manager", { state: { activeTab: "verification" } }), badge: pendingCount },
+        { icon: <FiFolder />, label: "Categories", active: false, onClick: () => navigate("/manager", { state: { activeTab: "categories" } }) },
+        { icon: <FiHardDrive />, label: "Assets", active: false, onClick: () => navigate("/manager", { state: { activeTab: "assets" } }) },
+        { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/manager", { state: { activeTab: "work-items" } }) },
+        { icon: <FiClock />, label: "Schedules", active: false, onClick: () => navigate("/schedules") },
+        { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
+        { icon: <FiFileText />, label: "System Logs", active: false, onClick: () => navigate("/manager", { state: { activeTab: "logs" } }) },
+      ];
+    } else if (user?.role === "engineer") {
+      return [
+        { icon: <FiCheckCircle />, label: "Dashboard", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "overview" } }) },
+        { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "work-items" } }) },
+        { icon: <FiClipboard />, label: "Reports", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "reports" } }) },
+        { icon: <FiClock />, label: "Schedule", active: false, onClick: () => navigate("/schedules") },
+        { icon: <FiCheckCircle />, label: "Notifications", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "notifications" } }) },
+        { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
+      ];
+    } else if (user?.role === "staff") {
+      return [
+        { icon: <FiBell />, label: "Dashboard", active: false, onClick: () => navigate("/staff", { state: { activeTab: "overview" } }) },
+        { icon: <FiClock />, label: "My Schedule", active: false, onClick: () => navigate("/schedules") },
+        { icon: <FiBell />, label: "Notifications", active: false, onClick: () => navigate("/staff", { state: { activeTab: "notifications" } }) },
+        { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
+      ];
+    }
+    return [];
+  };
+
+  const sidebarItems = getSidebarItems();
 
   const conversations = mockUsers.filter((u) => u.id !== user?.id);
   const filteredConversations = conversations.filter((conv) =>
@@ -43,7 +90,8 @@ export const MessagingPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-56px)] bg-slate-50">
+    <DashboardLayout sidebarItems={sidebarItems} fullWidth={true}>
+      <div className="flex h-full bg-slate-50 min-h-0">
       {/* Sidebar - Conversations List */}
       {/* On mobile: show full-width when no chat selected, hide when chat is open */}
       <div
@@ -213,7 +261,8 @@ export const MessagingPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

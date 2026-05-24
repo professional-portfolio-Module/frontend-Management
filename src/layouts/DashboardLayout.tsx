@@ -15,12 +15,14 @@ interface DashboardLayoutProps {
     active?: boolean;
   }[];
   onProfileClick?: () => void;
+  fullWidth?: boolean;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
   sidebarItems,
   onProfileClick,
+  fullWidth = false,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
@@ -53,10 +55,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         />
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            {children}
-          </div>
+        <main className="flex-1 overflow-y-auto scrollbar-thin flex flex-col min-h-0">
+          {fullWidth ? (
+            children
+          ) : (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+              {children}
+            </div>
+          )}
         </main>
       </div>
     </div>
