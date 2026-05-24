@@ -15,6 +15,7 @@ import { userService } from "../../services/userService";
 import { categoryService, Category } from "../../services/categoryService";
 import { assetService, Asset } from "../../services/assetService";
 import { HOTELS } from "../../constants/hotels";
+import apiClient from "../../services/api";
 
 export const ManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -64,6 +65,15 @@ export const ManagerDashboard: React.FC = () => {
   const [assetPage, setAssetPage] = useState(1);
   const [assetTotalPages, setAssetTotalPages] = useState(1);
 
+  // QR Code state
+  const [selectedQrAsset, setSelectedQrAsset] = useState<Asset | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrBlobUrl, setQrBlobUrl] = useState<string | null>(null);
+  const [qrRedirectUrl, setQrRedirectUrl] = useState("");
+  const [qrSavingRedirect, setQrSavingRedirect] = useState(false);
+  const [qrMessage, setQrMessage] = useState("");
+
+
   const fetchCategories = async () => {
     setCategoriesLoading(true);
     try {
@@ -94,6 +104,65 @@ export const ManagerDashboard: React.FC = () => {
       setAssetsLoading(false);
     }
   };
+
+  const handleShowQrCode = async (asset: Asset) => {
+    setSelectedQrAsset(asset);
+    setQrLoading(true);
+    setQrBlobUrl(null);
+    setQrRedirectUrl("");
+    setQrMessage("");
+
+    // Fetch QR Code image as a blob
+    try {
+      const response = await apiClient.get(
+        `/Main/router-backend/api/qr/generate/${encodeURIComponent(asset.card_no)}`,
+        { responseType: "blob" }
+      );
+      const url = URL.createObjectURL(response.data);
+      setQrBlobUrl(url);
+    } catch (err: any) {
+      console.error("Failed to generate QR code", err);
+      setQrMessage("Failed to generate QR code image.");
+    }
+
+    // Fetch current redirect target URL
+    try {
+      const redirectRes = await apiClient.get(
+        `/Main/router-backend/api/qr/target/${encodeURIComponent(asset.card_no)}`
+      );
+      if (redirectRes.data && redirectRes.data.success) {
+        setQrRedirectUrl(redirectRes.data.data.targetUrl || "");
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch redirect target URL", err);
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const handleSaveQrRedirect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedQrAsset) return;
+    setQrSavingRedirect(true);
+    setQrMessage("");
+    try {
+      const response = await apiClient.post("/Main/router-backend/api/qr/update", {
+        machineId: selectedQrAsset.card_no,
+        targetUrl: qrRedirectUrl,
+      });
+      if (response.data && response.data.success) {
+        setQrMessage("Redirect URL updated successfully!");
+      } else {
+        setQrMessage(response.data.message || "Failed to update redirect URL.");
+      }
+    } catch (err: any) {
+      console.error("Failed to update QR redirect", err);
+      setQrMessage(err.response?.data?.message || "Failed to update redirect URL. Ensure it is a valid absolute URL.");
+    } finally {
+      setQrSavingRedirect(false);
+    }
+  };
+
 
   React.useEffect(() => {
     if (activeTab === "verification") {
@@ -539,6 +608,9 @@ export const ManagerDashboard: React.FC = () => {
                     <Button size="sm" variant="secondary" onClick={() => handleEditAsset(row)}>
                       Edit
                     </Button>
+                    <Button size="sm" variant="secondary" onClick={() => handleShowQrCode(row)}>
+                      QR Code
+                    </Button>
                     {row.status !== "retired" && (
                       <Button size="sm" variant="danger" onClick={() => handleDeleteAsset(val)}>
                         Retire
@@ -772,6 +844,109 @@ export const ManagerDashboard: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* QR Code Modal */}
+      <Modal
+        isOpen={!!selectedQrAsset}
+        title={`QR Code: ${selectedQrAsset?.card_no}`}
+        onClose={() => {
+          setSelectedQrAsset(null);
+          if (qrBlobUrl) {
+            URL.revokeObjectURL(qrBlobUrl);
+            setQrBlobUrl(null);
+          }
+        }}
+      >
+        <div className="flex flex-col items-center gap-6 p-4">
+          {qrLoading ? (
+            <div className="flex flex-col items-center justify-center h-48">
+              <svg className="animate-spin h-8 w-8 text-primary-600 mb-3" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <p className="text-sm font-medium text-slate-500">Generating QR Code…</p>
+            </div>
+          ) : (
+            <>
+              {qrBlobUrl ? (
+                <div className="flex flex-col items-center gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm w-full">
+                  <img src={qrBlobUrl} alt={`QR Code for ${selectedQrAsset?.card_no}`} className="w-48 h-48 object-contain" />
+                  <div className="flex gap-2 w-full justify-center">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const link = document.createElement("a");
+                        link.href = qrBlobUrl;
+                        link.download = `qrcode_${selectedQrAsset?.card_no}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                    >
+                      Download QR
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        const win = window.open();
+                        if (win) {
+                          win.document.write(`
+                            <html>
+                              <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;">
+                                <h2>Asset: ${selectedQrAsset?.card_no}</h2>
+                                <p>${selectedQrAsset?.description}</p>
+                                <img src="${qrBlobUrl}" style="width:300px;height:300px;" />
+                                <script>window.onload = function() { window.print(); window.close(); }</script>
+                              </body>
+                            </html>
+                          `);
+                          win.document.close();
+                        }
+                      }}
+                    >
+                      Print
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-red-600">{qrMessage || "Failed to load QR code."}</p>
+              )}
+
+              {/* Dynamic Redirect URL Configuration */}
+              <div className="w-full border-t border-slate-200 pt-5">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3">Dynamic QR Redirect Target</h3>
+                <form onSubmit={handleSaveQrRedirect} className="space-y-3">
+                  {qrMessage && !qrLoading && !qrBlobUrl && (
+                    <div className="p-2.5 text-xs rounded-md bg-slate-50 border border-slate-200 text-slate-700">
+                      {qrMessage}
+                    </div>
+                  )}
+                  {qrMessage && qrBlobUrl && (
+                    <div className={`p-2.5 text-xs rounded-md border ${qrMessage.includes("success") ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}>
+                      {qrMessage}
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Redirect Target URL</label>
+                    <input
+                      type="url"
+                      placeholder="e.g. https://example.com/asset-status"
+                      value={qrRedirectUrl}
+                      onChange={(e) => setQrRedirectUrl(e.target.value)}
+                      className="input-field text-sm w-full"
+                      required
+                    />
+                  </div>
+                  <Button type="submit" fullWidth disabled={qrSavingRedirect}>
+                    {qrSavingRedirect ? "Saving Target URL…" : "Update Target URL"}
+                  </Button>
+                </form>
+              </div>
+            </>
+          )}
+        </div>
       </Modal>
 
       <CreateAccountModal
