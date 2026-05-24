@@ -22,6 +22,7 @@ export interface GetAssetsParams {
   status?: string;
   page?: number;
   limit?: number;
+  hotel_id?: string;
 }
 
 export interface GetAssetsResponse {

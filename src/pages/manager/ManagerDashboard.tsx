@@ -14,7 +14,6 @@ import { CreateAccountModal } from "../../components/common/CreateAccountModal";
 import { userService } from "../../services/userService";
 import { categoryService, Category } from "../../services/categoryService";
 import { assetService, Asset } from "../../services/assetService";
-import { HOTELS } from "../../constants/hotels";
 import apiClient from "../../services/api";
 
 export const ManagerDashboard: React.FC = () => {
@@ -58,6 +57,10 @@ export const ManagerDashboard: React.FC = () => {
   });
   const [assetError, setAssetError] = useState("");
 
+  // User's Associated Hotels
+  const [userHotels, setUserHotels] = useState<any[]>([]);
+  const [selectedHotelId, setSelectedHotelId] = useState<string>("");
+
   // Assets filters and pagination state
   const [assetSearch, setAssetSearch] = useState("");
   const [assetCategory, setAssetCategory] = useState("");
@@ -95,6 +98,7 @@ export const ManagerDashboard: React.FC = () => {
         search: assetSearch || undefined,
         category_id: assetCategory || undefined,
         status: assetStatus || undefined,
+        hotel_id: selectedHotelId || undefined,
       });
       setAssets(response.items);
       setAssetTotalPages(response.pagination.totalPages);
@@ -165,6 +169,24 @@ export const ManagerDashboard: React.FC = () => {
 
 
   React.useEffect(() => {
+    if (user?.id) {
+      apiClient.get(`/Main/router-backend/api/users/${user.id}`)
+        .then((res) => {
+          if (res.data && res.data.success) {
+            const hotelsList = res.data.data.hotels || [];
+            setUserHotels(hotelsList);
+            if (hotelsList.length > 0) {
+              setSelectedHotelId(hotelsList[0].id);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch manager's hotels:", err);
+        });
+    }
+  }, [user?.id]);
+
+  React.useEffect(() => {
     if (activeTab === "verification") {
       userService.getPendingUsers().then((users) => {
         setPendingUsers(users);
@@ -178,7 +200,7 @@ export const ManagerDashboard: React.FC = () => {
     if (activeTab === "assets") {
       fetchAssets();
     }
-  }, [activeTab, assetPage, assetSearch, assetCategory, assetStatus]);
+  }, [activeTab, assetPage, assetSearch, assetCategory, assetStatus, selectedHotelId]);
 
   const engineers = mockUsers.filter((u) => u.role === "engineer");
   const staff = mockUsers.filter((u) => u.role === "staff");
@@ -506,7 +528,7 @@ export const ManagerDashboard: React.FC = () => {
                   warranty_expiery: "",
                   notes: "",
                   category_id: "",
-                  hotel_id: HOTELS[0]?.id || "",
+                  hotel_id: selectedHotelId || (userHotels[0]?.id || ""),
                   qr_code_url: "",
                 });
                 setIsAssetModalOpen(true);
@@ -518,7 +540,29 @@ export const ManagerDashboard: React.FC = () => {
           </div>
 
           {/* Filters Panel */}
-          <div className="p-5 bg-slate-50 border-b border-slate-200 grid md:grid-cols-3 gap-4">
+          <div className="p-5 bg-slate-50 border-b border-slate-200 grid md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Hotel</label>
+              <select
+                value={selectedHotelId}
+                onChange={(e) => {
+                  setSelectedHotelId(e.target.value);
+                  setAssetPage(1);
+                }}
+                disabled={userHotels.length <= 1}
+                className="input-field text-sm bg-white cursor-pointer disabled:bg-slate-100 disabled:cursor-not-allowed"
+              >
+                {userHotels.length === 0 ? (
+                  <option value="">Loading Hotels...</option>
+                ) : (
+                  userHotels.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.name} ({h.city})
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Search</label>
               <input
@@ -790,10 +834,11 @@ export const ManagerDashboard: React.FC = () => {
           />
           <Select
             label="Hotel"
-            options={HOTELS.map((h) => ({ value: h.id, label: `${h.name} - ${h.city}` }))}
+            options={userHotels.map((h) => ({ value: h.id, label: `${h.name} - ${h.city}` }))}
             value={assetFormData.hotel_id}
             onChange={(e) => setAssetFormData({ ...assetFormData, hotel_id: e.target.value })}
             required
+            disabled={userHotels.length <= 1}
           />
           <Input
             label="Location"
