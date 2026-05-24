@@ -35,7 +35,7 @@ export const userService = {
   // Get pending users (for verification)
   async getPendingUsers(): Promise<User[]> {
     try {
-      const response = await apiClient.get("/admin/api/users/pending");
+      const response = await apiClient.get("/AuthForward/admin/api/users/pending");
       if (response.data && response.data.success) {
         return response.data.data.map((u: any) => ({
           id: u.id,
@@ -57,7 +57,7 @@ export const userService = {
   // Approve user account
   async verifyUser(userId: string): Promise<void> {
     try {
-      const response = await apiClient.put(`/admin/api/users/${userId}/approve`);
+      const response = await apiClient.put(`/AuthForward/admin/api/users/${userId}/approve`);
       if (!response.data.success && response.data.success !== undefined) {
         throw new Error(response.data.message || "Failed to approve user");
       }
@@ -144,7 +144,7 @@ export const userService = {
   // Create real internal user via API
   async createInternalUser(data: CreateUserPayload): Promise<void> {
     try {
-      const response = await apiClient.post("/admin/api/users/internal", data);
+      const response = await apiClient.post("/AuthForward/admin/api/users/internal", data);
       if (!response.data.success && response.data.success !== undefined) {
         throw new Error(response.data.message || "Failed to create user");
       }

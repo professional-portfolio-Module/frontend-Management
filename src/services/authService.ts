@@ -11,7 +11,7 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthUser> {
     try {
       // 1. Authenticate and get basic info + tokens (in hybrid mode)
-      const response = await apiClient.post("/auth/login", {
+      const response = await apiClient.post("/AuthForward/auth/login", {
         usernameOrEmail: credentials.email,
         password: credentials.password
       });
@@ -36,7 +36,7 @@ export const authService = {
       }
 
       // 2. Fetch user profile to get the role using the email (user_name)
-      const userProfileRes = await apiClient.get(`/auth/api/email/${authData.user_name}`);
+      const userProfileRes = await apiClient.get(`/AuthForward/auth/api/email/${authData.user_name}`);
       
       if (!userProfileRes.data.success) {
         throw new Error("Failed to load user profile");
@@ -83,7 +83,7 @@ export const authService = {
   // Logout via API
   async logout(): Promise<void> {
     try {
-      await apiClient.post("/auth/logout");
+      await apiClient.post("/AuthForward/auth/logout");
     } catch (error) {
       console.error("Logout failed", error);
     } finally {
@@ -121,7 +121,7 @@ export const authService = {
   // Forgot password - Request OTP
   async forgotPassword(email: string): Promise<string> {
     try {
-      const response = await apiClient.post("/auth/forgot-password", {
+      const response = await apiClient.post("/AuthForward/auth/forgot-password", {
         usernameOrEmail: email
       });
       return response.data.message || "OTP sent successfully";
@@ -141,7 +141,7 @@ export const authService = {
   // Reset password using OTP
   async resetPassword(email: string, otp: string, newPassword: string): Promise<string> {
     try {
-      const response = await apiClient.post("/auth/reset-forgotten-password", {
+      const response = await apiClient.post("/AuthForward/auth/reset-forgotten-password", {
         usernameOrEmail: email,
         otp: otp,
         newPassword: newPassword,
