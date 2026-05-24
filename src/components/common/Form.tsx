@@ -1,5 +1,5 @@
-import React from "react";
-import { FiAlertCircle } from "react-icons/fi";
+import React, { useState } from "react";
+import { FiAlertCircle, FiEye, FiEyeOff } from "react-icons/fi";
 
 interface InputProps {
   label?: string;
@@ -26,6 +26,10 @@ export const Input: React.FC<InputProps> = ({
   className = "",
   icon,
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const inputType = type === "password" ? (showPassword ? "text" : "password") : type;
+
   return (
     <div className={`flex flex-col gap-2.5 ${className}`}>
       {label && (
@@ -37,13 +41,22 @@ export const Input: React.FC<InputProps> = ({
       <div className="relative">
         {icon && <div className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 transition-colors">{icon}</div>}
         <input
-          type={type}
+          type={inputType}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
           disabled={disabled}
-          className={`input-field ${icon ? "!pl-10" : ""} ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-slate-50" : ""}`}
+          className={`input-field ${icon ? "!pl-10" : ""} ${type === "password" ? "!pr-10" : ""} ${error ? "border-red-500 focus:ring-red-400 focus:ring-2" : ""} ${disabled ? "bg-slate-50" : ""}`}
         />
+        {type === "password" && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+          >
+            {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+          </button>
+        )}
       </div>
       {error && (
         <p className="text-sm text-red-600 flex items-center gap-1.5">
