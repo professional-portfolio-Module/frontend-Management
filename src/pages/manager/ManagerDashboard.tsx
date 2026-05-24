@@ -9,7 +9,7 @@ import { Modal } from "../../components/common/Modal";
 import { Input, Select, TextArea } from "../../components/common/Form";
 import { useAuth } from "../../context/AuthContext";
 import { mockActivities, mockNotifications } from "../../mock/data";
-import { mockUsers } from "../../mock/users";
+import { User } from "../../mock/users";
 import { CreateAccountModal } from "../../components/common/CreateAccountModal";
 import { userService } from "../../services/userService";
 import { categoryService, Category } from "../../services/categoryService";
@@ -29,6 +29,8 @@ export const ManagerDashboard: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const [pendingUsers, setPendingUsers] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
@@ -106,6 +108,20 @@ export const ManagerDashboard: React.FC = () => {
       console.error("Failed to fetch assets:", err);
     } finally {
       setAssetsLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const data = await userService.getUsers({
+        hotel_id: selectedHotelId || undefined,
+      });
+      setUsersList(data);
+    } catch (err: any) {
+      console.error("Failed to fetch hotel users:", err);
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -194,7 +210,11 @@ export const ManagerDashboard: React.FC = () => {
     } else if (activeTab === "categories" || activeTab === "assets") {
       fetchCategories();
     }
-  }, [activeTab]);
+
+    if (activeTab === "overview" || activeTab === "users") {
+      fetchUsers();
+    }
+  }, [activeTab, selectedHotelId]);
 
   React.useEffect(() => {
     if (activeTab === "assets") {
@@ -202,8 +222,8 @@ export const ManagerDashboard: React.FC = () => {
     }
   }, [activeTab, assetPage, assetSearch, assetCategory, assetStatus, selectedHotelId]);
 
-  const engineers = mockUsers.filter((u) => u.role === "engineer");
-  const staff = mockUsers.filter((u) => u.role === "staff");
+  const engineers = usersList.filter((u) => u.role === "engineer");
+  const staff = usersList.filter((u) => u.role === "staff");
   const unreadNotifications = mockNotifications.filter((n) => !n.read && n.userId === user?.id);
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
@@ -464,7 +484,8 @@ export const ManagerDashboard: React.FC = () => {
                 ),
               },
             ]}
-            data={mockUsers.filter((u) => u.role !== "admin")}
+            loading={usersLoading}
+            data={usersList.filter((u) => u.role !== "admin")}
           />
         </Card>
       )}

@@ -1,4 +1,4 @@
-import { User, mockUsers, mockEngineers, mockStaff } from "../mock/users";
+import { User, mockUsers } from "../mock/users";
 import apiClient from "./api";
 
 const simulateDelay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -13,15 +13,26 @@ export interface CreateUserPayload {
 
 export const userService = {
   // Get all users
-  async getUsers(role?: string): Promise<User[]> {
-    await simulateDelay(300);
-    if (role === "engineer") {
-      return mockEngineers;
+  async getUsers(params?: { role?: string; hotel_id?: string }): Promise<User[]> {
+    try {
+      const response = await apiClient.get("/Main/router-backend/api/users", { params });
+      if (response.data && response.data.success) {
+        return response.data.data.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role ? u.role.toLowerCase() as User['role'] : "staff",
+          phone: u.mobileNumber || "",
+          department: u.role ? (u.role.toUpperCase() === "ADMIN" ? "Administration" : u.role.toUpperCase() === "MANAGER" ? "Management" : "Operations") : "Operations",
+          status: u.is_active ? "active" : "inactive",
+          createdAt: u.created_at || new Date().toISOString()
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error("Failed to fetch users", error);
+      return [];
     }
-    if (role === "staff") {
-      return mockStaff;
-    }
-    return mockUsers;
   },
 
   // Get user by ID
