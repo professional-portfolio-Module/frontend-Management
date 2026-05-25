@@ -22,7 +22,7 @@ export const userService = {
           name: u.name,
           email: u.email,
           role: u.role ? u.role.toLowerCase() as User['role'] : "staff",
-          phone: u.mobileNumber || "",
+          phone: u.mobileNumber || u.mobilenumber || "",
           department: u.role ? (u.role.toUpperCase() === "ADMIN" ? "Administration" : u.role.toUpperCase() === "MANAGER" ? "Management" : "Operations") : "Operations",
           status: u.is_active ? "active" : "inactive",
           createdAt: u.created_at || new Date().toISOString()
