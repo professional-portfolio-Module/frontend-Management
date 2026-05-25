@@ -150,11 +150,16 @@ export const ManagerDashboard: React.FC = () => {
       const redirectRes = await apiClient.get(
         `/Main/router-backend/api/qr/target/${encodeURIComponent(asset.card_no)}`
       );
-      if (redirectRes.data && redirectRes.data.success) {
-        setQrRedirectUrl(redirectRes.data.data.targetUrl || "");
+      if (redirectRes.data && redirectRes.data.success && redirectRes.data.data.targetUrl) {
+        setQrRedirectUrl(redirectRes.data.data.targetUrl);
+      } else {
+        // Pre-fill with the production Netlify URL for this specific asset
+        setQrRedirectUrl(`https://browns-company.netlify.app/manager/assets?search=${encodeURIComponent(asset.card_no)}`);
       }
     } catch (err: any) {
       console.error("Failed to fetch redirect target URL", err);
+      // Fallback pre-fill on error
+      setQrRedirectUrl(`https://browns-company.netlify.app/manager/assets?search=${encodeURIComponent(asset.card_no)}`);
     } finally {
       setQrLoading(false);
     }
