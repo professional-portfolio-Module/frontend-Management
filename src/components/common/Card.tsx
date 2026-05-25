@@ -44,7 +44,7 @@ interface StatCardProps {
   value: string | number;
   trend?: "up" | "down";
   trendValue?: string;
-  color?: "blue" | "green" | "yellow" | "red";
+  color?: "blue" | "green" | "yellow" | "red" | "purple" | "teal";
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -75,6 +75,16 @@ export const StatCard: React.FC<StatCardProps> = ({
       iconBg: "bg-rose-50",
       iconText: "text-rose-600",
       accent: "border-l-rose-500",
+    },
+    purple: {
+      iconBg: "bg-purple-50",
+      iconText: "text-purple-600",
+      accent: "border-l-purple-500",
+    },
+    teal: {
+      iconBg: "bg-teal-50",
+      iconText: "text-teal-600",
+      accent: "border-l-teal-500",
     },
   };
 

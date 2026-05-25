@@ -224,6 +224,8 @@ export const ManagerDashboard: React.FC = () => {
 
   const engineers = usersList.filter((u) => u.role === "engineer");
   const staff = usersList.filter((u) => u.role === "staff");
+  const managers = usersList.filter((u) => u.role === "manager");
+  const technicians = usersList.filter((u) => u.role === "technician");
   const unreadNotifications = mockNotifications.filter((n) => !n.read && n.userId === user?.id);
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
@@ -362,9 +364,11 @@ export const ManagerDashboard: React.FC = () => {
       {activeTab === "overview" && (
         <div className="space-y-8">
           {/* Statistics */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
             <StatCard icon={<FiUsers size={18} />} label="Total Engineers" value={engineers.length} color="blue" />
             <StatCard icon={<FiCheckCircle size={18} />} label="Staff Members" value={staff.length} color="green" />
+            <StatCard icon={<FiUsers size={18} />} label="Technicians" value={technicians.length} color="teal" />
+            <StatCard icon={<FiUsers size={18} />} label="Managers" value={managers.length} color="purple" />
             <StatCard icon={<FiClock size={18} />} label="Pending Verification" value={pendingUsers.length} color="yellow" trend="up" trendValue="2 this week" />
             <StatCard icon={<FiBell size={18} />} label="Notifications" value={unreadNotifications.length} color="red" />
           </div>
