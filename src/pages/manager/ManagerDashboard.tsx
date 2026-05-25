@@ -132,14 +132,16 @@ export const ManagerDashboard: React.FC = () => {
     setQrRedirectUrl("");
     setQrMessage("");
 
-    // Fetch QR Code image as a blob
+    // Fetch QR Code image as a base64 Data URL (JSON response)
     try {
       const response = await apiClient.get(
-        `/Main/router-backend/api/qr/generate/${encodeURIComponent(asset.card_no)}`,
-        { responseType: "blob" }
+        `/Main/router-backend/api/qr/generate/${encodeURIComponent(asset.card_no)}`
       );
-      const url = URL.createObjectURL(response.data);
-      setQrBlobUrl(url);
+      if (response.data && response.data.success && response.data.data.qrCode) {
+        setQrBlobUrl(response.data.data.qrCode);
+      } else {
+        throw new Error("Invalid response format");
+      }
     } catch (err: any) {
       console.error("Failed to generate QR code", err);
       setQrMessage("Failed to generate QR code image.");
