@@ -16,6 +16,7 @@ interface CreateAccountModalProps {
   onClose: () => void;
   allowedRoles: { value: string; label: string }[];
   onSubmit: (data: any) => Promise<void>;
+  defaultHotelId?: string;
 }
 
 export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
@@ -23,13 +24,14 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   onClose,
   allowedRoles,
   onSubmit,
+  defaultHotelId,
 }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     mobileNumber: "",
     role: allowedRoles[0]?.value || "",
-    hotelId: "",
+    hotelId: defaultHotelId || "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -39,6 +41,11 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
+    if (defaultHotelId) {
+      setFormData(prev => ({ ...prev, hotelId: defaultHotelId }));
+      setHotelsLoading(false);
+      return;
+    }
     const fetchHotels = async () => {
       try {
         setHotelsLoading(true);
@@ -56,7 +63,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
       }
     };
     fetchHotels();
-  }, [isOpen]);
+  }, [isOpen, defaultHotelId]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -166,19 +173,21 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
               onChange={(e) => handleChange("role", e.target.value)}
               required
             />
-            <Select
-              label="Hotel"
-              options={
-                hotelsLoading
-                  ? [{ value: "", label: "Loading hotels..." }]
-                  : hotels.length === 0
-                    ? [{ value: "", label: "No hotels found" }]
-                    : hotels.map(h => ({ value: h.id, label: `${h.name} - ${h.city || 'N/A'}` }))
-              }
-              value={formData.hotelId}
-              onChange={(e) => handleChange("hotelId", e.target.value)}
-              required
-            />
+            {!defaultHotelId && (
+              <Select
+                label="Hotel"
+                options={
+                  hotelsLoading
+                    ? [{ value: "", label: "Loading hotels..." }]
+                    : hotels.length === 0
+                      ? [{ value: "", label: "No hotels found" }]
+                      : hotels.map(h => ({ value: h.id, label: `${h.name} - ${h.city || 'N/A'}` }))
+                }
+                value={formData.hotelId}
+                onChange={(e) => handleChange("hotelId", e.target.value)}
+                required
+              />
+            )}
           </>
         )}
       </div>

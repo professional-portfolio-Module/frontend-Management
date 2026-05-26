@@ -1033,6 +1033,7 @@ export const ManagerDashboard: React.FC = () => {
           { value: "ENGINEER", label: "Engineer" },
           { value: "STAFF", label: "Staff" },
         ]}
+        defaultHotelId={user?.hotelId}
         onSubmit={async (data) => {
           const { name, email, mobileNumber, role, hotelId } = data;
           await userService.createInternalUser({

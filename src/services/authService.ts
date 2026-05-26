@@ -51,6 +51,7 @@ export const authService = {
         // The backend role might be "ADMIN", frontend expects lowercase "admin". Fallback to "staff" if null.
         role: userData.role ? userData.role.toLowerCase() : "staff",
         phone: userData.mobileNumber || "",
+        hotelId: userData.hotelId || "",
         profilePhoto: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`,
         department: "Maintenance",
         status: "active", // mapping accountStatus if needed
