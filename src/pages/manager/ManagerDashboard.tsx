@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiBell, FiActivity, FiFolder, FiHardDrive, FiClipboard } from "react-icons/fi";
+import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiBell, FiActivity, FiFolder, FiHardDrive, FiClipboard, FiSearch } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -110,6 +110,9 @@ export const ManagerDashboard: React.FC = () => {
   const [pendingUsers, setPendingUsers] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("");
+  const [userStatusFilter, setUserStatusFilter] = useState("");
 
   // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
@@ -406,6 +409,18 @@ export const ManagerDashboard: React.FC = () => {
   const staff = usersList.filter((u) => u.role === "staff");
   const managers = usersList.filter((u) => u.role === "manager");
   const technicians = usersList.filter((u) => u.role === "technician");
+  const filteredUsers = usersList.filter((u) => {
+    if (u.role === "admin") return false;
+    if (userSearch.trim()) {
+      const q = userSearch.toLowerCase().trim();
+      if (!u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) {
+        return false;
+      }
+    }
+    if (userRoleFilter && u.role !== userRoleFilter) return false;
+    if (userStatusFilter && u.status !== userStatusFilter) return false;
+    return true;
+  });
   const unreadNotifications = mockNotifications.filter((n) => !n.read && n.userId === user?.id);
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
@@ -770,6 +785,61 @@ export const ManagerDashboard: React.FC = () => {
               + Add User
             </button>
           </div>
+
+          {/* Search & Filters Toolbar */}
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-3 items-center">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <FiSearch className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search name or email..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="pl-9 w-full rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white"
+              />
+            </div>
+            
+            {/* Role Filter */}
+            <select
+              value={userRoleFilter}
+              onChange={(e) => setUserRoleFilter(e.target.value)}
+              className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium cursor-pointer"
+            >
+              <option value="">All Roles</option>
+              <option value="manager">Manager</option>
+              <option value="engineer">Engineer</option>
+              <option value="staff">Staff</option>
+              <option value="technician">Technician</option>
+            </select>
+
+            {/* Status Filter */}
+            <select
+              value={userStatusFilter}
+              onChange={(e) => setUserStatusFilter(e.target.value)}
+              className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium cursor-pointer"
+            >
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+
+            {/* Clear Filters Button */}
+            {(userSearch || userRoleFilter || userStatusFilter) && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setUserSearch("");
+                  setUserRoleFilter("");
+                  setUserStatusFilter("");
+                }}
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+
           <Table
             columns={[
               { key: "name", label: "Name" },
@@ -797,7 +867,7 @@ export const ManagerDashboard: React.FC = () => {
               },
             ]}
             loading={usersLoading}
-            data={usersList.filter((u) => u.role !== "admin")}
+            data={filteredUsers}
           />
         </Card>
       )}
