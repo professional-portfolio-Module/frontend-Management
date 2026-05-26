@@ -1,9 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal } from "./Modal";
 import { Input, Select } from "./Form";
 import { Button } from "./Button";
 import { FiUserPlus } from "react-icons/fi";
-import { HOTELS } from "../../constants/hotels";
+import apiClient from "../../services/api";
+
+interface Hotel {
+  id: string;
+  name: string;
+  city: string;
+}
 
 interface CreateAccountModalProps {
   isOpen: boolean;
@@ -28,6 +34,29 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [hotelsLoading, setHotelsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const fetchHotels = async () => {
+      try {
+        setHotelsLoading(true);
+        const res = await apiClient.get("/Main/router-backend/api/hotels");
+        if (res.data?.success && res.data.data) {
+          setHotels(res.data.data);
+          if (res.data.data.length > 0 && !formData.hotelId) {
+            setFormData(prev => ({ ...prev, hotelId: res.data.data[0].id }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch hotels:", err);
+      } finally {
+        setHotelsLoading(false);
+      }
+    };
+    fetchHotels();
+  }, [isOpen]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -139,7 +168,13 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
             />
             <Select
               label="Hotel"
-              options={HOTELS.map(h => ({ value: h.id, label: `${h.name} - ${h.city}` }))}
+              options={
+                hotelsLoading
+                  ? [{ value: "", label: "Loading hotels..." }]
+                  : hotels.length === 0
+                    ? [{ value: "", label: "No hotels found" }]
+                    : hotels.map(h => ({ value: h.id, label: `${h.name} - ${h.city || 'N/A'}` }))
+              }
               value={formData.hotelId}
               onChange={(e) => handleChange("hotelId", e.target.value)}
               required
