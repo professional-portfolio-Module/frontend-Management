@@ -40,6 +40,9 @@ export const ManagerDashboard: React.FC = () => {
   const [categoryFormData, setCategoryFormData] = useState({ name: "", code: "", description: "" });
   const [categoryError, setCategoryError] = useState("");
 
+  // Statuses state
+  const [statuses, setStatuses] = useState<{ value: string; label: string }[]>([]);
+
   // Assets state
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(false);
@@ -91,7 +94,18 @@ export const ManagerDashboard: React.FC = () => {
     }
   };
 
+  const fetchStatuses = async () => {
+    try {
+      const data = await assetService.getStatuses();
+      setStatuses(data);
+    } catch (err: any) {
+      console.error("Failed to fetch statuses:", err);
+    }
+  };
+
+
   const fetchAssets = async () => {
+
     setAssetsLoading(true);
     try {
       const response = await assetService.getAssets({
@@ -216,6 +230,7 @@ export const ManagerDashboard: React.FC = () => {
       });
     } else if (activeTab === "categories" || activeTab === "assets") {
       fetchCategories();
+      fetchStatuses();
     }
 
     if (activeTab === "overview" || activeTab === "users") {
@@ -637,11 +652,11 @@ export const ManagerDashboard: React.FC = () => {
                 className="input-field text-sm bg-white cursor-pointer"
               >
                 <option value="">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="under_maintainace">Under Maintenance</option>
-                <option value="breakdown">Breakdown</option>
-                <option value="retired">Retired</option>
-                <option value="inactive">Inactive</option>
+                {statuses.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -879,13 +894,7 @@ export const ManagerDashboard: React.FC = () => {
           />
           <Select
             label="Status"
-            options={[
-              { value: "active", label: "Active" },
-              { value: "under_maintainace", label: "Under Maintenance" },
-              { value: "breakdown", label: "Breakdown" },
-              { value: "retired", label: "Retired" },
-              { value: "inactive", label: "Inactive" }
-            ]}
+            options={statuses}
             value={assetFormData.status}
             onChange={(e) => setAssetFormData({ ...assetFormData, status: e.target.value as Asset['status'] })}
             required

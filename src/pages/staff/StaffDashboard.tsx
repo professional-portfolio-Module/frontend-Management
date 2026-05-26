@@ -26,6 +26,7 @@ export const StaffDashboard: React.FC = () => {
   // Categories & Assets read-only state
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [statuses, setStatuses] = useState<{ value: string; label: string }[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(false);
   const [userHotels, setUserHotels] = useState<any[]>([]);
@@ -54,6 +55,17 @@ export const StaffDashboard: React.FC = () => {
       setCategoriesLoading(false);
     }
   };
+
+  const fetchStatuses = async () => {
+    try {
+      const data = await assetService.getStatuses();
+      setStatuses(data);
+    } catch (err: any) {
+      console.error("Failed to fetch statuses:", err);
+    }
+  };
+
+
 
   const fetchAssets = async () => {
     setAssetsLoading(true);
@@ -96,6 +108,7 @@ export const StaffDashboard: React.FC = () => {
   useEffect(() => {
     if (activeTab === "categories" || activeTab === "assets") {
       fetchCategories();
+      fetchStatuses();
     }
   }, [activeTab]);
 
@@ -264,11 +277,11 @@ export const StaffDashboard: React.FC = () => {
                 className="input-field text-sm bg-white cursor-pointer"
               >
                 <option value="">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="under_maintainace">Under Maintenance</option>
-                <option value="breakdown">Breakdown</option>
-                <option value="retired">Retired</option>
-                <option value="inactive">Inactive</option>
+                {statuses.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

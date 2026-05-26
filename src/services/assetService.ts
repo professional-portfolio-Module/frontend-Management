@@ -71,6 +71,24 @@ export const assetService = {
     throw new Error(response.data?.message || "Failed to update asset");
   },
 
+  async getStatuses(): Promise<{ value: string; label: string }[]> {
+    try {
+      const response = await apiClient.get("/Main/router-backend/api/equipment/statuses");
+      if (response.data && response.data.success) {
+        return response.data.data;
+      }
+    } catch (err) {
+      console.error("Failed to fetch equipment statuses from API, falling back to static list", err);
+    }
+    return [
+      { value: "active", label: "Active" },
+      { value: "under_maintainace", label: "Under Maintenance" },
+      { value: "breakdown", label: "Breakdown" },
+      { value: "retired", label: "Retired" },
+      { value: "inactive", label: "Inactive" }
+    ];
+  },
+
   async deleteAsset(id: string): Promise<void> {
     const response = await apiClient.delete(`/Main/router-backend/api/equipment/${id}`);
     if (!response.data || (!response.data.success && response.data.success !== undefined)) {
@@ -78,3 +96,4 @@ export const assetService = {
     }
   }
 };
+
