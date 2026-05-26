@@ -369,14 +369,23 @@ export const StaffDashboard: React.FC = () => {
             setUserHotels(hotelsList);
             if (hotelsList.length > 0) {
               setSelectedHotelId(hotelsList[0].id);
+            } else if (user.hotelId) {
+              setSelectedHotelId(user.hotelId);
             }
+          } else if (user.hotelId) {
+            setSelectedHotelId(user.hotelId);
           }
         })
         .catch((err) => {
           console.error("Failed to fetch user's hotels:", err);
+          if (user.hotelId) {
+            setSelectedHotelId(user.hotelId);
+          }
         });
+    } else if (user?.hotelId) {
+      setSelectedHotelId(user.hotelId);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.hotelId]);
 
   useEffect(() => {
     if (activeTab === "categories" || activeTab === "assets") {
@@ -454,7 +463,22 @@ export const StaffDashboard: React.FC = () => {
       {activeTab === "maintenance-schedules" && (
         <Card padding="none">
           <div className="p-5 border-b border-slate-200 bg-white flex justify-between items-center">
-            <h2 className="text-sm font-semibold text-slate-900">Maintenance Schedules</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-sm font-semibold text-slate-900">Maintenance Schedules</h2>
+              {userHotels.length > 0 && (
+                <select
+                  value={selectedHotelId}
+                  onChange={(e) => setSelectedHotelId(e.target.value)}
+                  className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-slate-50 cursor-pointer text-slate-700 font-medium"
+                >
+                  {userHotels.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.name} ({h.city})
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
             <Button size="sm" onClick={() => { resetScheduleForm(); setShowCreateModal(true); }}>
               <FiPlus className="mr-1" /> Create Schedule
             </Button>
