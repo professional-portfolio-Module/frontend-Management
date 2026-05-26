@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiClock, FiMessageSquare, FiBell, FiCalendar, FiFolder, FiHardDrive, FiPlus, FiEdit, FiTrash2 } from "react-icons/fi";
+import { FiClock, FiMessageSquare, FiBell, FiCalendar, FiFolder, FiHardDrive, FiPlus, FiEdit, FiTrash2, FiSearch } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -126,6 +126,10 @@ export const StaffDashboard: React.FC = () => {
   const [schedulesLoading, setSchedulesLoading] = useState(false);
   const [schedulePage, setSchedulePage] = useState(1);
   const [scheduleTotalPages, setScheduleTotalPages] = useState(1);
+  const [scheduleSearch, setScheduleSearch] = useState("");
+  const [scheduleMonthFilter, setScheduleMonthFilter] = useState("");
+  const [scheduleWeekFilter, setScheduleWeekFilter] = useState("");
+  const [scheduleAssetFilter, setScheduleAssetFilter] = useState("");
   const [allAssetsForDropdown, setAllAssetsForDropdown] = useState<Asset[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
   
@@ -229,6 +233,10 @@ export const StaffDashboard: React.FC = () => {
         hotel_id: selectedHotelId,
         page: schedulePage,
         limit: 50,
+        month: scheduleMonthFilter || undefined,
+        card_no: scheduleAssetFilter || undefined,
+        week_no: scheduleWeekFilter ? Number(scheduleWeekFilter) : undefined,
+        search: scheduleSearch.trim() || undefined,
       });
       setMaintenanceSchedules(result.items);
       setScheduleTotalPages(result.pagination.totalPages);
@@ -411,7 +419,7 @@ export const StaffDashboard: React.FC = () => {
       fetchTechnicians();
       fetchAllAssetsForDropdown();
     }
-  }, [activeTab, selectedHotelId, schedulePage]);
+  }, [activeTab, selectedHotelId, schedulePage, scheduleSearch, scheduleMonthFilter, scheduleWeekFilter, scheduleAssetFilter]);
 
   const sidebarItems = [
     { icon: <FiBell />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
@@ -487,6 +495,99 @@ export const StaffDashboard: React.FC = () => {
             <Button size="sm" onClick={() => { resetScheduleForm(); setShowCreateModal(true); }}>
               <FiPlus className="mr-1" /> Create Schedule
             </Button>
+          </div>
+
+          {/* Search & Filters Toolbar */}
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-3 items-center">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <FiSearch className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search schedule title or description..."
+                value={scheduleSearch}
+                onChange={(e) => {
+                  setScheduleSearch(e.target.value);
+                  setSchedulePage(1);
+                }}
+                className="pl-9 w-full rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white"
+              />
+            </div>
+            
+            {/* Month Filter */}
+            <select
+              value={scheduleMonthFilter}
+              onChange={(e) => {
+                setScheduleMonthFilter(e.target.value);
+                setSchedulePage(1);
+              }}
+              className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium cursor-pointer"
+            >
+              <option value="">All Months</option>
+              <option value="Jan">January</option>
+              <option value="Feb">February</option>
+              <option value="Mar">March</option>
+              <option value="Apr">April</option>
+              <option value="May">May</option>
+              <option value="Jun">June</option>
+              <option value="Jul">July</option>
+              <option value="Aug">August</option>
+              <option value="Sep">September</option>
+              <option value="Oct">October</option>
+              <option value="Nov">November</option>
+              <option value="Dec">December</option>
+            </select>
+
+            {/* Week Filter */}
+            <select
+              value={scheduleWeekFilter}
+              onChange={(e) => {
+                setScheduleWeekFilter(e.target.value);
+                setSchedulePage(1);
+              }}
+              className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium cursor-pointer"
+            >
+              <option value="">All Weeks</option>
+              <option value="1">Week 1</option>
+              <option value="2">Week 2</option>
+              <option value="3">Week 3</option>
+              <option value="4">Week 4</option>
+              <option value="5">Week 5</option>
+            </select>
+
+            {/* Asset Filter */}
+            <select
+              value={scheduleAssetFilter}
+              onChange={(e) => {
+                setScheduleAssetFilter(e.target.value);
+                setSchedulePage(1);
+              }}
+              className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium max-w-[200px] cursor-pointer"
+            >
+              <option value="">All Assets</option>
+              {allAssetsForDropdown.map((asset) => (
+                <option key={asset.id} value={asset.card_no}>
+                  {asset.card_no} - {asset.description}
+                </option>
+              ))}
+            </select>
+
+            {/* Clear Filters Button */}
+            {(scheduleSearch || scheduleMonthFilter || scheduleWeekFilter || scheduleAssetFilter) && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setScheduleSearch("");
+                  setScheduleMonthFilter("");
+                  setScheduleWeekFilter("");
+                  setScheduleAssetFilter("");
+                  setSchedulePage(1);
+                }}
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
 
           <Table
