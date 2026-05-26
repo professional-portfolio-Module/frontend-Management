@@ -994,16 +994,16 @@ export const StaffDashboard: React.FC = () => {
         )}
       </Modal>
 
-      {/* Create Maintenance Schedule Modal */}
       <Modal
         isOpen={showCreateModal}
         title="Create Maintenance Schedule"
+        size="lg"
         onClose={() => {
           setShowCreateModal(false);
           resetScheduleForm();
         }}
       >
-        <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+        <div className="space-y-4 pr-1">
           <Input
             label="Title"
             required
@@ -1119,13 +1119,14 @@ export const StaffDashboard: React.FC = () => {
       <Modal
         isOpen={showEditModal}
         title="Edit Maintenance Schedule"
+        size="lg"
         onClose={() => {
           setShowEditModal(false);
           setSelectedSchedule(null);
           resetScheduleForm();
         }}
       >
-        <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+        <div className="space-y-4 pr-1">
           <Input
             label="Title"
             required
