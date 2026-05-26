@@ -17,6 +17,82 @@ import { assetService, Asset } from "../../services/assetService";
 import { manualTaskService, ManualTask } from "../../services/manualTaskService";
 import apiClient from "../../services/api";
 
+const SearchableAssetDropdown: React.FC<{
+  label: string;
+  required?: boolean;
+  value: string;
+  onChange: (card_no: string) => void;
+  assets: Asset[];
+}> = ({ label, required, value, onChange, assets }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selectedAsset = assets.find(a => a.card_no === value);
+  const displayedLabel = selectedAsset 
+    ? `${selectedAsset.card_no} - ${selectedAsset.description}` 
+    : "Search and select asset...";
+
+  const filteredAssets = assets
+    .filter(a => 
+      a.card_no.toLowerCase().includes(search.toLowerCase()) || 
+      (a.description || "").toLowerCase().includes(search.toLowerCase())
+    )
+    .slice(0, 50);
+
+  return (
+    <div className="flex flex-col gap-2.5 relative">
+      <label className="text-sm font-semibold text-slate-700 tracking-tight">
+        {label}
+        {required && <span className="text-red-600 ml-1">*</span>}
+      </label>
+      
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="input-field flex justify-between items-center cursor-pointer bg-white text-sm min-h-[38px] border border-slate-300 rounded-md px-3 py-2"
+      >
+        <span className={selectedAsset ? "text-slate-900" : "text-slate-400"}>
+          {displayedLabel}
+        </span>
+        <span className="text-slate-400 text-xs">▼</span>
+      </div>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-[75px] left-0 w-full bg-white border border-slate-200 rounded-md shadow-lg z-50 p-2 flex flex-col gap-2 max-h-[300px]">
+            <input
+              type="text"
+              placeholder="Type code or description to search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input-field text-xs bg-slate-50 w-full"
+              autoFocus
+            />
+            <div className="overflow-y-auto flex-1 flex flex-col gap-0.5 max-h-[200px]">
+              {filteredAssets.length === 0 ? (
+                <div className="p-2 text-xs text-slate-500 text-center">No matching assets found</div>
+              ) : (
+                filteredAssets.map((a) => (
+                  <div
+                    key={a.id}
+                    onClick={() => {
+                      onChange(a.card_no);
+                      setSearch("");
+                      setIsOpen(false);
+                    }}
+                    className={`p-2 text-xs rounded hover:bg-primary-50 hover:text-primary-700 cursor-pointer transition-colors ${value === a.card_no ? "bg-primary-50 text-primary-700 font-semibold" : "text-slate-700"}`}
+                  >
+                    <span className="font-semibold">{a.card_no}</span> - {a.description}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 export const ManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -456,14 +532,22 @@ export const ManagerDashboard: React.FC = () => {
       setManualTaskError("Title is required.");
       return;
     }
+    if (!manualTaskForm.assigned_to) {
+      setManualTaskError("Technician assignment is required.");
+      return;
+    }
+    if (!manualTaskForm.card_no) {
+      setManualTaskError("Asset selection is required.");
+      return;
+    }
     try {
       await manualTaskService.createManualTask({
         hotel_id: selectedHotelId || (userHotels[0]?.id || null),
         title: manualTaskForm.title,
         description: manualTaskForm.description || null,
-        assigned_to: manualTaskForm.assigned_to || null,
+        assigned_to: manualTaskForm.assigned_to,
         assigned_by: user?.id || null,
-        card_no: manualTaskForm.card_no || null,
+        card_no: manualTaskForm.card_no,
         priority: manualTaskForm.priority,
         status: 'pending',
         due_date: manualTaskForm.due_date || null,
@@ -500,12 +584,20 @@ export const ManagerDashboard: React.FC = () => {
       setEditManualTaskError("Title is required.");
       return;
     }
+    if (!editManualTaskForm.assigned_to) {
+      setEditManualTaskError("Technician assignment is required.");
+      return;
+    }
+    if (!editManualTaskForm.card_no) {
+      setEditManualTaskError("Asset selection is required.");
+      return;
+    }
     try {
       await manualTaskService.updateManualTask(selectedManualTask.manual_task_id, {
         title: editManualTaskForm.title,
         description: editManualTaskForm.description || null,
-        assigned_to: editManualTaskForm.assigned_to || null,
-        card_no: editManualTaskForm.card_no || null,
+        assigned_to: editManualTaskForm.assigned_to,
+        card_no: editManualTaskForm.card_no,
         status: editManualTaskForm.status,
         priority: editManualTaskForm.priority,
         due_date: editManualTaskForm.due_date || null,
@@ -1419,13 +1511,16 @@ export const ManagerDashboard: React.FC = () => {
           />
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Assign Technician</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">
+              Assign Technician <span className="text-red-600 ml-0.5">*</span>
+            </label>
             <select
               value={manualTaskForm.assigned_to}
               onChange={(e) => setManualTaskForm({ ...manualTaskForm, assigned_to: e.target.value })}
               className="input-field text-sm bg-white cursor-pointer"
+              required
             >
-              <option value="">Select Technician (Optional)</option>
+              <option value="">Select Technician...</option>
               {technicians.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name} ({t.email})
@@ -1434,21 +1529,13 @@ export const ManagerDashboard: React.FC = () => {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Select Asset</label>
-            <select
-              value={manualTaskForm.card_no}
-              onChange={(e) => setManualTaskForm({ ...manualTaskForm, card_no: e.target.value })}
-              className="input-field text-sm bg-white cursor-pointer"
-            >
-              <option value="">Select Asset (Optional)</option>
-              {allAssetsForTask.map((a) => (
-                <option key={a.id} value={a.card_no}>
-                  {a.card_no} - {a.description}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SearchableAssetDropdown
+            label="Select Asset"
+            required
+            value={manualTaskForm.card_no}
+            onChange={(card_no) => setManualTaskForm({ ...manualTaskForm, card_no })}
+            assets={allAssetsForTask}
+          />
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
@@ -1510,13 +1597,16 @@ export const ManagerDashboard: React.FC = () => {
           />
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Assign Technician</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">
+              Assign Technician <span className="text-red-600 ml-0.5">*</span>
+            </label>
             <select
               value={editManualTaskForm.assigned_to}
               onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, assigned_to: e.target.value })}
               className="input-field text-sm bg-white cursor-pointer"
+              required
             >
-              <option value="">Select Technician (Optional)</option>
+              <option value="">Select Technician...</option>
               {technicians.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name} ({t.email})
@@ -1525,21 +1615,13 @@ export const ManagerDashboard: React.FC = () => {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Select Asset</label>
-            <select
-              value={editManualTaskForm.card_no}
-              onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, card_no: e.target.value })}
-              className="input-field text-sm bg-white cursor-pointer"
-            >
-              <option value="">Select Asset (Optional)</option>
-              {allAssetsForTask.map((a) => (
-                <option key={a.id} value={a.card_no}>
-                  {a.card_no} - {a.description}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SearchableAssetDropdown
+            label="Select Asset"
+            required
+            value={editManualTaskForm.card_no}
+            onChange={(card_no) => setEditManualTaskForm({ ...editManualTaskForm, card_no })}
+            assets={allAssetsForTask}
+          />
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
