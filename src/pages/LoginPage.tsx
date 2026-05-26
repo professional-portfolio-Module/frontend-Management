@@ -54,7 +54,7 @@ export const LoginPage: React.FC = () => {
       const authUser = await login({ email, password });
       navigateToDashboard(authUser.role);
     } catch (err: any) {
-      setError(err.message || "Invalid credentials. Please try again.");
+      setError("invalid credencials");
     } finally {
       setLoading(false);
     }
