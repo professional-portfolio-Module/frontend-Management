@@ -56,12 +56,17 @@ export interface UpdateScheduleData {
 }
 
 export const maintenanceScheduleService = {
-  async getMaintenanceSchedules(params: { hotel_id: string; month?: string; card_no?: string }): Promise<MaintenanceSchedule[]> {
+  async getMaintenanceSchedules(params: { hotel_id: string; month?: string; card_no?: string; page?: number; limit?: number }): Promise<{ items: MaintenanceSchedule[]; pagination: { totalItems: number; totalPages: number; currentPage: number; limit: number } }> {
     const response = await apiClient.get("/Main/router-backend/api/maintenance-schedules", { params });
     if (response.data && response.data.success) {
-      return response.data.data;
+      const data = response.data.data;
+      // Handle both paginated response { items, pagination } and legacy array response
+      if (Array.isArray(data)) {
+        return { items: data, pagination: { totalItems: data.length, totalPages: 1, currentPage: 1, limit: data.length } };
+      }
+      return data;
     }
-    return [];
+    return { items: [], pagination: { totalItems: 0, totalPages: 0, currentPage: 1, limit: 50 } };
   },
 
   async createMaintenanceSchedule(data: CreateScheduleData): Promise<MaintenanceSchedule> {

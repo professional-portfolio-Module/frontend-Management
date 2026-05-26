@@ -124,6 +124,8 @@ export const StaffDashboard: React.FC = () => {
   // Maintenance Schedules states
   const [maintenanceSchedules, setMaintenanceSchedules] = useState<MaintenanceSchedule[]>([]);
   const [schedulesLoading, setSchedulesLoading] = useState(false);
+  const [schedulePage, setSchedulePage] = useState(1);
+  const [scheduleTotalPages, setScheduleTotalPages] = useState(1);
   const [allAssetsForDropdown, setAllAssetsForDropdown] = useState<Asset[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
   
@@ -223,10 +225,13 @@ export const StaffDashboard: React.FC = () => {
     if (!selectedHotelId) return;
     setSchedulesLoading(true);
     try {
-      const data = await maintenanceScheduleService.getMaintenanceSchedules({
+      const result = await maintenanceScheduleService.getMaintenanceSchedules({
         hotel_id: selectedHotelId,
+        page: schedulePage,
+        limit: 50,
       });
-      setMaintenanceSchedules(data);
+      setMaintenanceSchedules(result.items);
+      setScheduleTotalPages(result.pagination.totalPages);
     } catch (err: any) {
       console.error("Failed to fetch maintenance schedules:", err);
     } finally {
@@ -401,12 +406,12 @@ export const StaffDashboard: React.FC = () => {
   }, [activeTab, assetPage, assetSearch, assetCategory, assetStatus, selectedHotelId]);
 
   useEffect(() => {
-    if (activeTab === "maintenance-schedules") {
+    if (activeTab === "maintenance-schedules" && selectedHotelId) {
       fetchMaintenanceSchedules();
       fetchTechnicians();
       fetchAllAssetsForDropdown();
     }
-  }, [activeTab, selectedHotelId]);
+  }, [activeTab, selectedHotelId, schedulePage]);
 
   const sidebarItems = [
     { icon: <FiBell />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
@@ -543,6 +548,33 @@ export const StaffDashboard: React.FC = () => {
             ]}
             data={maintenanceSchedules}
           />
+
+          {/* Pagination */}
+          {scheduleTotalPages > 1 && (
+            <div className="px-5 py-3 border-t border-slate-200 flex items-center justify-between bg-white">
+              <p className="text-xs text-slate-500">
+                Page {schedulePage} of {scheduleTotalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={schedulePage <= 1}
+                  onClick={() => setSchedulePage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={schedulePage >= scheduleTotalPages}
+                  onClick={() => setSchedulePage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
