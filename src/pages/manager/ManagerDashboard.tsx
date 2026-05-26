@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiBell, FiActivity, FiFolder, FiHardDrive } from "react-icons/fi";
+import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiBell, FiActivity, FiFolder, FiHardDrive, FiClipboard } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -14,7 +14,9 @@ import { CreateAccountModal } from "../../components/common/CreateAccountModal";
 import { userService } from "../../services/userService";
 import { categoryService, Category } from "../../services/categoryService";
 import { assetService, Asset } from "../../services/assetService";
+import { manualTaskService, ManualTask } from "../../services/manualTaskService";
 import apiClient from "../../services/api";
+
 
 export const ManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -81,6 +83,43 @@ export const ManagerDashboard: React.FC = () => {
   const [qrSavingRedirect, setQrSavingRedirect] = useState(false);
   const [qrMessage, setQrMessage] = useState("");
 
+  // Manual Tasks state
+  const [manualTasks, setManualTasks] = useState<ManualTask[]>([]);
+  const [manualTasksLoading, setManualTasksLoading] = useState(false);
+  const [manualTaskSearch, setManualTaskSearch] = useState("");
+  const [manualTaskStatus, setManualTaskStatus] = useState("");
+  const [manualTaskPriority, setManualTaskPriority] = useState("");
+  const [manualTaskAssignedTo, setManualTaskAssignedTo] = useState("");
+
+  // Modals state
+  const [isManualTaskModalOpen, setIsManualTaskModalOpen] = useState(false);
+  const [manualTaskForm, setManualTaskForm] = useState({
+    title: "",
+    description: "",
+    assigned_to: "",
+    card_no: "",
+    priority: "normal" as 'normal' | 'emergency',
+    due_date: ""
+  });
+  const [manualTaskError, setManualTaskError] = useState("");
+
+  const [isEditManualTaskModalOpen, setIsEditManualTaskModalOpen] = useState(false);
+  const [selectedManualTask, setSelectedManualTask] = useState<ManualTask | null>(null);
+  const [editManualTaskForm, setEditManualTaskForm] = useState({
+    title: "",
+    description: "",
+    assigned_to: "",
+    card_no: "",
+    status: "pending" as any,
+    priority: "normal" as any,
+    due_date: "",
+    tech_remarks: "",
+    eng_remarks: ""
+  });
+  const [editManualTaskError, setEditManualTaskError] = useState("");
+  const [allAssetsForTask, setAllAssetsForTask] = useState<Asset[]>([]);
+
+
 
   const fetchCategories = async () => {
     setCategoriesLoading(true);
@@ -138,6 +177,37 @@ export const ManagerDashboard: React.FC = () => {
       setUsersLoading(false);
     }
   };
+
+  const fetchManualTasks = async () => {
+    setManualTasksLoading(true);
+    try {
+      const data = await manualTaskService.getManualTasks({
+        hotel_id: selectedHotelId || undefined,
+        status: manualTaskStatus || undefined,
+        priority: manualTaskPriority || undefined,
+        assigned_to: manualTaskAssignedTo || undefined,
+        search: manualTaskSearch || undefined,
+      });
+      setManualTasks(data);
+    } catch (err: any) {
+      console.error("Failed to fetch manual tasks:", err);
+    } finally {
+      setManualTasksLoading(false);
+    }
+  };
+
+  const fetchAllAssetsForTask = async () => {
+    try {
+      const response = await assetService.getAssets({
+        limit: 1000,
+        hotel_id: selectedHotelId || undefined,
+      });
+      setAllAssetsForTask(response.items);
+    } catch (err: any) {
+      console.error("Failed to fetch all assets for dropdown:", err);
+    }
+  };
+
 
   const handleShowQrCode = async (asset: Asset) => {
     setSelectedQrAsset(asset);
@@ -233,8 +303,12 @@ export const ManagerDashboard: React.FC = () => {
       fetchStatuses();
     }
 
-    if (activeTab === "overview" || activeTab === "users") {
+    if (activeTab === "overview" || activeTab === "users" || activeTab === "manual-tasks") {
       fetchUsers();
+    }
+    if (activeTab === "manual-tasks") {
+      fetchAllAssetsForTask();
+      fetchManualTasks();
     }
   }, [activeTab, selectedHotelId]);
 
@@ -243,6 +317,13 @@ export const ManagerDashboard: React.FC = () => {
       fetchAssets();
     }
   }, [activeTab, assetPage, assetSearch, assetCategory, assetStatus, selectedHotelId]);
+
+  React.useEffect(() => {
+    if (activeTab === "manual-tasks") {
+      fetchManualTasks();
+    }
+  }, [activeTab, manualTaskStatus, manualTaskPriority, manualTaskAssignedTo, manualTaskSearch, selectedHotelId]);
+
 
   const engineers = usersList.filter((u) => u.role === "engineer");
   const staff = usersList.filter((u) => u.role === "staff");
@@ -368,17 +449,101 @@ export const ManagerDashboard: React.FC = () => {
     }
   };
 
+  const handleManualTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setManualTaskError("");
+    if (!manualTaskForm.title) {
+      setManualTaskError("Title is required.");
+      return;
+    }
+    try {
+      await manualTaskService.createManualTask({
+        hotel_id: selectedHotelId || (userHotels[0]?.id || null),
+        title: manualTaskForm.title,
+        description: manualTaskForm.description || null,
+        assigned_to: manualTaskForm.assigned_to || null,
+        assigned_by: user?.id || null,
+        card_no: manualTaskForm.card_no || null,
+        priority: manualTaskForm.priority,
+        status: 'pending',
+        due_date: manualTaskForm.due_date || null,
+      });
+      setIsManualTaskModalOpen(false);
+      setManualTaskForm({ title: "", description: "", assigned_to: "", card_no: "", priority: "normal", due_date: "" });
+      fetchManualTasks();
+    } catch (err: any) {
+      setManualTaskError(err.message || "Failed to create manual task.");
+    }
+  };
+
+  const handleEditManualTask = (task: ManualTask) => {
+    setSelectedManualTask(task);
+    setEditManualTaskForm({
+      title: task.title,
+      description: task.description || "",
+      assigned_to: task.assigned_to || "",
+      card_no: task.card_no || "",
+      status: task.status,
+      priority: task.priority,
+      due_date: task.due_date ? task.due_date.split("T")[0] : "",
+      tech_remarks: task.tech_remarks || "",
+      eng_remarks: task.eng_remarks || "",
+    });
+    setIsEditManualTaskModalOpen(true);
+  };
+
+  const handleEditManualTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditManualTaskError("");
+    if (!selectedManualTask) return;
+    if (!editManualTaskForm.title) {
+      setEditManualTaskError("Title is required.");
+      return;
+    }
+    try {
+      await manualTaskService.updateManualTask(selectedManualTask.manual_task_id, {
+        title: editManualTaskForm.title,
+        description: editManualTaskForm.description || null,
+        assigned_to: editManualTaskForm.assigned_to || null,
+        card_no: editManualTaskForm.card_no || null,
+        status: editManualTaskForm.status,
+        priority: editManualTaskForm.priority,
+        due_date: editManualTaskForm.due_date || null,
+        eng_remarks: editManualTaskForm.eng_remarks || null,
+        tech_remarks: editManualTaskForm.tech_remarks || null,
+        checked_by: editManualTaskForm.status === 'completed' ? user?.id : undefined
+      });
+      setIsEditManualTaskModalOpen(false);
+      setSelectedManualTask(null);
+      fetchManualTasks();
+    } catch (err: any) {
+      setEditManualTaskError(err.message || "Failed to update manual task.");
+    }
+  };
+
+  const handleManualTaskDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this manual task?")) return;
+    try {
+      await manualTaskService.deleteManualTask(id);
+      fetchManualTasks();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete manual task.");
+    }
+  };
+
   const sidebarItems = [
     { icon: <FiActivity />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
     { icon: <FiUsers />, label: "User Management", active: activeTab === "users", onClick: () => setActiveTab("users") },
     { icon: <FiCheckCircle />, label: "Verification", active: activeTab === "verification", onClick: () => setActiveTab("verification"), badge: pendingUsers.length },
     { icon: <FiFolder />, label: "Categories", active: activeTab === "categories", onClick: () => setActiveTab("categories") },
     { icon: <FiHardDrive />, label: "Assets", active: activeTab === "assets", onClick: () => setActiveTab("assets") },
+    { icon: <FiClipboard />, label: "Manual Tasks", active: activeTab === "manual-tasks", onClick: () => setActiveTab("manual-tasks") },
     { icon: <FiFileText />, label: "Work Items", active: activeTab === "work-items", onClick: () => setActiveTab("work-items") },
     { icon: <FiClock />, label: "Schedules", active: activeTab === "schedules", onClick: () => navigate("/schedules") },
     { icon: <FiMessageSquare />, label: "Messages", active: activeTab === "messages", onClick: () => navigate("/messages") },
     { icon: <FiFileText />, label: "System Logs", active: activeTab === "logs", onClick: () => setActiveTab("logs") },
   ];
+
 
   return (
     <DashboardLayout sidebarItems={sidebarItems} onProfileClick={() => setShowProfileModal(true)}>
@@ -741,6 +906,198 @@ export const ManagerDashboard: React.FC = () => {
         </Card>
       )}
 
+      {/* Manual Tasks Tab */}
+      {activeTab === "manual-tasks" && (
+        <Card padding="none">
+          <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-white">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Manual Tasks</h2>
+              <p className="text-xs text-slate-500 mt-1">Assign and manage manual tasks for technicians</p>
+            </div>
+            <button
+              onClick={() => {
+                setManualTaskForm({
+                  title: "",
+                  description: "",
+                  assigned_to: "",
+                  card_no: "",
+                  priority: "normal",
+                  due_date: ""
+                });
+                setManualTaskError("");
+                setIsManualTaskModalOpen(true);
+              }}
+              className="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-md transition-colors"
+            >
+              + Add Manual Task
+            </button>
+          </div>
+
+          {/* Filters Panel */}
+          <div className="p-5 bg-slate-50 border-b border-slate-200 grid md:grid-cols-5 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Search</label>
+              <input
+                type="text"
+                placeholder="Search title, description..."
+                value={manualTaskSearch}
+                onChange={(e) => setManualTaskSearch(e.target.value)}
+                className="input-field text-sm bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Technician</label>
+              <select
+                value={manualTaskAssignedTo}
+                onChange={(e) => setManualTaskAssignedTo(e.target.value)}
+                className="input-field text-sm bg-white cursor-pointer"
+              >
+                <option value="">All Technicians</option>
+                {technicians.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Priority</label>
+              <select
+                value={manualTaskPriority}
+                onChange={(e) => setManualTaskPriority(e.target.value)}
+                className="input-field text-sm bg-white cursor-pointer"
+              >
+                <option value="">All Priorities</option>
+                <option value="normal">Normal</option>
+                <option value="emergency">Emergency</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Status</label>
+              <select
+                value={manualTaskStatus}
+                onChange={(e) => setManualTaskStatus(e.target.value)}
+                className="input-field text-sm bg-white cursor-pointer"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="under_review">Under Review</option>
+                <option value="completed">Completed</option>
+                <option value="rejected">Rejected</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+          </div>
+
+          <Table
+            loading={manualTasksLoading}
+            columns={[
+              {
+                key: "title",
+                label: "Task Details",
+                render: (_val, row: ManualTask) => (
+                  <div>
+                    <div className="font-semibold text-slate-900">{row.title}</div>
+                    {row.description && (
+                      <div className="text-xs text-slate-500 line-clamp-2 mt-0.5">{row.description}</div>
+                    )}
+                  </div>
+                )
+              },
+              {
+                key: "assigned_to_name",
+                label: "Assigned To",
+                render: (_val, row: ManualTask) => (
+                  <span className="text-sm text-slate-700">{row.assigned_to_name || "Unassigned"}</span>
+                )
+              },
+              {
+                key: "card_no",
+                label: "Asset",
+                render: (_val, row: ManualTask) => (
+                  row.card_no ? (
+                    <div>
+                      <div className="font-medium text-slate-800 text-xs">{row.card_no}</div>
+                      {row.asset_description && (
+                        <div className="text-[10px] text-slate-500">{row.asset_description}</div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-400">-</span>
+                  )
+                )
+              },
+              {
+                key: "priority",
+                label: "Priority",
+                render: (_val, row: ManualTask) => {
+                  if (row.priority === 'emergency') {
+                    return (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 animate-pulse border border-red-200">
+                        Emergency
+                      </span>
+                    );
+                  }
+                  return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+                      Normal
+                    </span>
+                  );
+                }
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (_val, row: ManualTask) => {
+                  switch (row.status) {
+                    case 'pending':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Pending</span>;
+                    case 'in-progress':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">In Progress</span>;
+                    case 'under_review':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">Under Review</span>;
+                    case 'completed':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">Completed</span>;
+                    case 'rejected':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">Rejected</span>;
+                    case 'expired':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">Expired</span>;
+                    default:
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">{row.status}</span>;
+                  }
+                }
+              },
+              {
+                key: "due_date",
+                label: "Due Date",
+                render: (_val, row: ManualTask) => (
+                  <span className="text-xs text-slate-600">
+                    {row.due_date ? new Date(row.due_date).toLocaleDateString() : "No due date"}
+                  </span>
+                )
+              },
+              {
+                key: "manual_task_id",
+                label: "Actions",
+                render: (val, row: ManualTask) => (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => handleEditManualTask(row)}>
+
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="danger" onClick={() => handleManualTaskDelete(val)}>
+                      Delete
+                    </Button>
+                  </div>
+                )
+              }
+            ]}
+            data={manualTasks}
+          />
+        </Card>
+      )}
+
       {/* Work Items Tab */}
       {activeTab === "work-items" && (
         <Card>
@@ -1035,6 +1392,216 @@ export const ManagerDashboard: React.FC = () => {
         </div>
       </Modal>
 
+      {/* Create Manual Task Modal */}
+      <Modal
+        isOpen={isManualTaskModalOpen}
+        title="Create Manual Task"
+        onClose={() => setIsManualTaskModalOpen(false)}
+      >
+        <form onSubmit={handleManualTaskSubmit} className="space-y-4">
+          {manualTaskError && (
+            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md border border-red-200">
+              {manualTaskError}
+            </div>
+          )}
+          
+          <Input
+            label="Task Title"
+            value={manualTaskForm.title}
+            onChange={(e) => setManualTaskForm({ ...manualTaskForm, title: e.target.value })}
+            required
+          />
+
+          <TextArea
+            label="Task Description"
+            value={manualTaskForm.description}
+            onChange={(e) => setManualTaskForm({ ...manualTaskForm, description: e.target.value })}
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Assign Technician</label>
+            <select
+              value={manualTaskForm.assigned_to}
+              onChange={(e) => setManualTaskForm({ ...manualTaskForm, assigned_to: e.target.value })}
+              className="input-field text-sm bg-white cursor-pointer"
+            >
+              <option value="">Select Technician (Optional)</option>
+              {technicians.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.email})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Select Asset</label>
+            <select
+              value={manualTaskForm.card_no}
+              onChange={(e) => setManualTaskForm({ ...manualTaskForm, card_no: e.target.value })}
+              className="input-field text-sm bg-white cursor-pointer"
+            >
+              <option value="">Select Asset (Optional)</option>
+              {allAssetsForTask.map((a) => (
+                <option key={a.id} value={a.card_no}>
+                  {a.card_no} - {a.description}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
+            <select
+              value={manualTaskForm.priority}
+              onChange={(e) => setManualTaskForm({ ...manualTaskForm, priority: e.target.value as any })}
+              className="input-field text-sm bg-white cursor-pointer"
+            >
+              <option value="normal">Normal</option>
+              <option value="emergency">Emergency</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
+            <input
+              type="date"
+              value={manualTaskForm.due_date}
+              onChange={(e) => setManualTaskForm({ ...manualTaskForm, due_date: e.target.value })}
+              className="input-field text-sm bg-white"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4 justify-end">
+            <Button variant="secondary" onClick={() => setIsManualTaskModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Create Task
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Manual Task Modal */}
+      <Modal
+        isOpen={isEditManualTaskModalOpen}
+        title="Edit Manual Task"
+        onClose={() => setIsEditManualTaskModalOpen(false)}
+      >
+        <form onSubmit={handleEditManualTaskSubmit} className="space-y-4">
+          {editManualTaskError && (
+            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md border border-red-200">
+              {editManualTaskError}
+            </div>
+          )}
+          
+          <Input
+            label="Task Title"
+            value={editManualTaskForm.title}
+            onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, title: e.target.value })}
+            required
+          />
+
+          <TextArea
+            label="Task Description"
+            value={editManualTaskForm.description}
+            onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, description: e.target.value })}
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Assign Technician</label>
+            <select
+              value={editManualTaskForm.assigned_to}
+              onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, assigned_to: e.target.value })}
+              className="input-field text-sm bg-white cursor-pointer"
+            >
+              <option value="">Select Technician (Optional)</option>
+              {technicians.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.email})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Select Asset</label>
+            <select
+              value={editManualTaskForm.card_no}
+              onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, card_no: e.target.value })}
+              className="input-field text-sm bg-white cursor-pointer"
+            >
+              <option value="">Select Asset (Optional)</option>
+              {allAssetsForTask.map((a) => (
+                <option key={a.id} value={a.card_no}>
+                  {a.card_no} - {a.description}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
+            <select
+              value={editManualTaskForm.priority}
+              onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, priority: e.target.value as any })}
+              className="input-field text-sm bg-white cursor-pointer"
+            >
+              <option value="normal">Normal</option>
+              <option value="emergency">Emergency</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+            <select
+              value={editManualTaskForm.status}
+              onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, status: e.target.value as any })}
+              className="input-field text-sm bg-white cursor-pointer"
+            >
+              <option value="pending">Pending</option>
+              <option value="in-progress">In Progress</option>
+              <option value="under_review">Under Review</option>
+              <option value="completed">Completed</option>
+              <option value="rejected">Rejected</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
+            <input
+              type="date"
+              value={editManualTaskForm.due_date}
+              onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, due_date: e.target.value })}
+              className="input-field text-sm bg-white"
+            />
+          </div>
+
+          <TextArea
+            label="Tech Remarks"
+            value={editManualTaskForm.tech_remarks}
+            onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, tech_remarks: e.target.value })}
+          />
+
+          <TextArea
+            label="Manager Remarks"
+            value={editManualTaskForm.eng_remarks}
+            onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, eng_remarks: e.target.value })}
+          />
+
+          <div className="flex gap-2 pt-4 justify-end">
+            <Button variant="secondary" onClick={() => setIsEditManualTaskModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
       <CreateAccountModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -1055,6 +1622,7 @@ export const ManagerDashboard: React.FC = () => {
         }}
       />
     </DashboardLayout>
+
   );
 };
 
