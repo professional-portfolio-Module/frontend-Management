@@ -276,7 +276,7 @@ export const ManagerDashboard: React.FC = () => {
   const fetchAllAssetsForTask = async () => {
     try {
       const response = await assetService.getAssets({
-        limit: 1000,
+        limit: 2000,
         hotel_id: selectedHotelId || undefined,
       });
       setAllAssetsForTask(response.items);
