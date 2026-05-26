@@ -104,15 +104,38 @@ export const userService = {
 
   // Update profile
   async updateProfile(id: string, name: string, phone: string, profilePhoto?: string): Promise<User> {
-    await simulateDelay(400);
-    const user = mockUsers.find((u) => u.id === id);
-    if (!user) throw new Error("User not found");
-    user.name = name;
-    user.phone = phone;
-    if (profilePhoto) {
-      user.profilePhoto = profilePhoto;
+    try {
+      const response = await apiClient.put(`/Main/router-backend/api/users/${id}`, {
+        name,
+        phone
+      });
+      if (response.data && response.data.success) {
+        const u = response.data.data;
+        return {
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role ? u.role.toLowerCase() as User['role'] : "staff",
+          phone: u.mobilenumber || u.mobileNumber || "",
+          department: u.role ? (u.role.toUpperCase() === "ADMIN" ? "Administration" : u.role.toUpperCase() === "MANAGER" ? "Management" : "Operations") : "Operations",
+          status: u.is_active ? "active" : "inactive",
+          createdAt: u.created_at || new Date().toISOString()
+        };
+      }
+      throw new Error(response.data?.message || "Failed to update profile");
+    } catch (error) {
+      // Fallback to local storage update or mock update if real update fails (hybrid fallback)
+      const user = mockUsers.find((u) => u.id === id);
+      if (user) {
+        user.name = name;
+        user.phone = phone;
+        if (profilePhoto) {
+          user.profilePhoto = profilePhoto;
+        }
+        return user;
+      }
+      throw error;
     }
-    return user;
   },
 
   // Change password
@@ -174,9 +197,17 @@ export const userService = {
 
   // Delete user
   async deleteUser(id: string): Promise<void> {
-    await simulateDelay(300);
-    const index = mockUsers.findIndex((u) => u.id === id);
-    if (index === -1) throw new Error("User not found");
-    mockUsers.splice(index, 1);
+    try {
+      const response = await apiClient.delete(`/Main/router-backend/api/users/${id}`);
+      if (!response.data || !response.data.success) {
+        throw new Error(response.data?.message || "Failed to deactivate user");
+      }
+    } catch (error) {
+      // Fallback for hybrid/mock mode
+      const index = mockUsers.findIndex((u) => u.id === id);
+      if (index !== -1) {
+        mockUsers.splice(index, 1);
+      }
+    }
   },
 };

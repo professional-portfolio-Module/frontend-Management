@@ -97,11 +97,12 @@ const SearchableAssetDropdown: React.FC<{
 export const ManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState(() => {
     return location.state?.activeTab || "overview";
   });
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileMode, setProfileMode] = useState<"view" | "edit">("view");
   const [profileName, setProfileName] = useState(user?.name || "");
   const [profilePhone, setProfilePhone] = useState(user?.phone || "");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -620,6 +621,34 @@ export const ManagerDashboard: React.FC = () => {
       fetchManualTasks();
     } catch (err: any) {
       alert(err.message || "Failed to delete manual task.");
+    }
+  };
+  const handleUpdateProfile = async () => {
+    if (!profileName.trim()) {
+      alert("Name is required");
+      return;
+    }
+    try {
+      await userService.updateProfile(user!.id, profileName, profilePhone);
+      updateProfile(profileName, profilePhone);
+      alert("Profile updated successfully!");
+      setProfileMode("view");
+    } catch (err: any) {
+      alert(err.message || "Failed to update profile");
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    if (window.confirm("Are you sure you want to deactivate your account? This action cannot be undone.")) {
+      try {
+        await userService.deleteUser(user!.id);
+        alert("Account deactivated successfully.");
+        setShowProfileModal(false);
+        await logout();
+        navigate("/login");
+      } catch (err: any) {
+        alert(err.message || "Failed to deactivate account");
+      }
     }
   };
 
@@ -1229,31 +1258,108 @@ export const ManagerDashboard: React.FC = () => {
       )}
 
       {/* Profile Modal */}
-      <Modal isOpen={showProfileModal} title="Edit Profile" onClose={() => setShowProfileModal(false)}>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-            <input
-              type="text"
-              value={profileName}
-              onChange={(e) => setProfileName(e.target.value)}
-              className="input-field"
-            />
+      <Modal 
+        isOpen={showProfileModal} 
+        title={profileMode === "view" ? "My Profile" : "Edit Profile"} 
+        onClose={() => {
+          setShowProfileModal(false);
+          setProfileMode("view");
+        }}
+      >
+        {profileMode === "view" ? (
+          <div className="space-y-6">
+            {/* Avatar & Header */}
+            <div className="flex flex-col items-center pb-4 border-b border-slate-100">
+              <div className="w-20 h-20 rounded-full bg-primary-600 text-white font-bold flex items-center justify-center text-3xl shadow-md border-2 border-white ring-4 ring-primary-50">
+                {user?.name?.charAt(0).toUpperCase()}
+              </div>
+              <h3 className="mt-3 text-lg font-bold text-slate-900">{user?.name}</h3>
+              <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-700/20">
+                {user?.role}
+              </span>
+            </div>
+
+            {/* Profile Fields List */}
+            <div className="space-y-3.5 text-sm">
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="font-semibold text-slate-500">Email Address</span>
+                <span className="text-slate-900 font-medium">{user?.email}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="font-semibold text-slate-500">Phone Number</span>
+                <span className="text-slate-900 font-medium">{user?.phone || "Not specified"}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="font-semibold text-slate-500">Department</span>
+                <span className="text-slate-900 font-medium">{user?.department || "Management"}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="font-semibold text-slate-500">Account Status</span>
+                <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-600">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Active
+                </span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="font-semibold text-slate-500">Created At</span>
+                <span className="text-slate-900 font-medium">
+                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : "N/A"}
+                </span>
+              </div>
+            </div>
+
+            {/* Actions Row */}
+            <div className="flex flex-col gap-2 pt-4 border-t border-slate-100">
+              <Button fullWidth onClick={() => setProfileMode("edit")}>
+                Edit Profile
+              </Button>
+              <Button fullWidth variant="danger" onClick={handleDeactivateAccount}>
+                Deactivate Account
+              </Button>
+              <Button fullWidth variant="secondary" onClick={() => {
+                setShowProfileModal(false);
+                setProfileMode("view");
+              }}>
+                Close
+              </Button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-            <input
-              type="tel"
-              value={profilePhone}
-              onChange={(e) => setProfilePhone(e.target.value)}
-              className="input-field"
-            />
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-1.5">Name</label>
+              <input
+                type="text"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                className="input-field"
+                placeholder="Enter your name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-1.5">Phone</label>
+              <input
+                type="tel"
+                value={profilePhone}
+                onChange={(e) => setProfilePhone(e.target.value)}
+                className="input-field"
+                placeholder="Enter your phone number"
+              />
+            </div>
+            <div className="flex gap-3 pt-6 border-t border-slate-100">
+              <Button fullWidth onClick={handleUpdateProfile}>
+                Save Changes
+              </Button>
+              <Button fullWidth variant="secondary" onClick={() => setProfileMode("view")}>
+                Back
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-2 pt-4">
-          <Button fullWidth>Save Changes</Button>
-          <Button fullWidth variant="secondary" onClick={() => setShowProfileModal(false)}>Cancel</Button>
-        </div>
+        )}
       </Modal>
 
       {/* Create Category Modal */}
