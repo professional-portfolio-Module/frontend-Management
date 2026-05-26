@@ -1,18 +1,97 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiClock, FiMessageSquare, FiBell, FiCalendar, FiFolder, FiHardDrive } from "react-icons/fi";
+import { FiClock, FiMessageSquare, FiBell, FiCalendar, FiFolder, FiHardDrive, FiPlus, FiEdit, FiTrash2 } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
 import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
+import { Input, Select, TextArea } from "../../components/common/Form";
 import { useAuth } from "../../context/AuthContext";
 import { mockSchedules, mockNotifications, mockMessages } from "../../mock/data";
 import { categoryService, Category } from "../../services/categoryService";
 import { assetService, Asset } from "../../services/assetService";
 import apiClient from "../../services/api";
-
 import { userService } from "../../services/userService";
+import { maintenanceScheduleService, MaintenanceSchedule } from "../../services/maintenanceScheduleService";
+
+
+const SearchableAssetDropdown: React.FC<{
+  label: string;
+  required?: boolean;
+  value: string;
+  onChange: (card_no: string) => void;
+  assets: Asset[];
+}> = ({ label, required, value, onChange, assets }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selectedAsset = assets.find(a => a.card_no === value);
+  const displayedLabel = selectedAsset 
+    ? `${selectedAsset.card_no} - ${selectedAsset.description}` 
+    : "Search and select asset...";
+
+  const filteredAssets = assets
+    .filter(a => 
+      a.card_no.toLowerCase().includes(search.toLowerCase()) || 
+      (a.description || "").toLowerCase().includes(search.toLowerCase())
+    )
+    .slice(0, 50);
+
+  return (
+    <div className="flex flex-col gap-2.5 relative">
+      <label className="text-sm font-semibold text-slate-700 tracking-tight">
+        {label}
+        {required && <span className="text-red-600 ml-1">*</span>}
+      </label>
+      
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="input-field flex justify-between items-center cursor-pointer bg-white text-sm min-h-[38px] border border-slate-300 rounded-md px-3 py-2"
+      >
+        <span className={selectedAsset ? "text-slate-900" : "text-slate-400"}>
+          {displayedLabel}
+        </span>
+        <span className="text-slate-400 text-xs">▼</span>
+      </div>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-[75px] left-0 w-full bg-white border border-slate-200 rounded-md shadow-lg z-50 p-2 flex flex-col gap-2 max-h-[300px]">
+            <input
+              type="text"
+              placeholder="Type code or description to search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input-field text-xs bg-slate-50 w-full"
+              autoFocus
+            />
+            <div className="overflow-y-auto flex-1 flex flex-col gap-0.5 max-h-[200px]">
+              {filteredAssets.length === 0 ? (
+                <div className="p-2 text-xs text-slate-500 text-center">No matching assets found</div>
+              ) : (
+                filteredAssets.map((a) => (
+                  <div
+                    key={a.id}
+                    onClick={() => {
+                      onChange(a.card_no);
+                      setSearch("");
+                      setIsOpen(false);
+                    }}
+                    className={`p-2 text-xs rounded hover:bg-primary-50 hover:text-primary-700 cursor-pointer transition-colors ${value === a.card_no ? "bg-primary-50 text-primary-700 font-semibold" : "text-slate-700"}`}
+                  >
+                    <span className="font-semibold">{a.card_no}</span> - {a.description}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 export const StaffDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -41,6 +120,28 @@ export const StaffDashboard: React.FC = () => {
   const [assetStatus, setAssetStatus] = useState("");
   const [assetPage, setAssetPage] = useState(1);
   const [assetTotalPages, setAssetTotalPages] = useState(1);
+
+  // Maintenance Schedules states
+  const [maintenanceSchedules, setMaintenanceSchedules] = useState<MaintenanceSchedule[]>([]);
+  const [schedulesLoading, setSchedulesLoading] = useState(false);
+  const [allAssetsForDropdown, setAllAssetsForDropdown] = useState<Asset[]>([]);
+  const [technicians, setTechnicians] = useState<any[]>([]);
+  
+  // Modals & form state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<MaintenanceSchedule | null>(null);
+
+  // Form fields
+  const [schedTitle, setSchedTitle] = useState("");
+  const [schedCardNo, setSchedCardNo] = useState("");
+  const [schedMonth, setSchedMonth] = useState("JAN");
+  const [schedWeekNo, setSchedWeekNo] = useState(1);
+  const [schedStartDate, setSchedStartDate] = useState("");
+  const [schedEndDate, setSchedEndDate] = useState("");
+  const [schedDescription, setSchedDescription] = useState("");
+  const [schedAssignedTechs, setSchedAssignedTechs] = useState<string[]>([]);
+  const [schedIsActive, setSchedIsActive] = useState(true);
 
   const mySchedules = mockSchedules.filter((s) => s.userId === user?.id);
   const unreadNotifications = mockNotifications.filter((n) => !n.read && n.userId === user?.id);
@@ -118,6 +219,147 @@ export const StaffDashboard: React.FC = () => {
     }
   };
 
+  const fetchMaintenanceSchedules = async () => {
+    if (!selectedHotelId) return;
+    setSchedulesLoading(true);
+    try {
+      const data = await maintenanceScheduleService.getMaintenanceSchedules({
+        hotel_id: selectedHotelId,
+      });
+      setMaintenanceSchedules(data);
+    } catch (err: any) {
+      console.error("Failed to fetch maintenance schedules:", err);
+    } finally {
+      setSchedulesLoading(false);
+    }
+  };
+
+  const fetchTechnicians = async () => {
+    try {
+      const data = await userService.getUsers({
+        hotel_id: selectedHotelId || undefined,
+      });
+      setTechnicians(data.filter((u: any) => u.role === "technician"));
+    } catch (err: any) {
+      console.error("Failed to fetch technicians:", err);
+    }
+  };
+
+  const fetchAllAssetsForDropdown = async () => {
+    try {
+      const response = await assetService.getAssets({
+        limit: 2000,
+        hotel_id: selectedHotelId || undefined,
+      });
+      setAllAssetsForDropdown(response.items);
+    } catch (err: any) {
+      console.error("Failed to fetch all assets for dropdown:", err);
+    }
+  };
+
+  const handleCreateSchedule = async () => {
+    if (!schedTitle.trim() || !schedCardNo || !schedMonth || !schedStartDate || !schedEndDate) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    try {
+      await maintenanceScheduleService.createMaintenanceSchedule({
+        hotel_id: selectedHotelId,
+        card_no: schedCardNo,
+        month: schedMonth,
+        week_no: Number(schedWeekNo),
+        start_date: schedStartDate,
+        end_date: schedEndDate,
+        title: schedTitle.trim(),
+        default_description_manager: schedDescription.trim() || undefined,
+        assigned_technicians: schedAssignedTechs,
+        assigned_by: user!.id,
+      });
+      alert("Maintenance schedule created successfully!");
+      setShowCreateModal(false);
+      resetScheduleForm();
+      fetchMaintenanceSchedules();
+    } catch (err: any) {
+      alert(err.message || "Failed to create maintenance schedule");
+    }
+  };
+
+  const handleUpdateSchedule = async () => {
+    if (!selectedSchedule) return;
+    if (!schedTitle.trim() || !schedCardNo || !schedMonth || !schedStartDate || !schedEndDate) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    try {
+      await maintenanceScheduleService.updateMaintenanceSchedule(selectedSchedule.schedule_id, {
+        card_no: schedCardNo,
+        month: schedMonth,
+        week_no: Number(schedWeekNo),
+        start_date: schedStartDate,
+        end_date: schedEndDate,
+        title: schedTitle.trim(),
+        default_description_manager: schedDescription.trim() || null,
+        is_active: schedIsActive,
+        assigned_technicians: schedAssignedTechs,
+        assigned_by: user!.id,
+      });
+      alert("Maintenance schedule updated successfully!");
+      setShowEditModal(false);
+      setSelectedSchedule(null);
+      resetScheduleForm();
+      fetchMaintenanceSchedules();
+    } catch (err: any) {
+      alert(err.message || "Failed to update maintenance schedule");
+    }
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    if (window.confirm("Are you sure you want to deactivate this maintenance schedule?")) {
+      try {
+        await maintenanceScheduleService.deleteMaintenanceSchedule(id);
+        alert("Maintenance schedule deactivated successfully.");
+        fetchMaintenanceSchedules();
+      } catch (err: any) {
+        alert(err.message || "Failed to deactivate maintenance schedule");
+      }
+    }
+  };
+
+  const openEditModal = (schedule: MaintenanceSchedule) => {
+    setSelectedSchedule(schedule);
+    setSchedTitle(schedule.title);
+    setSchedCardNo(schedule.card_no);
+    setSchedMonth(schedule.month);
+    setSchedWeekNo(schedule.week_no);
+    setSchedStartDate(formatDateForInput(schedule.start_date));
+    setSchedEndDate(formatDateForInput(schedule.end_date));
+    setSchedDescription(schedule.default_description_manager || "");
+    setSchedIsActive(schedule.is_active);
+    setSchedAssignedTechs(schedule.assignments.map(a => a.user_id));
+    setShowEditModal(true);
+  };
+
+  const resetScheduleForm = () => {
+    setSchedTitle("");
+    setSchedCardNo("");
+    setSchedMonth("JAN");
+    setSchedWeekNo(1);
+    setSchedStartDate("");
+    setSchedEndDate("");
+    setSchedDescription("");
+    setSchedIsActive(true);
+    setSchedAssignedTechs([]);
+  };
+
+  const formatDateForInput = (dateStr: string) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    return d.toISOString().split("T")[0];
+  };
+
   useEffect(() => {
     if (user?.id) {
       apiClient.get(`/Main/router-backend/api/users/${user.id}`)
@@ -149,8 +391,17 @@ export const StaffDashboard: React.FC = () => {
     }
   }, [activeTab, assetPage, assetSearch, assetCategory, assetStatus, selectedHotelId]);
 
+  useEffect(() => {
+    if (activeTab === "maintenance-schedules") {
+      fetchMaintenanceSchedules();
+      fetchTechnicians();
+      fetchAllAssetsForDropdown();
+    }
+  }, [activeTab, selectedHotelId]);
+
   const sidebarItems = [
     { icon: <FiBell />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
+    { icon: <FiCalendar />, label: "Maintenance Schedules", active: activeTab === "maintenance-schedules", onClick: () => setActiveTab("maintenance-schedules") },
     { icon: <FiClock />, label: "My Schedule", active: activeTab === "schedule", onClick: () => navigate("/schedules") },
     { icon: <FiFolder />, label: "Categories", active: activeTab === "categories", onClick: () => setActiveTab("categories") },
     { icon: <FiHardDrive />, label: "Assets", active: activeTab === "assets", onClick: () => setActiveTab("assets") },
@@ -197,6 +448,78 @@ export const StaffDashboard: React.FC = () => {
             </Card>
           </div>
         </div>
+      )}
+
+      {/* Maintenance Schedules Tab */}
+      {activeTab === "maintenance-schedules" && (
+        <Card padding="none">
+          <div className="p-5 border-b border-slate-200 bg-white flex justify-between items-center">
+            <h2 className="text-sm font-semibold text-slate-900">Maintenance Schedules</h2>
+            <Button size="sm" onClick={() => { resetScheduleForm(); setShowCreateModal(true); }}>
+              <FiPlus className="mr-1" /> Create Schedule
+            </Button>
+          </div>
+
+          <Table
+            loading={schedulesLoading}
+            columns={[
+              { key: "title", label: "Title" },
+              { key: "card_no", label: "Asset Code" },
+              { key: "month", label: "Month" },
+              { key: "week_no", label: "Week" },
+              {
+                key: "dates",
+                label: "Date Range",
+                render: (_, row: any) => (
+                  <span className="text-xs text-slate-500 font-medium">
+                    {formatDateForInput(row.start_date)} to {formatDateForInput(row.end_date)}
+                  </span>
+                )
+              },
+              {
+                key: "assignments",
+                label: "Assigned Technicians",
+                render: (val: any) => (
+                  <div className="flex flex-wrap gap-1">
+                    {val && val.length > 0 ? (
+                      val.map((a: any) => (
+                        <span key={a.assignment_id} className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-semibold">
+                          {a.technician_name || 'Tech'}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">None</span>
+                    )}
+                  </div>
+                )
+              },
+              {
+                key: "is_active",
+                label: "Status",
+                render: (val: boolean) => (
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${val ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' : 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-500/10'}`}>
+                    {val ? "Active" : "Inactive"}
+                  </span>
+                )
+              },
+              {
+                key: "actions",
+                label: "Actions",
+                render: (_, row: any) => (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => openEditModal(row)}>
+                      <FiEdit className="mr-1" /> Edit
+                    </Button>
+                    <Button size="sm" variant="danger" onClick={() => handleDeleteSchedule(row.schedule_id)}>
+                      <FiTrash2 className="mr-1" /> Deactivate
+                    </Button>
+                  </div>
+                )
+              }
+            ]}
+            data={maintenanceSchedules}
+          />
+        </Card>
       )}
 
       {/* Schedule Tab */}
@@ -512,6 +835,260 @@ export const StaffDashboard: React.FC = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Create Maintenance Schedule Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        title="Create Maintenance Schedule"
+        onClose={() => {
+          setShowCreateModal(false);
+          resetScheduleForm();
+        }}
+      >
+        <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+          <Input
+            label="Title"
+            required
+            value={schedTitle}
+            onChange={(e) => setSchedTitle(e.target.value)}
+            placeholder="e.g. Air Conditioner Monthly Servicing"
+          />
+
+          <SearchableAssetDropdown
+            label="Asset Code"
+            required
+            value={schedCardNo}
+            onChange={(card_no) => setSchedCardNo(card_no)}
+            assets={allAssetsForDropdown}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Month"
+              required
+              value={schedMonth}
+              onChange={(e) => setSchedMonth(e.target.value)}
+              options={[
+                { value: "JAN", label: "JAN" },
+                { value: "FEB", label: "FEB" },
+                { value: "MAR", label: "MAR" },
+                { value: "APR", label: "APR" },
+                { value: "MAY", label: "MAY" },
+                { value: "JUN", label: "JUN" },
+                { value: "JUL", label: "JUL" },
+                { value: "AUG", label: "AUG" },
+                { value: "SEP", label: "SEP" },
+                { value: "OCT", label: "OCT" },
+                { value: "NOV", label: "NOV" },
+                { value: "DEC", label: "DEC" },
+              ]}
+            />
+            <Select
+              label="Week No"
+              required
+              value={schedWeekNo}
+              onChange={(e) => setSchedWeekNo(Number(e.target.value))}
+              options={[
+                { value: 1, label: "Week 1" },
+                { value: 2, label: "Week 2" },
+                { value: 3, label: "Week 3" },
+                { value: 4, label: "Week 4" },
+                { value: 5, label: "Week 5" },
+              ]}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="date"
+              label="Start Date"
+              required
+              value={schedStartDate}
+              onChange={(e) => setSchedStartDate(e.target.value)}
+            />
+            <Input
+              type="date"
+              label="End Date"
+              required
+              value={schedEndDate}
+              onChange={(e) => setSchedEndDate(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <label className="text-sm font-semibold text-slate-700 tracking-tight">Assign Technicians</label>
+            <div className="border border-slate-200 rounded-md p-3 max-h-[150px] overflow-y-auto space-y-2 bg-slate-50">
+              {technicians.map((tech) => (
+                <label key={tech.id} className="flex items-center gap-2.5 text-sm text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={schedAssignedTechs.includes(tech.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSchedAssignedTechs([...schedAssignedTechs, tech.id]);
+                      } else {
+                        setSchedAssignedTechs(schedAssignedTechs.filter(id => id !== tech.id));
+                      }
+                    }}
+                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span>{tech.name}</span>
+                </label>
+              ))}
+              {technicians.length === 0 && <p className="text-xs text-slate-500">No technicians found.</p>}
+            </div>
+          </div>
+
+          <TextArea
+            label="Default Description (for Manager)"
+            value={schedDescription}
+            onChange={(e) => setSchedDescription(e.target.value)}
+            placeholder="Provide any description or instructions..."
+          />
+
+          <div className="flex gap-3 pt-4 border-t border-slate-100">
+            <Button fullWidth onClick={handleCreateSchedule}>
+              Create Schedule
+            </Button>
+            <Button fullWidth variant="secondary" onClick={() => { setShowCreateModal(false); resetScheduleForm(); }}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Maintenance Schedule Modal */}
+      <Modal
+        isOpen={showEditModal}
+        title="Edit Maintenance Schedule"
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedSchedule(null);
+          resetScheduleForm();
+        }}
+      >
+        <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+          <Input
+            label="Title"
+            required
+            value={schedTitle}
+            onChange={(e) => setSchedTitle(e.target.value)}
+            placeholder="e.g. Air Conditioner Monthly Servicing"
+          />
+
+          <SearchableAssetDropdown
+            label="Asset Code"
+            required
+            value={schedCardNo}
+            onChange={(card_no) => setSchedCardNo(card_no)}
+            assets={allAssetsForDropdown}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Month"
+              required
+              value={schedMonth}
+              onChange={(e) => setSchedMonth(e.target.value)}
+              options={[
+                { value: "JAN", label: "JAN" },
+                { value: "FEB", label: "FEB" },
+                { value: "MAR", label: "MAR" },
+                { value: "APR", label: "APR" },
+                { value: "MAY", label: "MAY" },
+                { value: "JUN", label: "JUN" },
+                { value: "JUL", label: "JUL" },
+                { value: "AUG", label: "AUG" },
+                { value: "SEP", label: "SEP" },
+                { value: "OCT", label: "OCT" },
+                { value: "NOV", label: "NOV" },
+                { value: "DEC", label: "DEC" },
+              ]}
+            />
+            <Select
+              label="Week No"
+              required
+              value={schedWeekNo}
+              onChange={(e) => setSchedWeekNo(Number(e.target.value))}
+              options={[
+                { value: 1, label: "Week 1" },
+                { value: 2, label: "Week 2" },
+                { value: 3, label: "Week 3" },
+                { value: 4, label: "Week 4" },
+                { value: 5, label: "Week 5" },
+              ]}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="date"
+              label="Start Date"
+              required
+              value={schedStartDate}
+              onChange={(e) => setSchedStartDate(e.target.value)}
+            />
+            <Input
+              type="date"
+              label="End Date"
+              required
+              value={schedEndDate}
+              onChange={(e) => setSchedEndDate(e.target.value)}
+            />
+          </div>
+
+          <Select
+            label="Status"
+            required
+            value={schedIsActive ? "true" : "false"}
+            onChange={(e) => setSchedIsActive(e.target.value === "true")}
+            options={[
+              { value: "true", label: "Active" },
+              { value: "false", label: "Inactive" },
+            ]}
+          />
+
+          <div className="flex flex-col gap-2.5">
+            <label className="text-sm font-semibold text-slate-700 tracking-tight">Assign Technicians</label>
+            <div className="border border-slate-200 rounded-md p-3 max-h-[150px] overflow-y-auto space-y-2 bg-slate-50">
+              {technicians.map((tech) => (
+                <label key={tech.id} className="flex items-center gap-2.5 text-sm text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={schedAssignedTechs.includes(tech.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSchedAssignedTechs([...schedAssignedTechs, tech.id]);
+                      } else {
+                        setSchedAssignedTechs(schedAssignedTechs.filter(id => id !== tech.id));
+                      }
+                    }}
+                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span>{tech.name}</span>
+                </label>
+              ))}
+              {technicians.length === 0 && <p className="text-xs text-slate-500">No technicians found.</p>}
+            </div>
+          </div>
+
+          <TextArea
+            label="Default Description (for Manager)"
+            value={schedDescription}
+            onChange={(e) => setSchedDescription(e.target.value)}
+            placeholder="Provide any description or instructions..."
+          />
+
+          <div className="flex gap-3 pt-4 border-t border-slate-100">
+            <Button fullWidth onClick={handleUpdateSchedule}>
+              Save Changes
+            </Button>
+            <Button fullWidth variant="secondary" onClick={() => { setShowEditModal(false); setSelectedSchedule(null); resetScheduleForm(); }}>
+              Cancel
+            </Button>
+          </div>
+        </div>
       </Modal>
     </DashboardLayout>
   );
