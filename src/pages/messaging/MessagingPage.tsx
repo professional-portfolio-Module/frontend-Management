@@ -34,10 +34,10 @@ export const MessagingPage: React.FC = () => {
     }
   }, [user]);
 
-  // Fetch manager/staff associated hotels (or all hotels for super admin / admin)
+  // Fetch manager/staff associated hotels (or all hotels for super admin)
   useEffect(() => {
     if (user?.id) {
-      if (user.role === "super_admin" || user.role === "admin") {
+      if (user.role === "super_admin") {
         hotelService.getHotels()
           .then((hotelsList) => {
             setUserHotels(hotelsList);
@@ -46,7 +46,7 @@ export const MessagingPage: React.FC = () => {
             }
           })
           .catch((err) => {
-            console.error("Failed to fetch hotels for admin/super_admin:", err);
+            console.error("Failed to fetch hotels for super_admin:", err);
           });
       } else {
         apiClient.get(`/Main/router-backend/api/users/${user.id}`)
@@ -92,12 +92,12 @@ export const MessagingPage: React.FC = () => {
             } else if (user?.role === "admin") {
               // Admins can message:
               // 1. Super admins (global)
-              // 2. Admins of the selected hotel
-              // 3. Managers in the selected hotel ONLY IF the selected hotel is their own hotel
+              // 2. Admins in his own hotel AND admins in other hotels (role === "admin")
+              // 3. Managers in his own hotel (role === "manager" && hotelId === user.hotelId)
               const isSuperAdmin = u.role === "super_admin";
-              const isAdminOfSelectedHotel = u.role === "admin" && u.hotelId === selectedHotelId;
-              const isManagerInOwnHotel = u.role === "manager" && selectedHotelId === user.hotelId && u.hotelId === selectedHotelId;
-              return isSuperAdmin || isAdminOfSelectedHotel || isManagerInOwnHotel;
+              const isAdmin = u.role === "admin";
+              const isManagerInOwnHotel = u.role === "manager" && u.hotelId === user.hotelId;
+              return isSuperAdmin || isAdmin || isManagerInOwnHotel;
             } else {
               // Other roles can message: technician, manager, engineer, staff, admin in the hotel
               return ["technician", "manager", "engineer", "staff", "admin"].includes(u.role);
