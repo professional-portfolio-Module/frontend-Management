@@ -17,6 +17,7 @@ interface CreateAccountModalProps {
   allowedRoles: { value: string; label: string }[];
   onSubmit: (data: any) => Promise<void>;
   defaultHotelId?: string;
+  excludeHotelIds?: string[];
 }
 
 export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
@@ -25,6 +26,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   allowedRoles,
   onSubmit,
   defaultHotelId,
+  excludeHotelIds,
 }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -61,9 +63,15 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
         setHotelsLoading(true);
         const res = await apiClient.get("/Main/router-backend/api/hotels");
         if (res.data?.success && res.data.data) {
-          setHotels(res.data.data);
-          if (res.data.data.length > 0 && !formData.hotelId) {
-            setFormData(prev => ({ ...prev, hotelId: res.data.data[0].id }));
+          let fetchedHotels = res.data.data;
+          if (excludeHotelIds && excludeHotelIds.length > 0) {
+            fetchedHotels = fetchedHotels.filter((h: any) => !excludeHotelIds.includes(h.id));
+          }
+          setHotels(fetchedHotels);
+          if (fetchedHotels.length > 0) {
+            setFormData(prev => ({ ...prev, hotelId: fetchedHotels[0].id }));
+          } else {
+            setFormData(prev => ({ ...prev, hotelId: "" }));
           }
         }
       } catch (err) {
@@ -73,7 +81,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
       }
     };
     fetchHotels();
-  }, [isOpen, defaultHotelId]);
+  }, [isOpen, defaultHotelId, excludeHotelIds]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -190,7 +198,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
                   hotelsLoading
                     ? [{ value: "", label: "Loading hotels..." }]
                     : hotels.length === 0
-                      ? [{ value: "", label: "No hotels found" }]
+                      ? [{ value: "", label: "All hotels already have an admin" }]
                       : hotels.map(h => ({ value: h.id, label: `${h.name} - ${h.city || 'N/A'}` }))
                 }
                 value={formData.hotelId}

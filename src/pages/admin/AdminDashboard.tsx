@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiUsers, FiServer, FiActivity, FiSettings, FiDatabase, FiShield, FiAlertTriangle } from "react-icons/fi";
+import { FiUsers, FiServer, FiActivity, FiSettings, FiDatabase, FiShield, FiAlertTriangle, FiHome } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
 import { CreateAccountModal } from "../../components/common/CreateAccountModal";
+import { CreateHotelModal } from "../../components/common/CreateHotelModal";
 import { userService } from "../../services/userService";
+import { hotelService, Hotel } from "../../services/hotelService";
 import { useAuth } from "../../context/AuthContext";
 import apiClient from "../../services/api";
 import { Modal } from "../../components/common/Modal";
@@ -14,8 +16,9 @@ import { Button } from "../../components/common/Button";
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout, updateProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "hotels" | "settings">("overview");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreateHotelModalOpen, setIsCreateHotelModalOpen] = useState(false);
 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileMode, setProfileMode] = useState<"view" | "edit">("view");
@@ -85,6 +88,8 @@ export const AdminDashboard: React.FC = () => {
 
   const [usersList, setUsersList] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [hotelsList, setHotelsList] = useState<Hotel[]>([]);
+  const [hotelsLoading, setHotelsLoading] = useState(false);
 
   const fetchUsers = async () => {
     if (!user) return;
@@ -109,8 +114,21 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const fetchHotels = async () => {
+    setHotelsLoading(true);
+    try {
+      const data = await hotelService.getHotels();
+      setHotelsList(data);
+    } catch (err) {
+      console.error("Failed to fetch hotels:", err);
+    } finally {
+      setHotelsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchHotels();
   }, [user]);
 
   // Calculate stats from loaded users list
@@ -137,11 +155,21 @@ export const AdminDashboard: React.FC = () => {
       : []),
     {
       icon: <FiUsers size={20} />,
-      label: "User Management",
+      label: user?.role === "super_admin" ? "Admin Management" : "User Management",
       active: activeTab === "users",
       onClick: () => setActiveTab("users"),
       badge: pendingUsers > 0 ? pendingUsers : undefined,
     },
+    ...(user?.role === "super_admin"
+      ? [
+          {
+            icon: <FiHome size={20} />,
+            label: "Hotel Management",
+            active: activeTab === "hotels",
+            onClick: () => setActiveTab("hotels"),
+          },
+        ]
+      : []),
     ...(user?.role === "super_admin"
       ? [
           {
@@ -154,10 +182,36 @@ export const AdminDashboard: React.FC = () => {
       : []),
   ];
 
+  const hotelColumns = [
+    {
+      key: "name",
+      label: "Hotel Name",
+      render: (_: any, row: any) => (
+        <span className="font-semibold text-slate-900">{row.name}</span>
+      ),
+    },
+    {
+      key: "city",
+      label: "City",
+    },
+    {
+      key: "country",
+      label: "Country",
+    },
+    {
+      key: "createdAt",
+      label: "Registered At",
+      render: (_: any, row: any) => {
+        const val = row.created_at || row.createdAt;
+        return val ? new Date(val).toLocaleDateString() : "N/A";
+      },
+    },
+  ];
+
   const userColumns = [
     {
       key: "name",
-      label: "User",
+      label: user?.role === "super_admin" ? "Admin" : "User",
       render: (_: any, row: any) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-xs">
@@ -226,7 +280,10 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex space-x-1 border-b border-slate-200 mb-6">
-        {(["overview", "users", "settings"] as const).map((tab) => (
+        {(user?.role === "super_admin"
+          ? (["overview", "users", "hotels", "settings"] as const)
+          : (["overview", "users", "settings"] as const)
+        ).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -238,7 +295,7 @@ export const AdminDashboard: React.FC = () => {
               }
             `}
           >
-            {tab}
+            {tab === "users" && user?.role === "super_admin" ? "admins" : tab}
           </button>
         ))}
       </div>
@@ -247,7 +304,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="space-y-8">
           {/* Statistics */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard icon={<FiUsers size={18} />} label="Total Users" value={totalUsers} color="blue" />
+            <StatCard icon={<FiUsers size={18} />} label={user?.role === "super_admin" ? "Total Admins" : "Total Users"} value={totalUsers} color="blue" />
             <StatCard icon={<FiActivity size={18} />} label="Active Sessions" value={activeUsers} color="green" />
             <StatCard icon={<FiServer size={18} />} label="Server Uptime" value="99.9%" color="yellow" />
             <StatCard icon={<FiAlertTriangle size={18} />} label="System Alerts" value={systemAlerts.length} color="red" trend="down" trendValue="1 since yesterday" />
@@ -323,16 +380,37 @@ export const AdminDashboard: React.FC = () => {
         <Card padding="none">
           <div className="p-5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-sm font-semibold text-slate-900">
-              {user?.role === "admin" ? "Hotel User Directory" : "Global User Directory"}
+              {user?.role === "admin" 
+                ? "Hotel User Directory" 
+                : user?.role === "super_admin" 
+                  ? "Global Admin Directory" 
+                  : "Global User Directory"}
             </h2>
             <button 
               onClick={() => setIsCreateModalOpen(true)}
               className="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-md transition-colors"
             >
-              + Add User
+              + Add {user?.role === "super_admin" ? "Admin" : "User"}
             </button>
           </div>
           <Table columns={userColumns} data={usersList} loading={usersLoading} />
+        </Card>
+      )}
+
+      {activeTab === "hotels" && user?.role === "super_admin" && (
+        <Card padding="none">
+          <div className="p-5 border-b border-slate-200 flex justify-between items-center">
+            <h2 className="text-sm font-semibold text-slate-900">
+              System Hotel Directory
+            </h2>
+            <button 
+              onClick={() => setIsCreateHotelModalOpen(true)}
+              className="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-md transition-colors"
+            >
+              + Add Hotel
+            </button>
+          </div>
+          <Table columns={hotelColumns} data={hotelsList} loading={hotelsLoading} />
         </Card>
       )}
 
@@ -348,6 +426,11 @@ export const AdminDashboard: React.FC = () => {
               ]
         }
         defaultHotelId={user?.role === "admin" ? user.hotelId : undefined}
+        excludeHotelIds={
+          user?.role === "super_admin"
+            ? usersList.filter(u => u.role === "admin" && u.hotelId).map(u => u.hotelId)
+            : undefined
+        }
         onSubmit={async (data) => {
           const { name, email, mobileNumber, role, hotelId } = data;
           await userService.createInternalUser({
@@ -358,6 +441,16 @@ export const AdminDashboard: React.FC = () => {
             hotelId: user?.role === "admin" ? user.hotelId : hotelId
           });
           fetchUsers();
+        }}
+      />
+
+      <CreateHotelModal
+        isOpen={isCreateHotelModalOpen}
+        onClose={() => setIsCreateHotelModalOpen(false)}
+        onSubmit={async (data) => {
+          const { name, city, country } = data;
+          await hotelService.createHotel({ name, city, country });
+          fetchHotels();
         }}
       />
 
