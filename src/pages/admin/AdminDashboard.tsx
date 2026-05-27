@@ -87,7 +87,11 @@ export const AdminDashboard: React.FC = () => {
       // Standard admin is scoped to their hotelId; super_admin gets all hotels
       const params = user.role === "admin" ? { hotel_id: user.hotelId } : {};
       const data = await userService.getUsers(params);
-      setUsersList(data);
+      // Filter out super_admin users for standard admins
+      const filtered = user.role === "admin"
+        ? data.filter((u) => u.role !== "super_admin")
+        : data;
+      setUsersList(filtered);
     } catch (err) {
       console.error("Failed to fetch users:", err);
     } finally {
