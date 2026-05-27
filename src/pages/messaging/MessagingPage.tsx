@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { FiSearch, FiSend, FiMoreVertical, FiArrowLeft, FiActivity, FiUsers, FiCheckCircle, FiFolder, FiHardDrive, FiFileText, FiClock, FiMessageSquare, FiBell, FiClipboard } from "react-icons/fi";
+import { FiSearch, FiSend, FiMoreVertical, FiArrowLeft, FiActivity, FiUsers, FiCheckCircle, FiFolder, FiHardDrive, FiFileText, FiClock, FiMessageSquare, FiBell, FiClipboard, FiHome, FiSettings } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import { User } from "../../mock/users";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import { userService } from "../../services/userService";
 import { messageService, Message } from "../../services/messageService";
+import { hotelService } from "../../services/hotelService";
 import apiClient from "../../services/api";
 
 export const MessagingPage: React.FC = () => {
@@ -33,24 +34,37 @@ export const MessagingPage: React.FC = () => {
     }
   }, [user]);
 
-  // Fetch manager/staff associated hotels
+  // Fetch manager/staff associated hotels (or all hotels for super admin / admin)
   useEffect(() => {
     if (user?.id) {
-      apiClient.get(`/Main/router-backend/api/users/${user.id}`)
-        .then((res) => {
-          if (res.data && res.data.success) {
-            const hotelsList = res.data.data.hotels || [];
+      if (user.role === "super_admin" || user.role === "admin") {
+        hotelService.getHotels()
+          .then((hotelsList) => {
             setUserHotels(hotelsList);
             if (hotelsList.length > 0) {
               setSelectedHotelId(hotelsList[0].id);
             }
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to fetch user's hotels:", err);
-        });
+          })
+          .catch((err) => {
+            console.error("Failed to fetch hotels for admin/super_admin:", err);
+          });
+      } else {
+        apiClient.get(`/Main/router-backend/api/users/${user.id}`)
+          .then((res) => {
+            if (res.data && res.data.success) {
+              const hotelsList = res.data.data.hotels || [];
+              setUserHotels(hotelsList);
+              if (hotelsList.length > 0) {
+                setSelectedHotelId(hotelsList[0].id);
+              }
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to fetch user's hotels:", err);
+          });
+      }
     }
-  }, [user?.id]);
+  }, [user]);
 
   // Fetch contacts for the selected hotel
   useEffect(() => {
@@ -73,14 +87,17 @@ export const MessagingPage: React.FC = () => {
             if (u.id === user?.id) return false;
             
             if (user?.role === "super_admin") {
-              // Super admins can ONLY message other admins (hotel admins)
-              return u.role === "admin";
+              // Super admins can ONLY message other admins (hotel admins) of the selected hotel
+              return u.role === "admin" && u.hotelId === selectedHotelId;
             } else if (user?.role === "admin") {
-              // Admins can message: super admins, admins (global), and managers (in hotel)
+              // Admins can message:
+              // 1. Super admins (global)
+              // 2. Admins of the selected hotel
+              // 3. Managers in the selected hotel ONLY IF the selected hotel is their own hotel
               const isSuperAdmin = u.role === "super_admin";
-              const isAdmin = u.role === "admin";
-              const isManagerInSelectedHotel = u.role === "manager" && hotelUsers.some((hu) => hu.id === u.id);
-              return isSuperAdmin || isAdmin || isManagerInSelectedHotel;
+              const isAdminOfSelectedHotel = u.role === "admin" && u.hotelId === selectedHotelId;
+              const isManagerInOwnHotel = u.role === "manager" && selectedHotelId === user.hotelId && u.hotelId === selectedHotelId;
+              return isSuperAdmin || isAdminOfSelectedHotel || isManagerInOwnHotel;
             } else {
               // Other roles can message: technician, manager, engineer, staff, admin in the hotel
               return ["technician", "manager", "engineer", "staff", "admin"].includes(u.role);
@@ -98,7 +115,7 @@ export const MessagingPage: React.FC = () => {
     } else {
       setContacts([]);
     }
-  }, [selectedHotelId, user?.id, user?.role]);
+  }, [selectedHotelId, user]);
 
   // Fetch chat history between current user and selected contact
   const fetchChatMessages = async () => {
@@ -159,6 +176,19 @@ export const MessagingPage: React.FC = () => {
         { icon: <FiBell />, label: "Dashboard", active: false, onClick: () => navigate("/staff", { state: { activeTab: "overview" } }) },
         { icon: <FiClock />, label: "My Schedule", active: false, onClick: () => navigate("/schedules") },
         { icon: <FiBell />, label: "Notifications", active: false, onClick: () => navigate("/staff", { state: { activeTab: "notifications" } }) },
+        { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
+      ];
+    } else if (user?.role === "super_admin") {
+      return [
+        { icon: <FiActivity />, label: "System Overview", active: false, onClick: () => navigate("/admin", { state: { activeTab: "overview" } }) },
+        { icon: <FiUsers />, label: "Admin Management", active: false, onClick: () => navigate("/admin", { state: { activeTab: "users" } }) },
+        { icon: <FiHome />, label: "Hotel Management", active: false, onClick: () => navigate("/admin", { state: { activeTab: "hotels" } }) },
+        { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
+        { icon: <FiSettings />, label: "System Settings", active: false, onClick: () => navigate("/admin", { state: { activeTab: "settings" } }) },
+      ];
+    } else if (user?.role === "admin") {
+      return [
+        { icon: <FiUsers />, label: "User Management", active: false, onClick: () => navigate("/admin", { state: { activeTab: "users" } }) },
         { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
       ];
     }
@@ -266,7 +296,14 @@ export const MessagingPage: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 truncate">{conversation.name}</p>
-                      <p className="text-xs text-slate-500 capitalize">{conversation.role}</p>
+                      <div className="flex justify-between items-center gap-2">
+                        <p className="text-xs text-slate-500 capitalize truncate">{conversation.role}</p>
+                        {conversation.hotelName && (
+                          <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium truncate max-w-[100px]" title={conversation.hotelName}>
+                            {conversation.hotelName}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -293,7 +330,9 @@ export const MessagingPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{selectedUser?.name || "User"}</p>
-                  <p className="text-xs text-emerald-600 font-medium capitalize">{selectedUser?.role || "Team member"}</p>
+                  <p className="text-xs text-emerald-600 font-medium capitalize">
+                    {selectedUser?.role || "Team member"}{selectedUser?.hotelName ? ` • ${selectedUser.hotelName}` : ""}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">

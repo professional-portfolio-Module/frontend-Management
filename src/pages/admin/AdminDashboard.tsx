@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { FiUsers, FiServer, FiActivity, FiSettings, FiDatabase, FiShield, FiAlertTriangle, FiHome } from "react-icons/fi";
+import { useNavigate, useLocation } from "react-router-dom";
+import { FiUsers, FiServer, FiActivity, FiSettings, FiDatabase, FiShield, FiAlertTriangle, FiHome, FiMessageSquare } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -15,6 +15,7 @@ import { Button } from "../../components/common/Button";
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "hotels" | "settings">("overview");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -52,10 +53,12 @@ export const AdminDashboard: React.FC = () => {
   }, [user?.id]);
 
   useEffect(() => {
-    if (user?.role === "admin") {
+    if (location.state && (location.state as any).activeTab) {
+      setActiveTab((location.state as any).activeTab);
+    } else if (user?.role === "admin") {
       setActiveTab("users");
     }
-  }, [user?.role]);
+  }, [location.state, user?.role]);
 
   const handleUpdateProfile = async () => {
     if (!profileName.trim()) {
@@ -170,6 +173,12 @@ export const AdminDashboard: React.FC = () => {
           },
         ]
       : []),
+    {
+      icon: <FiMessageSquare size={20} />,
+      label: "Messages",
+      active: false,
+      onClick: () => navigate("/messages"),
+    },
     ...(user?.role === "super_admin"
       ? [
           {
