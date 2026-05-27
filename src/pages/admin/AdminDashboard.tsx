@@ -465,6 +465,7 @@ export const AdminDashboard: React.FC = () => {
                   <option value="manager">Manager</option>
                   <option value="engineer">Engineer</option>
                   <option value="staff">Staff</option>
+                  <option value="technician">Technician</option>
                 </select>
               )}
             </div>
