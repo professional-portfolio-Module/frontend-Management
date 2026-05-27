@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiClock, FiMessageSquare, FiBell, FiCalendar, FiFolder, FiHardDrive, FiPlus, FiEdit, FiTrash2, FiSearch } from "react-icons/fi";
+import { FiClock, FiMessageSquare, FiBell, FiCalendar, FiFolder, FiHardDrive, FiPlus, FiEdit, FiTrash2, FiSearch, FiTrendingUp } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -14,6 +14,7 @@ import { assetService, Asset } from "../../services/assetService";
 import apiClient from "../../services/api";
 import { userService } from "../../services/userService";
 import { maintenanceScheduleService, MaintenanceSchedule } from "../../services/maintenanceScheduleService";
+import { AnalyticsPage } from "../analytics/AnalyticsPage";
 
 
 const SearchableAssetDropdown: React.FC<{
@@ -423,6 +424,7 @@ export const StaffDashboard: React.FC = () => {
 
   const sidebarItems = [
     { icon: <FiBell />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
+    { icon: <FiTrendingUp />, label: "Analytics", active: activeTab === "analytics", onClick: () => setActiveTab("analytics") },
     { icon: <FiCalendar />, label: "Maintenance Schedules", active: activeTab === "maintenance-schedules", onClick: () => setActiveTab("maintenance-schedules") },
     { icon: <FiClock />, label: "My Schedule", active: activeTab === "schedule", onClick: () => navigate("/schedules") },
     { icon: <FiFolder />, label: "Categories", active: activeTab === "categories", onClick: () => setActiveTab("categories") },
@@ -887,6 +889,11 @@ export const StaffDashboard: React.FC = () => {
             data={myMessages}
           />
         </Card>
+      )}
+
+      {/* Analytics Tab */}
+      {activeTab === "analytics" && (
+        <AnalyticsPage role="staff" />
       )}
 
       {/* Profile Modal */}

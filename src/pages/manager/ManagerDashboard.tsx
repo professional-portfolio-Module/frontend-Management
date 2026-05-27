@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiBell, FiActivity, FiFolder, FiHardDrive, FiClipboard, FiSearch } from "react-icons/fi";
+import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiBell, FiActivity, FiFolder, FiHardDrive, FiClipboard, FiSearch, FiTrendingUp } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -16,6 +16,7 @@ import { categoryService, Category } from "../../services/categoryService";
 import { assetService, Asset } from "../../services/assetService";
 import { manualTaskService, ManualTask } from "../../services/manualTaskService";
 import apiClient from "../../services/api";
+import { AnalyticsPage } from "../analytics/AnalyticsPage";
 
 const SearchableAssetDropdown: React.FC<{
   label: string;
@@ -669,6 +670,7 @@ export const ManagerDashboard: React.FC = () => {
 
   const sidebarItems = [
     { icon: <FiActivity />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
+    { icon: <FiTrendingUp />, label: "Analytics", active: activeTab === "analytics", onClick: () => setActiveTab("analytics") },
     { icon: <FiUsers />, label: "User Management", active: activeTab === "users", onClick: () => setActiveTab("users") },
     { icon: <FiCheckCircle />, label: "Verification", active: activeTab === "verification", onClick: () => setActiveTab("verification"), badge: pendingUsers.length },
     { icon: <FiFolder />, label: "Categories", active: activeTab === "categories", onClick: () => setActiveTab("categories") },
@@ -1325,6 +1327,11 @@ export const ManagerDashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-900 mb-6">System Logs</h2>
           <p className="text-slate-600">View system activity and audit logs.</p>
         </Card>
+      )}
+
+      {/* Analytics Tab */}
+      {activeTab === "analytics" && (
+        <AnalyticsPage role="manager" />
       )}
 
       {/* Profile Modal */}

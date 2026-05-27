@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiCheckCircle, FiClock, FiMessageSquare, FiFileText, FiClipboard, FiBell } from "react-icons/fi";
+import { FiCheckCircle, FiClock, FiMessageSquare, FiFileText, FiClipboard, FiBell, FiTrendingUp } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -9,8 +9,8 @@ import { Modal } from "../../components/common/Modal";
 import { useAuth } from "../../context/AuthContext";
 import { mockWorkItems, mockSchedules, mockNotifications } from "../../mock/data";
 import { ReportsPage } from "./ReportsPage";
-
 import { userService } from "../../services/userService";
+import { AnalyticsPage } from "../analytics/AnalyticsPage";
 
 export const EngineerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -65,6 +65,7 @@ export const EngineerDashboard: React.FC = () => {
 
   const sidebarItems = [
     { icon: <FiCheckCircle />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
+    { icon: <FiTrendingUp />, label: "Analytics", active: activeTab === "analytics", onClick: () => setActiveTab("analytics") },
     { icon: <FiFileText />, label: "Work Items", active: activeTab === "work-items", onClick: () => setActiveTab("work-items"), badge: workItemStats.pending },
     { icon: <FiClipboard />, label: "Reports", active: activeTab === "reports", onClick: () => setActiveTab("reports") },
     { icon: <FiClock />, label: "Schedule", active: activeTab === "schedule", onClick: () => navigate("/schedules") },
@@ -171,6 +172,11 @@ export const EngineerDashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Messages</h2>
           <p className="text-slate-600">Messaging system for internal communication.</p>
         </Card>
+      )}
+
+      {/* Analytics Tab */}
+      {activeTab === "analytics" && (
+        <AnalyticsPage role="engineer" />
       )}
 
       {/* Profile Modal */}
