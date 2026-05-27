@@ -21,7 +21,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const storedUser = authService.getCurrentUser();
     if (storedUser) {
-      setUser(storedUser);
+      if (storedUser.role === "technician") {
+        authService.clearAuthData();
+        setUser(null);
+      } else {
+        setUser(storedUser);
+      }
     }
     setIsLoading(false);
   }, []);
@@ -30,6 +35,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // DO NOT use setIsLoading here. It causes RoleBasedRedirect to unmount LoginPage
     // and destroys local component state (like error messages)
     const authUser = await authService.login(credentials);
+    if (authUser.role === "technician") {
+      throw new Error("Access Denied: Technicians must login via the mobile application.");
+    }
     authService.setAuthData(authUser);
     setUser(authUser);
     return authUser;
