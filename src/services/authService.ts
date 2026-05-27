@@ -64,7 +64,7 @@ export const authService = {
       console.error("Login API Error:", error);
       console.error("Error Response Data:", error.response?.data);
       
-      let message = "invalid credencials";
+      let message = "Invalid credentials";
       if (error.response?.data) {
         if (typeof error.response.data === 'string') {
           try {
@@ -78,7 +78,7 @@ export const authService = {
         }
       }
       if (message.toLowerCase().includes("credential") || message.toLowerCase().includes("invalid")) {
-        message = "invalid credencials";
+        message = "Invalid credentials";
       }
       throw new Error(message);
     }

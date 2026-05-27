@@ -72,7 +72,10 @@ export const MessagingPage: React.FC = () => {
           const filtered = uniqueUsers.filter((u) => {
             if (u.id === user?.id) return false;
             
-            if (user?.role === "admin") {
+            if (user?.role === "super_admin") {
+              // Super admins can ONLY message other admins (hotel admins)
+              return u.role === "admin";
+            } else if (user?.role === "admin") {
               // Admins can message: super admins, admins (global), and managers (in hotel)
               const isSuperAdmin = u.role === "super_admin";
               const isAdmin = u.role === "admin";

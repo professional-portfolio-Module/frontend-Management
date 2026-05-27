@@ -48,6 +48,12 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [user?.id]);
 
+  useEffect(() => {
+    if (user?.role === "admin") {
+      setActiveTab("users");
+    }
+  }, [user?.role]);
+
   const handleUpdateProfile = async () => {
     if (!profileName.trim()) {
       alert("Name is required");
@@ -115,12 +121,16 @@ export const AdminDashboard: React.FC = () => {
   ];
 
   const sidebarItems = [
-    {
-      icon: <FiActivity size={20} />,
-      label: "System Overview",
-      active: activeTab === "overview",
-      onClick: () => setActiveTab("overview"),
-    },
+    ...(user?.role === "super_admin"
+      ? [
+          {
+            icon: <FiActivity size={20} />,
+            label: "System Overview",
+            active: activeTab === "overview",
+            onClick: () => setActiveTab("overview"),
+          },
+        ]
+      : []),
     {
       icon: <FiUsers size={20} />,
       label: "User Management",
@@ -128,12 +138,16 @@ export const AdminDashboard: React.FC = () => {
       onClick: () => setActiveTab("users"),
       badge: pendingUsers > 0 ? pendingUsers : undefined,
     },
-    {
-      icon: <FiSettings size={20} />,
-      label: "System Settings",
-      active: activeTab === "settings",
-      onClick: () => setActiveTab("settings"),
-    },
+    ...(user?.role === "super_admin"
+      ? [
+          {
+            icon: <FiSettings size={20} />,
+            label: "System Settings",
+            active: activeTab === "settings",
+            onClick: () => setActiveTab("settings"),
+          },
+        ]
+      : []),
   ];
 
   const userColumns = [
@@ -322,16 +336,11 @@ export const AdminDashboard: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         allowedRoles={
-          user?.role === "admin"
-            ? [
-                { value: "ADMIN", label: "Admin" },
-                { value: "MANAGER", label: "Manager" }
-              ]
+          user?.role === "super_admin"
+            ? [{ value: "ADMIN", label: "Admin" }]
             : [
                 { value: "ADMIN", label: "Admin" },
-                { value: "MANAGER", label: "Manager" },
-                { value: "ENGINEER", label: "Engineer" },
-                { value: "STAFF", label: "Staff" },
+                { value: "MANAGER", label: "Manager" }
               ]
         }
         defaultHotelId={user?.role === "admin" ? user.hotelId : undefined}

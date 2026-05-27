@@ -40,6 +40,16 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   const [hotelsLoading, setHotelsLoading] = useState(true);
 
   useEffect(() => {
+    if (isOpen && allowedRoles.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        role: allowedRoles[0].value,
+        hotelId: defaultHotelId || prev.hotelId
+      }));
+    }
+  }, [isOpen, allowedRoles, defaultHotelId]);
+
+  useEffect(() => {
     if (!isOpen) return;
     if (defaultHotelId) {
       setFormData(prev => ({ ...prev, hotelId: defaultHotelId }));
