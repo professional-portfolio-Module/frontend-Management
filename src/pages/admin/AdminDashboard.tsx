@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiUsers, FiServer, FiActivity, FiSettings, FiDatabase, FiShield, FiAlertTriangle, FiHome, FiMessageSquare } from "react-icons/fi";
+import { FiUsers, FiServer, FiActivity, FiSettings, FiDatabase, FiShield, FiAlertTriangle, FiHome, FiMessageSquare, FiSearch } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -91,7 +91,11 @@ export const AdminDashboard: React.FC = () => {
 
   const [usersList, setUsersList] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [hotelsList, setHotelsList] = useState<Hotel[]>([]);
+  const [hotelSearchQuery, setHotelSearchQuery] = useState("");
   const [hotelsLoading, setHotelsLoading] = useState(false);
 
   const fetchUsers = async () => {
@@ -272,6 +276,31 @@ export const AdminDashboard: React.FC = () => {
     },
   ];
 
+  // Filtered users for the user/admin directory
+  const filteredUsers = usersList.filter((u) => {
+    const matchesSearch = 
+      !searchQuery.trim() ||
+      (u.name?.toLowerCase().includes(searchQuery.toLowerCase())) || 
+      (u.email?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (u.department?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (u.hotelName?.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesStatus = statusFilter === "all" || u.status === statusFilter;
+    const matchesRole = roleFilter === "all" || u.role?.toLowerCase() === roleFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus && matchesRole;
+  });
+
+  // Filtered hotels for the hotel directory
+  const filteredHotels = hotelsList.filter((h) => {
+    return (
+      !hotelSearchQuery.trim() ||
+      h.name?.toLowerCase().includes(hotelSearchQuery.toLowerCase()) ||
+      h.city?.toLowerCase().includes(hotelSearchQuery.toLowerCase()) ||
+      h.country?.toLowerCase().includes(hotelSearchQuery.toLowerCase())
+    );
+  });
+
   return (
     <DashboardLayout
       sidebarItems={sidebarItems}
@@ -402,7 +431,45 @@ export const AdminDashboard: React.FC = () => {
               + Add {user?.role === "super_admin" ? "Admin" : "User"}
             </button>
           </div>
-          <Table columns={userColumns} data={usersList} loading={usersLoading} />
+          {/* Search Filters Bar */}
+          <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Search by name, email, department or hotel..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-white placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+            <div className="flex gap-3">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white text-slate-600 focus:outline-none focus:border-primary-500"
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="pending">Pending</option>
+              </select>
+              {user?.role === "admin" && (
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white text-slate-600 focus:outline-none focus:border-primary-500"
+                >
+                  <option value="all">All Roles</option>
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="engineer">Engineer</option>
+                  <option value="staff">Staff</option>
+                </select>
+              )}
+            </div>
+          </div>
+          <Table columns={userColumns} data={filteredUsers} loading={usersLoading} />
         </Card>
       )}
 
@@ -419,7 +486,20 @@ export const AdminDashboard: React.FC = () => {
               + Add Hotel
             </button>
           </div>
-          <Table columns={hotelColumns} data={hotelsList} loading={hotelsLoading} />
+          {/* Hotel Search Bar */}
+          <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Search by hotel name, city or country..."
+                value={hotelSearchQuery}
+                onChange={(e) => setHotelSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-white placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+          <Table columns={hotelColumns} data={filteredHotels} loading={hotelsLoading} />
         </Card>
       )}
 
