@@ -92,11 +92,13 @@ export const MessagingPage: React.FC = () => {
             } else if (user?.role === "admin") {
               // Admins can message:
               // 1. Super admins (global)
-              // 2. Admins in his own hotel AND admins in other hotels (role === "admin")
-              // 3. Managers in his own hotel (role === "manager" && hotelId === user.hotelId)
+              // 2. Admins in other hotels (role === "admin")
+              // 3. Managers in his own hotel
               const isSuperAdmin = u.role === "super_admin";
               const isAdmin = u.role === "admin";
-              const isManagerInOwnHotel = u.role === "manager" && u.hotelId === user.hotelId;
+              // Use selectedHotelId (admin's assigned hotel) as fallback if user.hotelId is empty
+              const adminHotelId = user.hotelId || selectedHotelId;
+              const isManagerInOwnHotel = u.role === "manager" && u.hotelId === adminHotelId;
               return isSuperAdmin || isAdmin || isManagerInOwnHotel;
             } else {
               // Other roles can message: technician, manager, engineer, staff, admin in the hotel
