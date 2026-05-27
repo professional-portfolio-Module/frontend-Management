@@ -235,7 +235,7 @@ export const MessagingPage: React.FC = () => {
             {userHotels.length > 0 && (
               <div>
                 <label htmlFor="hotel-select" className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                  Active Hotel
+                  {user?.role === "super_admin" ? "Select Hotel" : "Active Hotel"}
                 </label>
                 <select
                   id="hotel-select"
@@ -298,7 +298,7 @@ export const MessagingPage: React.FC = () => {
                       <p className="text-sm font-medium text-slate-900 truncate">{conversation.name}</p>
                       <div className="flex justify-between items-center gap-2">
                         <p className="text-xs text-slate-500 capitalize truncate">{conversation.role}</p>
-                        {conversation.hotelName && (
+                        {conversation.hotelName && user?.role !== "super_admin" && (
                           <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium truncate max-w-[100px]" title={conversation.hotelName}>
                             {conversation.hotelName}
                           </span>
@@ -331,7 +331,7 @@ export const MessagingPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{selectedUser?.name || "User"}</p>
                   <p className="text-xs text-emerald-600 font-medium capitalize">
-                    {selectedUser?.role || "Team member"}{selectedUser?.hotelName ? ` • ${selectedUser.hotelName}` : ""}
+                    {selectedUser?.role || "Team member"}{selectedUser?.hotelName && user?.role !== "super_admin" ? ` • ${selectedUser.hotelName}` : ""}
                   </p>
                 </div>
               </div>
