@@ -56,14 +56,34 @@ export const MessagingPage: React.FC = () => {
   useEffect(() => {
     if (selectedHotelId) {
       setContactsLoading(true);
-      userService.getUsers({ hotel_id: selectedHotelId })
-        .then((data) => {
-          // Only show allowed roles: technician, manager, engineer, staff, admin
-          // Filter out the logged-in user from the contacts list
-          const filtered = data.filter((u) => 
-            u.id !== user?.id &&
-            ["technician", "manager", "engineer", "staff", "admin"].includes(u.role)
-          );
+      const fetchHotelContacts = userService.getUsers({ hotel_id: selectedHotelId });
+      const fetchAllUsers = userService.getUsers(); // To fetch super admin users globally
+
+      Promise.all([fetchHotelContacts, fetchAllUsers])
+        .then(([hotelUsers, allUsers]) => {
+          const superAdmins = allUsers.filter((u) => u.role === "super_admin");
+          const admins = allUsers.filter((u) => u.role === "admin");
+          const combined = [...hotelUsers, ...superAdmins, ...admins];
+          
+          // Deduplicate by ID
+          const uniqueUsers = Array.from(new Map(combined.map(item => [item.id, item])).values());
+          
+          // Filter out logged-in user and enforce role permissions
+          const filtered = uniqueUsers.filter((u) => {
+            if (u.id === user?.id) return false;
+            
+            if (user?.role === "admin") {
+              // Admins can message: super admins, admins (global), and managers (in hotel)
+              const isSuperAdmin = u.role === "super_admin";
+              const isAdmin = u.role === "admin";
+              const isManagerInSelectedHotel = u.role === "manager" && hotelUsers.some((hu) => hu.id === u.id);
+              return isSuperAdmin || isAdmin || isManagerInSelectedHotel;
+            } else {
+              // Other roles can message: technician, manager, engineer, staff, admin in the hotel
+              return ["technician", "manager", "engineer", "staff", "admin"].includes(u.role);
+            }
+          });
+          
           setContacts(filtered);
         })
         .catch((err) => {
@@ -75,7 +95,7 @@ export const MessagingPage: React.FC = () => {
     } else {
       setContacts([]);
     }
-  }, [selectedHotelId, user?.id]);
+  }, [selectedHotelId, user?.id, user?.role]);
 
   // Fetch chat history between current user and selected contact
   const fetchChatMessages = async () => {
