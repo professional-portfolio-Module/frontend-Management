@@ -25,7 +25,9 @@ export const userService = {
           phone: u.mobileNumber || u.mobilenumber || "",
           department: u.role ? (u.role.toUpperCase() === "ADMIN" ? "Administration" : u.role.toUpperCase() === "MANAGER" ? "Management" : "Operations") : "Operations",
           status: u.is_active ? "active" : "inactive",
-          createdAt: u.created_at || new Date().toISOString()
+          createdAt: u.created_at || new Date().toISOString(),
+          hotelId: u.hotels && u.hotels[0] ? u.hotels[0].id : u.hotelId || "",
+          hotelName: u.hotels && u.hotels[0] ? u.hotels[0].name : u.hotelName || "",
         }));
       }
       return [];

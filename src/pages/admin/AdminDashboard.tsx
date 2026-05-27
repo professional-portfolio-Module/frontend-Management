@@ -7,6 +7,7 @@ import { Table } from "../../components/common/Table";
 import { CreateAccountModal } from "../../components/common/CreateAccountModal";
 import { userService } from "../../services/userService";
 import { useAuth } from "../../context/AuthContext";
+import apiClient from "../../services/api";
 import { Modal } from "../../components/common/Modal";
 import { Button } from "../../components/common/Button";
 
@@ -21,12 +22,31 @@ export const AdminDashboard: React.FC = () => {
   const [profileName, setProfileName] = useState(user?.name || "");
   const [profilePhone, setProfilePhone] = useState(user?.phone || "");
 
+  const [adminHotel, setAdminHotel] = useState<any>(null);
+
   useEffect(() => {
     if (user) {
       setProfileName(user.name);
       setProfilePhone(user.phone || "");
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user?.id) {
+      apiClient.get(`/Main/router-backend/api/users/${user.id}`)
+        .then((res) => {
+          if (res.data && res.data.success) {
+            const hotelsList = res.data.data.hotels || [];
+            if (hotelsList.length > 0) {
+              setAdminHotel(hotelsList[0]);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch admin's hotel:", err);
+        });
+    }
+  }, [user?.id]);
 
   const handleUpdateProfile = async () => {
     if (!profileName.trim()) {
@@ -136,6 +156,13 @@ export const AdminDashboard: React.FC = () => {
       ),
     },
     {
+      key: "hotelName",
+      label: "Hotel",
+      render: (value: string) => (
+        <span className="text-sm text-slate-700 font-medium">{value || "Global"}</span>
+      ),
+    },
+    {
       key: "department",
       label: "Department",
     },
@@ -168,7 +195,11 @@ export const AdminDashboard: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 mb-1">Administration</h1>
-        <p className="text-sm text-slate-500">System health and global configuration</p>
+        <p className="text-sm text-slate-500">
+          {user?.role === "admin" && adminHotel 
+            ? `Scoped to ${adminHotel.name} (${adminHotel.city})` 
+            : "System health and global configuration"}
+        </p>
       </div>
 
       {/* Tabs */}
@@ -288,7 +319,10 @@ export const AdminDashboard: React.FC = () => {
         onClose={() => setIsCreateModalOpen(false)}
         allowedRoles={
           user?.role === "admin"
-            ? [{ value: "MANAGER", label: "Manager" }]
+            ? [
+                { value: "ADMIN", label: "Admin" },
+                { value: "MANAGER", label: "Manager" }
+              ]
             : [
                 { value: "ADMIN", label: "Admin" },
                 { value: "MANAGER", label: "Manager" },

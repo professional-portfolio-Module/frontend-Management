@@ -6,6 +6,7 @@ export interface User {
   role: "admin" | "super_admin" | "manager" | "engineer" | "staff" | "technician";
   phone?: string;
   hotelId?: string;
+  hotelName?: string;
   profilePhoto?: string;
   department?: string;
   status: "active" | "inactive" | "pending";
