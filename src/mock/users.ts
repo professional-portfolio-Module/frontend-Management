@@ -3,7 +3,7 @@ export interface User {
   email: string;
   password?: string;
   name: string;
-  role: "admin" | "manager" | "engineer" | "staff" | "technician";
+  role: "admin" | "super_admin" | "manager" | "engineer" | "staff" | "technician";
   phone?: string;
   hotelId?: string;
   profilePhoto?: string;

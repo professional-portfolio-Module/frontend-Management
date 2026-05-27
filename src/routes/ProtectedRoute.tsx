@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "admin" | "manager" | "engineer" | "staff";
+  requiredRole?: "admin" | "super_admin" | "manager" | "engineer" | "staff";
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
@@ -22,15 +22,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/login" />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    // Redirect to the user's own dashboard instead of root to avoid loops
-    const roleRoutes: Record<string, string> = {
-      admin: "/admin",
-      manager: "/manager",
-      engineer: "/engineer",
-      staff: "/staff",
-    };
-    return <Navigate to={roleRoutes[user.role] || "/"} replace />;
+  if (requiredRole) {
+    const isAllowed = user.role === requiredRole || (requiredRole === "admin" && user.role === "super_admin");
+    if (!isAllowed) {
+      // Redirect to the user's own dashboard instead of root to avoid loops
+      const roleRoutes: Record<string, string> = {
+        admin: "/admin",
+        super_admin: "/admin",
+        manager: "/manager",
+        engineer: "/engineer",
+        staff: "/staff",
+      };
+      return <Navigate to={roleRoutes[user.role] || "/"} replace />;
+    }
   }
 
   return <>{children}</>;

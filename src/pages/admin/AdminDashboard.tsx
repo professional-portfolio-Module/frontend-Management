@@ -1,22 +1,88 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUsers, FiServer, FiActivity, FiSettings, FiDatabase, FiShield, FiAlertTriangle } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
 import { CreateAccountModal } from "../../components/common/CreateAccountModal";
-import { mockUsers } from "../../mock/users";
 import { userService } from "../../services/userService";
+import { useAuth } from "../../context/AuthContext";
+import { Modal } from "../../components/common/Modal";
+import { Button } from "../../components/common/Button";
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "settings">("overview");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Mock admin data
-  const totalUsers = mockUsers.length;
-  const activeUsers = mockUsers.filter(u => u.status === "active").length;
-  const pendingUsers = mockUsers.filter(u => u.status === "pending").length;
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileMode, setProfileMode] = useState<"view" | "edit">("view");
+  const [profileName, setProfileName] = useState(user?.name || "");
+  const [profilePhone, setProfilePhone] = useState(user?.phone || "");
+
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name);
+      setProfilePhone(user.phone || "");
+    }
+  }, [user]);
+
+  const handleUpdateProfile = async () => {
+    if (!profileName.trim()) {
+      alert("Name is required");
+      return;
+    }
+    try {
+      await userService.updateProfile(user!.id, profileName, profilePhone);
+      updateProfile(profileName, profilePhone);
+      alert("Profile updated successfully!");
+      setProfileMode("view");
+    } catch (err: any) {
+      alert(err.message || "Failed to update profile");
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    if (window.confirm("Are you sure you want to deactivate your account? This action cannot be undone.")) {
+      try {
+        await userService.deleteUser(user!.id);
+        alert("Account deactivated successfully.");
+        setShowProfileModal(false);
+        await logout();
+        navigate("/login");
+      } catch (err: any) {
+        alert(err.message || "Failed to deactivate account");
+      }
+    }
+  };
+
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+
+  const fetchUsers = async () => {
+    if (!user) return;
+    setUsersLoading(true);
+    try {
+      // Standard admin is scoped to their hotelId; super_admin gets all hotels
+      const params = user.role === "admin" ? { hotel_id: user.hotelId } : {};
+      const data = await userService.getUsers(params);
+      setUsersList(data);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [user]);
+
+  // Calculate stats from loaded users list
+  const totalUsers = usersList.length;
+  const activeUsers = usersList.filter(u => u.status === "active").length;
+  const pendingUsers = usersList.filter(u => u.status === "pending").length;
 
   const systemAlerts = [
     { id: 1, type: "warning", message: "High CPU usage on Node 02", timestamp: new Date(Date.now() - 3600000).toISOString() },
@@ -97,7 +163,7 @@ export const AdminDashboard: React.FC = () => {
   return (
     <DashboardLayout
       sidebarItems={sidebarItems}
-      onProfileClick={() => navigate("/profile")}
+      onProfileClick={() => setShowProfileModal(true)}
     >
       {/* Header */}
       <div className="mb-8">
@@ -203,7 +269,9 @@ export const AdminDashboard: React.FC = () => {
       {activeTab === "users" && (
         <Card padding="none">
           <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-            <h2 className="text-sm font-semibold text-slate-900">Global User Directory</h2>
+            <h2 className="text-sm font-semibold text-slate-900">
+              {user?.role === "admin" ? "Hotel User Directory" : "Global User Directory"}
+            </h2>
             <button 
               onClick={() => setIsCreateModalOpen(true)}
               className="text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-md transition-colors"
@@ -211,18 +279,24 @@ export const AdminDashboard: React.FC = () => {
               + Add User
             </button>
           </div>
-          <Table columns={userColumns} data={mockUsers} />
+          <Table columns={userColumns} data={usersList} loading={usersLoading} />
         </Card>
       )}
 
       <CreateAccountModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        allowedRoles={[
-          { value: "MANAGER", label: "Manager" },
-          { value: "ENGINEER", label: "Engineer" },
-          { value: "STAFF", label: "Staff" },
-        ]}
+        allowedRoles={
+          user?.role === "admin"
+            ? [{ value: "MANAGER", label: "Manager" }]
+            : [
+                { value: "ADMIN", label: "Admin" },
+                { value: "MANAGER", label: "Manager" },
+                { value: "ENGINEER", label: "Engineer" },
+                { value: "STAFF", label: "Staff" },
+              ]
+        }
+        defaultHotelId={user?.role === "admin" ? user.hotelId : undefined}
         onSubmit={async (data) => {
           const { name, email, mobileNumber, role, hotelId } = data;
           await userService.createInternalUser({
@@ -230,10 +304,116 @@ export const AdminDashboard: React.FC = () => {
             email,
             mobileNumber,
             role,
-            hotelId
+            hotelId: user?.role === "admin" ? user.hotelId : hotelId
           });
+          fetchUsers();
         }}
       />
+
+      {/* Profile Modal */}
+      <Modal 
+        isOpen={showProfileModal} 
+        title={profileMode === "view" ? "My Profile" : "Edit Profile"} 
+        onClose={() => {
+          setShowProfileModal(false);
+          setProfileMode("view");
+        }}
+      >
+        {profileMode === "view" ? (
+          <div className="space-y-6">
+            {/* Avatar & Header */}
+            <div className="flex flex-col items-center pb-4 border-b border-slate-100">
+              <div className="w-20 h-20 rounded-full bg-primary-600 text-white font-bold flex items-center justify-center text-3xl shadow-md border-2 border-white ring-4 ring-primary-50">
+                {user?.name?.charAt(0).toUpperCase()}
+              </div>
+              <h3 className="mt-3 text-lg font-bold text-slate-900">{user?.name}</h3>
+              <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-700/20">
+                {user?.role}
+              </span>
+            </div>
+
+            {/* Profile Fields List */}
+            <div className="space-y-3.5 text-sm">
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="font-semibold text-slate-500">Email Address</span>
+                <span className="text-slate-900 font-medium">{user?.email}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="font-semibold text-slate-500">Phone Number</span>
+                <span className="text-slate-900 font-medium">{user?.phone || "Not specified"}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="font-semibold text-slate-500">Department</span>
+                <span className="text-slate-900 font-medium">{user?.department || "Administration"}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-50">
+                <span className="font-semibold text-slate-500">Account Status</span>
+                <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-600">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Active
+                </span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="font-semibold text-slate-500">Created At</span>
+                <span className="text-slate-900 font-medium">
+                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : "N/A"}
+                </span>
+              </div>
+            </div>
+
+            {/* Actions Row */}
+            <div className="flex flex-col gap-2 pt-4 border-t border-slate-100">
+              <Button fullWidth onClick={() => setProfileMode("edit")}>
+                Edit Profile
+              </Button>
+              <Button fullWidth variant="danger" onClick={handleDeactivateAccount}>
+                Deactivate Account
+              </Button>
+              <Button fullWidth variant="secondary" onClick={() => {
+                setShowProfileModal(false);
+                setProfileMode("view");
+              }}>
+                Close
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-1.5">Name</label>
+              <input
+                type="text"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                placeholder="Enter your name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-1.5">Phone</label>
+              <input
+                type="tel"
+                value={profilePhone}
+                onChange={(e) => setProfilePhone(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                placeholder="Enter your phone number"
+              />
+            </div>
+            <div className="flex gap-3 pt-6 border-t border-slate-100">
+              <Button fullWidth onClick={handleUpdateProfile}>
+                Save Changes
+              </Button>
+              <Button fullWidth variant="secondary" onClick={() => setProfileMode("view")}>
+                Back
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {activeTab === "settings" && (
         <Card>

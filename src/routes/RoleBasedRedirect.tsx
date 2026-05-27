@@ -19,7 +19,7 @@ export const RoleBasedRedirect: React.FC<RoleBasedRedirectProps> = ({ children }
 
   // If user is authenticated but accessing root, redirect to their role dashboard
   if (user) {
-    if (user.role === "admin") {
+    if (user.role === "admin" || user.role === "super_admin") {
       return <Navigate to="/admin" />;
     } else if (user.role === "manager") {
       return <Navigate to="/manager" />;
