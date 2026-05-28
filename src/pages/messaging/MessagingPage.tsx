@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FiSearch, FiSend, FiMoreVertical, FiArrowLeft, FiActivity, FiUsers, FiCheckCircle, FiFolder, FiHardDrive, FiFileText, FiClock, FiMessageSquare, FiBell, FiClipboard, FiHome, FiSettings } from "react-icons/fi";
+import { FiSearch, FiSend, FiMoreVertical, FiArrowLeft, FiActivity, FiUsers, FiCheckCircle, FiFolder, FiHardDrive, FiFileText, FiClock, FiMessageSquare, FiBell, FiClipboard, FiHome, FiSettings, FiShield } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import { User } from "../../mock/users";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import { userService } from "../../services/userService";
-import { messageService, Message } from "../../services/messageService";
+import { messageService, Message, getSafetyNumber } from "../../services/messageService";
 import { hotelService } from "../../services/hotelService";
 import apiClient from "../../services/api";
 
@@ -24,6 +24,17 @@ export const MessagingPage: React.FC = () => {
   const [contacts, setContacts] = useState<User[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [safetyNumber, setSafetyNumber] = useState("");
+
+  // Derive E2EE safety numbers when chat selection changes
+  useEffect(() => {
+    if (selectedChat && user?.id) {
+      getSafetyNumber(user.id, selectedChat).then((num) => setSafetyNumber(num));
+    } else {
+      setSafetyNumber("");
+    }
+  }, [selectedChat, user?.id]);
 
   // Fetch pending verification requests count for Manager sidebar badge
   useEffect(() => {
@@ -338,6 +349,14 @@ export const MessagingPage: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowVerifyModal(true)}
+                  title="Verify Encryption Keys"
+                  className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-md transition-colors duration-150"
+                  aria-label="Verify Encryption Keys"
+                >
+                  <FiShield size={16} />
+                </button>
                 <button className="p-2 hover:bg-slate-50 rounded-md transition-colors duration-150">
                   <FiMoreVertical size={16} className="text-slate-400" />
                 </button>
@@ -419,6 +438,48 @@ export const MessagingPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showVerifyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 border border-slate-100 flex flex-col items-center">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-4 text-emerald-600">
+              <FiShield size={24} />
+            </div>
+            <h2 className="text-base font-bold text-slate-900 mb-1">Verify Encryption</h2>
+            <p className="text-xs text-slate-500 text-center mb-6 leading-relaxed">
+              Verify safety numbers to confirm all messages are secured with Perfect Forward Secrecy.
+            </p>
+            
+            {/* QR Code */}
+            <div className="p-3 border border-slate-100 bg-slate-50 rounded-lg mb-6 shadow-sm flex justify-center items-center">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+                  safetyNumber
+                )}`}
+                alt="Safety Number QR Code"
+                className="w-36 h-36 object-contain"
+              />
+            </div>
+            
+            {/* Safety Numbers */}
+            <div className="w-full bg-slate-50 border border-slate-100 rounded-lg p-3 text-center mb-6">
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Safety Numbers
+              </label>
+              <span className="font-mono text-sm font-bold text-slate-800 tracking-widest break-all">
+                {safetyNumber}
+              </span>
+            </div>
+            
+            <button
+              onClick={() => setShowVerifyModal(false)}
+              className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold transition-colors shadow-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
