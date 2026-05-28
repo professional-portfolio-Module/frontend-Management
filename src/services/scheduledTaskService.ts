@@ -37,8 +37,11 @@ export const scheduledTaskService = {
     if (status) params.status = status;
     if (priority) params.priority = priority;
 
-    const response = await apiClient.get("/scheduled-tasks", { params });
-    return response.data.data;
+    const response = await apiClient.get("/Main/router-backend/api/scheduled-tasks", { params });
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    return [];
   }
 };
 
