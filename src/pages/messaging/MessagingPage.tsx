@@ -153,13 +153,41 @@ export const MessagingPage: React.FC = () => {
     }
   }, [selectedChat, user?.id]);
 
-  // Setup periodic polling for new messages (every 4 seconds)
+  // Setup real-time messaging using Server-Sent Events (SSE)
   useEffect(() => {
-    if (!selectedChat || !user?.id) return;
-    const interval = setInterval(() => {
-      fetchChatMessages();
-    }, 4000);
-    return () => clearInterval(interval);
+    if (!user?.id) return;
+
+    const baseURL = apiClient.defaults.baseURL || "";
+    const streamUrl = `${baseURL}/Main/router-backend/api/messages/stream?userId=${user.id}`;
+    
+    const eventSource = new EventSource(streamUrl, {
+      withCredentials: true
+    });
+
+    eventSource.onmessage = (event) => {
+      try {
+        const newMessage = JSON.parse(event.data);
+        
+        // If the new message belongs to the current chat room, fetch and decrypt it immediately
+        if (
+          selectedChat &&
+          ((newMessage.sender_id === user.id && newMessage.receiver_id === selectedChat) ||
+           (newMessage.sender_id === selectedChat && newMessage.receiver_id === user.id))
+        ) {
+          fetchChatMessages();
+        }
+      } catch (err) {
+        console.error("Error parsing real-time message payload:", err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.warn("Real-time stream connection lost/error, EventSource will automatically retry.", err);
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [selectedChat, user?.id]);
 
   const getSidebarItems = () => {
