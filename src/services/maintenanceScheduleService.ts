@@ -14,7 +14,7 @@ export interface MaintenanceSchedule {
   schedule_id: string;
   hotel_id: string;
   card_no: string;
-  asset_id: string;
+  asset_id?: string;
   month: string;
   week_no: number;
   start_date: string;
