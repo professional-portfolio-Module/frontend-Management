@@ -15,6 +15,7 @@ import { userService } from "../../services/userService";
 import { categoryService, Category } from "../../services/categoryService";
 import { assetService, Asset } from "../../services/assetService";
 import { manualTaskService, ManualTask } from "../../services/manualTaskService";
+import { scheduledTaskService, ScheduledTask } from "../../services/scheduledTaskService";
 import apiClient from "../../services/api";
 import { AnalyticsPage } from "../analytics/AnalyticsPage";
 
@@ -172,6 +173,12 @@ export const ManagerDashboard: React.FC = () => {
   const [manualTaskPriority, setManualTaskPriority] = useState("");
   const [manualTaskAssignedTo, setManualTaskAssignedTo] = useState("");
 
+  // Scheduled Tasks state
+  const [scheduledTasks, setScheduledTasks] = useState<ScheduledTask[]>([]);
+  const [scheduledTasksLoading, setScheduledTasksLoading] = useState(false);
+  const [scheduledTaskStatus, setScheduledTaskStatus] = useState("");
+  const [scheduledTaskPriority, setScheduledTaskPriority] = useState("");
+
   // Modals state
   const [isManualTaskModalOpen, setIsManualTaskModalOpen] = useState(false);
   const [manualTaskForm, setManualTaskForm] = useState({
@@ -274,6 +281,23 @@ export const ManagerDashboard: React.FC = () => {
       console.error("Failed to fetch manual tasks:", err);
     } finally {
       setManualTasksLoading(false);
+    }
+  };
+
+  const fetchScheduledTasks = async () => {
+    if (!selectedHotelId) return;
+    setScheduledTasksLoading(true);
+    try {
+      const data = await scheduledTaskService.getScheduledTasks(
+        selectedHotelId,
+        scheduledTaskStatus || undefined,
+        scheduledTaskPriority || undefined
+      );
+      setScheduledTasks(data);
+    } catch (err: any) {
+      console.error("Failed to fetch scheduled tasks:", err);
+    } finally {
+      setScheduledTasksLoading(false);
     }
   };
 
@@ -404,6 +428,12 @@ export const ManagerDashboard: React.FC = () => {
       fetchManualTasks();
     }
   }, [activeTab, manualTaskStatus, manualTaskPriority, manualTaskAssignedTo, manualTaskSearch, selectedHotelId]);
+
+  React.useEffect(() => {
+    if (activeTab === "work-items") {
+      fetchScheduledTasks();
+    }
+  }, [activeTab, scheduledTaskStatus, scheduledTaskPriority, selectedHotelId]);
 
 
   const engineers = usersList.filter((u) => u.role === "engineer");
@@ -676,7 +706,7 @@ export const ManagerDashboard: React.FC = () => {
     { icon: <FiFolder />, label: "Categories", active: activeTab === "categories", onClick: () => setActiveTab("categories") },
     { icon: <FiHardDrive />, label: "Assets", active: activeTab === "assets", onClick: () => setActiveTab("assets") },
     { icon: <FiClipboard />, label: "Manual Tasks", active: activeTab === "manual-tasks", onClick: () => setActiveTab("manual-tasks") },
-    { icon: <FiFileText />, label: "Work Items", active: activeTab === "work-items", onClick: () => setActiveTab("work-items") },
+    { icon: <FiFileText />, label: "Scheduled Tasks", active: activeTab === "work-items", onClick: () => setActiveTab("work-items") },
     { icon: <FiClock />, label: "Schedules", active: activeTab === "schedules", onClick: () => navigate("/schedules") },
     { icon: <FiMessageSquare />, label: "Messages", active: activeTab === "messages", onClick: () => navigate("/messages") },
     { icon: <FiFileText />, label: "System Logs", active: activeTab === "logs", onClick: () => setActiveTab("logs") },
@@ -1291,14 +1321,161 @@ export const ManagerDashboard: React.FC = () => {
         </Card>
       )}
 
-      {/* Work Items Tab */}
+      {/* Work Items Tab (Scheduled Tasks) */}
       {activeTab === "work-items" && (
-        <Card>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Manage Work Items</h2>
-            <Button onClick={() => navigate("/manager/create-work-item")}>+ New Work Item</Button>
+        <Card padding="none">
+          <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-white">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Scheduled Tasks</h2>
+              <p className="text-xs text-slate-500 mt-1">View and monitor all auto-generated background scheduled tasks</p>
+            </div>
           </div>
-          <p className="text-slate-600">View and manage all work items assigned to your team members.</p>
+
+          {/* Filters Panel */}
+          <div className="p-5 bg-slate-50 border-b border-slate-200 grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Status</label>
+              <select
+                value={scheduledTaskStatus}
+                onChange={(e) => setScheduledTaskStatus(e.target.value)}
+                className="input-field text-sm bg-white cursor-pointer"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="under_review">Under Review</option>
+                <option value="completed">Completed</option>
+                <option value="rejected">Rejected</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Priority</label>
+              <select
+                value={scheduledTaskPriority}
+                onChange={(e) => setScheduledTaskPriority(e.target.value)}
+                className="input-field text-sm bg-white cursor-pointer"
+              >
+                <option value="">All Priorities</option>
+                <option value="normal">Normal</option>
+                <option value="emergency">Emergency</option>
+              </select>
+            </div>
+          </div>
+
+          <Table
+            loading={scheduledTasksLoading}
+            columns={[
+              {
+                key: "schedule_title",
+                label: "Task details",
+                render: (val, row: ScheduledTask) => (
+                  <div>
+                    <div className="font-semibold text-slate-900">{val}</div>
+                    <div className="text-xs text-slate-500 mt-1 max-w-md truncate">
+                      {row.additional_details || "No details provided"}
+                    </div>
+                  </div>
+                )
+              },
+              {
+                key: "asset_card_no",
+                label: "Asset",
+                render: (val, row: ScheduledTask) => (
+                  <div>
+                    <div className="text-sm font-medium text-slate-700">{val}</div>
+                    {row.asset_description && (
+                      <div className="text-xs text-slate-400 mt-0.5">{row.asset_description}</div>
+                    )}
+                    {row.asset_location && (
+                      <div className="text-xs text-slate-400 mt-0.5 font-mono">{row.asset_location}</div>
+                    )}
+                  </div>
+                )
+              },
+              {
+                key: "assigned_technicians",
+                label: "Assigned Technicians",
+                render: (val: any[]) => (
+                  <div className="flex flex-wrap gap-1">
+                    {val && val.length > 0 ? (
+                      val.map((tech) => (
+                        <span
+                          key={tech.user_id}
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200"
+                        >
+                          {tech.technician_name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-400">Unassigned</span>
+                    )}
+                  </div>
+                )
+              },
+              {
+                key: "due_date",
+                label: "Due Date",
+                render: (val) => (
+                  val ? (
+                    <span className="text-sm text-slate-600 font-medium">
+                      {new Date(val).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-400">-</span>
+                  )
+                )
+              },
+              {
+                key: "priority",
+                label: "Priority",
+                render: (_val, row: ScheduledTask) => {
+                  if (row.priority === 'emergency') {
+                    return (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 animate-pulse border border-red-200">
+                        Emergency
+                      </span>
+                    );
+                  }
+                  return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+                      Normal
+                    </span>
+                  );
+                }
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (_val, row: ScheduledTask) => {
+                  switch (row.status) {
+                    case 'pending':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Pending</span>;
+                    case 'in-progress':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">In Progress</span>;
+                    case 'under_review':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">Under Review</span>;
+                    case 'completed':
+                      return (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200 w-fit">Completed</span>
+                          {row.done_by_name && (
+                            <span className="text-[10px] text-slate-400">By {row.done_by_name}</span>
+                          )}
+                        </div>
+                      );
+                    case 'rejected':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">Rejected</span>;
+                    case 'expired':
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">Expired</span>;
+                    default:
+                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">{row.status}</span>;
+                  }
+                }
+              }
+            ]}
+            data={scheduledTasks}
+          />
         </Card>
       )}
 
