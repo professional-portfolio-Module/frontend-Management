@@ -777,7 +777,15 @@ export const ManagerDashboard: React.FC = () => {
       {/* Verification Tab */}
       {activeTab === "verification" && (
         <Card>
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Employee Verification</h2>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Employee Verification</h2>
+              <p className="text-xs text-slate-500 mt-1">Review and approve self-registered user accounts</p>
+            </div>
+            <div className="bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1.5 rounded-full text-xs font-semibold">
+              Pending: {pendingUsers.length}
+            </div>
+          </div>
           <Table
             columns={[
               { key: "name", label: "Name" },
@@ -824,6 +832,38 @@ export const ManagerDashboard: React.FC = () => {
             >
               + Add User
             </button>
+          </div>
+
+          {/* Stats Summary Panel */}
+          <div className="p-5 bg-slate-50/50 border-b border-slate-200 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Total Directory</span>
+              <span className="text-lg font-bold text-slate-800 mt-1">{usersList.length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-green-500 uppercase tracking-wider">Active</span>
+              <span className="text-lg font-bold text-green-600 mt-1">{usersList.filter(u => u.status === 'active').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Inactive</span>
+              <span className="text-lg font-bold text-slate-600 mt-1">{usersList.filter(u => u.status === 'inactive').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">Managers</span>
+              <span className="text-lg font-bold text-blue-600 mt-1">{usersList.filter(u => u.role === 'manager').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wider">Engineers</span>
+              <span className="text-lg font-bold text-indigo-600 mt-1">{usersList.filter(u => u.role === 'engineer').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-teal-500 uppercase tracking-wider">Technicians</span>
+              <span className="text-lg font-bold text-teal-600 mt-1">{usersList.filter(u => u.role === 'technician').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-wider">Staff</span>
+              <span className="text-lg font-bold text-purple-600 mt-1">{usersList.filter(u => u.role === 'staff').length}</span>
+            </div>
           </div>
 
           {/* Search & Filters Toolbar */}
@@ -915,8 +955,11 @@ export const ManagerDashboard: React.FC = () => {
       {/* Categories Tab */}
       {activeTab === "categories" && (
         <Card padding="none">
-          <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-            <h2 className="text-sm font-semibold text-slate-900">Categories Management</h2>
+          <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-white">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Categories Management</h2>
+              <p className="text-xs text-slate-500 mt-1">Total Categories: {categories.length}</p>
+            </div>
             <button
               onClick={() => {
                 setEditingCategory(null);
@@ -1164,6 +1207,34 @@ export const ManagerDashboard: React.FC = () => {
             </button>
           </div>
 
+          {/* Stats Summary Panel */}
+          <div className="p-5 bg-slate-50/50 border-b border-slate-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Total Tasks</span>
+              <span className="text-lg font-bold text-slate-800 mt-1">{manualTasks.length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">Pending</span>
+              <span className="text-lg font-bold text-amber-600 mt-1">{manualTasks.filter(t => t.status === 'pending').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">In Progress</span>
+              <span className="text-lg font-bold text-blue-600 mt-1">{manualTasks.filter(t => t.status === 'in-progress').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-green-500 uppercase tracking-wider">Completed</span>
+              <span className="text-lg font-bold text-green-600 mt-1">{manualTasks.filter(t => t.status === 'completed').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-rose-500 uppercase tracking-wider">Rejected</span>
+              <span className="text-lg font-bold text-rose-600 mt-1">{manualTasks.filter(t => t.status === 'rejected').length}</span>
+            </div>
+            <div className="bg-red-50 p-3 rounded-lg border border-red-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-red-500 uppercase tracking-wider">Emergency</span>
+              <span className="text-lg font-bold text-red-600 mt-1">{manualTasks.filter(t => t.priority === 'emergency').length}</span>
+            </div>
+          </div>
+
           {/* Filters Panel */}
           <div className="p-5 bg-slate-50 border-b border-slate-200 grid md:grid-cols-5 gap-4">
             <div className="md:col-span-2">
@@ -1336,6 +1407,38 @@ export const ManagerDashboard: React.FC = () => {
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Scheduled Tasks</h2>
               <p className="text-xs text-slate-500 mt-1">View and monitor all auto-generated background scheduled tasks</p>
+            </div>
+          </div>
+
+          {/* Stats Summary Panel */}
+          <div className="p-5 bg-slate-50/50 border-b border-slate-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Total Tasks</span>
+              <span className="text-lg font-bold text-slate-800 mt-1">{scheduledTasks.length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">Pending</span>
+              <span className="text-lg font-bold text-amber-600 mt-1">{scheduledTasks.filter(t => t.status === 'pending').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">In Progress</span>
+              <span className="text-lg font-bold text-blue-600 mt-1">{scheduledTasks.filter(t => t.status === 'in-progress').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-wider">Under Review</span>
+              <span className="text-lg font-bold text-purple-600 mt-1">{scheduledTasks.filter(t => t.status === 'under_review').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-green-500 uppercase tracking-wider">Completed</span>
+              <span className="text-lg font-bold text-green-600 mt-1">{scheduledTasks.filter(t => t.status === 'completed').length}</span>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-rose-500 uppercase tracking-wider">Rejected</span>
+              <span className="text-lg font-bold text-rose-600 mt-1">{scheduledTasks.filter(t => t.status === 'rejected').length}</span>
+            </div>
+            <div className="bg-red-50 p-3 rounded-lg border border-red-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-red-500 uppercase tracking-wider">Emergency</span>
+              <span className="text-lg font-bold text-red-600 mt-1">{scheduledTasks.filter(t => t.priority === 'emergency').length}</span>
             </div>
           </div>
 
