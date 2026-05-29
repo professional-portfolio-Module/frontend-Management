@@ -1454,18 +1454,35 @@ export const ManagerDashboard: React.FC = () => {
                     case 'in-progress':
                       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">In Progress</span>;
                     case 'under_review':
-                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">Under Review</span>;
+                      return (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200 w-fit">Under Review</span>
+                          {row.checked_by_name && (
+                            <span className="text-[10px] text-purple-600 font-medium">By {row.checked_by_name}</span>
+                          )}
+                        </div>
+                      );
                     case 'completed':
                       return (
                         <div className="flex flex-col gap-0.5">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200 w-fit">Completed</span>
                           {row.done_by_name && (
-                            <span className="text-[10px] text-slate-400">By {row.done_by_name}</span>
+                            <span className="text-[10px] text-slate-500">By {row.done_by_name}</span>
+                          )}
+                          {row.checked_by_name && (
+                            <span className="text-[10px] text-indigo-500 font-medium">Verified by {row.checked_by_name}</span>
                           )}
                         </div>
                       );
                     case 'rejected':
-                      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">Rejected</span>;
+                      return (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200 w-fit">Rejected</span>
+                          {row.checked_by_name && (
+                            <span className="text-[10px] text-rose-500">By {row.checked_by_name}</span>
+                          )}
+                        </div>
+                      );
                     case 'expired':
                       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">Expired</span>;
                     default:
