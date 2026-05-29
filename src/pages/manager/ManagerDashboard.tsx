@@ -717,7 +717,6 @@ export const ManagerDashboard: React.FC = () => {
     { icon: <FiFileText />, label: "Scheduled Tasks", active: activeTab === "work-items", onClick: () => setActiveTab("work-items") },
     { icon: <FiClock />, label: "Schedules", active: activeTab === "schedules", onClick: () => navigate("/schedules") },
     { icon: <FiMessageSquare />, label: "Messages", active: activeTab === "messages", onClick: () => navigate("/messages") },
-    { icon: <FiFileText />, label: "System Logs", active: activeTab === "logs", onClick: () => setActiveTab("logs") },
   ];
 
 
@@ -1623,14 +1622,6 @@ export const ManagerDashboard: React.FC = () => {
         <Card>
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Messages</h2>
           <p className="text-slate-600">Messaging system for internal communication.</p>
-        </Card>
-      )}
-
-      {/* System Logs Tab */}
-      {activeTab === "logs" && (
-        <Card>
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">System Logs</h2>
-          <p className="text-slate-600">View system activity and audit logs.</p>
         </Card>
       )}
 

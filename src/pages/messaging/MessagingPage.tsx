@@ -201,7 +201,6 @@ export const MessagingPage: React.FC = () => {
         { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/manager", { state: { activeTab: "work-items" } }) },
         { icon: <FiClock />, label: "Schedules", active: false, onClick: () => navigate("/schedules") },
         { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
-        { icon: <FiFileText />, label: "System Logs", active: false, onClick: () => navigate("/manager", { state: { activeTab: "logs" } }) },
       ];
     } else if (user?.role === "engineer") {
       return [
