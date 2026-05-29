@@ -153,40 +153,55 @@ export const MessagingPage: React.FC = () => {
     }
   }, [selectedChat, user?.id]);
 
-  // Setup real-time messaging using Server-Sent Events (SSE)
+  // Setup real-time messaging using Server-Sent Events (SSE) and polling fallback
   useEffect(() => {
     if (!user?.id) return;
 
     const baseURL = apiClient.defaults.baseURL || "";
     const streamUrl = `${baseURL}/Main/router-backend/api/messages/stream?userId=${user.id}`;
+    let eventSource: EventSource | null = null;
     
-    const eventSource = new EventSource(streamUrl, {
-      withCredentials: true
-    });
+    try {
+      eventSource = new EventSource(streamUrl, {
+        withCredentials: true
+      });
 
-    eventSource.onmessage = (event) => {
-      try {
-        const newMessage = JSON.parse(event.data);
-        
-        // If the new message belongs to the current chat room, fetch and decrypt it immediately
-        if (
-          selectedChat &&
-          ((newMessage.sender_id === user.id && newMessage.receiver_id === selectedChat) ||
-           (newMessage.sender_id === selectedChat && newMessage.receiver_id === user.id))
-        ) {
-          fetchChatMessages();
+      eventSource.onmessage = (event) => {
+        try {
+          const newMessage = JSON.parse(event.data);
+          
+          // If the new message belongs to the current chat room, fetch and decrypt it immediately
+          if (
+            selectedChat &&
+            ((newMessage.sender_id === user.id && newMessage.receiver_id === selectedChat) ||
+             (newMessage.sender_id === selectedChat && newMessage.receiver_id === user.id))
+          ) {
+            fetchChatMessages();
+          }
+        } catch (err) {
+          console.error("Error parsing real-time message payload:", err);
         }
-      } catch (err) {
-        console.error("Error parsing real-time message payload:", err);
-      }
-    };
+      };
 
-    eventSource.onerror = (err) => {
-      console.warn("Real-time stream connection lost/error, EventSource will automatically retry.", err);
-    };
+      eventSource.onerror = (err) => {
+        console.warn("Real-time stream connection lost/error, EventSource will automatically retry.", err);
+      };
+    } catch (sseErr) {
+      console.error("Failed to initialize EventSource:", sseErr);
+    }
+
+    // Backup polling fallback to handle cases where the BFF proxy buffers or blocks the SSE stream
+    const pollInterval = setInterval(() => {
+      if (selectedChat) {
+        fetchChatMessages();
+      }
+    }, 4000);
 
     return () => {
-      eventSource.close();
+      if (eventSource) {
+        eventSource.close();
+      }
+      clearInterval(pollInterval);
     };
   }, [selectedChat, user?.id]);
 
