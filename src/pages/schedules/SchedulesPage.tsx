@@ -1,10 +1,63 @@
 import React, { useState, useEffect } from "react";
 import { FiCalendar, FiClock, FiMapPin, FiUsers, FiFilter, FiChevronLeft, FiChevronRight, FiCheckCircle, FiActivity, FiFolder, FiHardDrive, FiFileText, FiMessageSquare, FiBell, FiClipboard, FiTrendingUp } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
-import { mockSchedules } from "../../mock/data";
-import { mockUsers } from "../../mock/users";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { useNavigate } from "react-router-dom";
+import { scheduledTaskService, ScheduledTask } from "../../services/scheduledTaskService";
+import { manualTaskService, ManualTask } from "../../services/manualTaskService";
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  startTime: string;
+  endTime: string;
+  location: string;
+  type: "scheduled" | "manual";
+  status: "scheduled" | "in-progress" | "completed" | "cancelled";
+  assignedToName: string;
+}
+
+const mapScheduledTask = (task: ScheduledTask): CalendarEvent => {
+  const dateStr = task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0];
+  let status: CalendarEvent["status"] = "scheduled";
+  if (task.status === "in-progress") status = "in-progress";
+  else if (task.status === "completed") status = "completed";
+  else if (task.status === "rejected") status = "cancelled";
+
+  return {
+    id: `scheduled-${task.task_id}`,
+    title: task.schedule_title || "Scheduled Maintenance",
+    date: dateStr,
+    startTime: "09:00",
+    endTime: "12:00",
+    location: task.asset_location || "Main Hotel",
+    type: "scheduled",
+    status,
+    assignedToName: task.done_by_name || "Unassigned Technician",
+  };
+};
+
+const mapManualTask = (task: ManualTask): CalendarEvent => {
+  const rawDate = task.due_date || task.created_at || new Date().toISOString();
+  const dateStr = rawDate.split("T")[0];
+  let status: CalendarEvent["status"] = "scheduled";
+  if (task.status === "in-progress") status = "in-progress";
+  else if (task.status === "completed") status = "completed";
+  else if (task.status === "rejected" || task.status === "expired") status = "cancelled";
+
+  return {
+    id: `manual-${task.manual_task_id}`,
+    title: task.title || "Manual Task",
+    date: dateStr,
+    startTime: "13:00",
+    endTime: "16:00",
+    location: task.asset_description || "Facility Equipment",
+    type: "manual",
+    status,
+    assignedToName: task.assigned_to_name || "Unassigned Technician",
+  };
+};
 
 export const SchedulesPage: React.FC = () => {
   const { user } = useAuth();
@@ -13,6 +66,8 @@ export const SchedulesPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
   const [pendingCount, setPendingCount] = useState(0);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user?.role === "manager") {
@@ -22,50 +77,83 @@ export const SchedulesPage: React.FC = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    let active = true;
+    const fetchSchedules = async () => {
+      const hotelId = user?.hotelId;
+      if (!hotelId) return;
+      setLoading(true);
+      try {
+        const [scheduledRes, manualRes] = await Promise.all([
+          scheduledTaskService.getScheduledTasks(hotelId),
+          manualTaskService.getManualTasks({ hotel_id: hotelId })
+        ]);
+        
+        if (active) {
+          const mappedSchedules = scheduledRes.map(mapScheduledTask);
+          const mappedManual = manualRes.map(mapManualTask);
+          setEvents([...mappedSchedules, ...mappedManual]);
+        }
+      } catch (err) {
+        console.error("Failed to load calendar events:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    fetchSchedules();
+    return () => {
+      active = false;
+    };
+  }, [user?.hotelId]);
+
   const getSidebarItems = () => {
-    if (user?.role === "manager") {
-      return [
-        { icon: <FiActivity />, label: "Dashboard", active: false, onClick: () => navigate("/manager", { state: { activeTab: "overview" } }) },
-        { icon: <FiTrendingUp />, label: "Analytics", active: false, onClick: () => navigate("/manager", { state: { activeTab: "analytics" } }) },
-        { icon: <FiUsers />, label: "User Management", active: false, onClick: () => navigate("/manager", { state: { activeTab: "users" } }) },
-        { icon: <FiCheckCircle />, label: "Verification", active: false, onClick: () => navigate("/manager", { state: { activeTab: "verification" } }), badge: pendingCount },
-        { icon: <FiFolder />, label: "Categories", active: false, onClick: () => navigate("/manager", { state: { activeTab: "categories" } }) },
-        { icon: <FiHardDrive />, label: "Assets", active: false, onClick: () => navigate("/manager", { state: { activeTab: "assets" } }) },
-        { icon: <FiClipboard />, label: "Manual Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "manual-tasks" } }) },
-        { icon: <FiFileText />, label: "Scheduled Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "work-items" } }) },
-        { icon: <FiClock />, label: "Schedules", active: true, onClick: () => navigate("/schedules") },
-        { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
-      ];
-    } else if (user?.role === "engineer") {
-      return [
-        { icon: <FiCheckCircle />, label: "Dashboard", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "overview" } }) },
-        { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "work-items" } }) },
-        { icon: <FiClipboard />, label: "Reports", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "reports" } }) },
-        { icon: <FiClock />, label: "Schedule", active: true, onClick: () => navigate("/schedules") },
-        { icon: <FiCheckCircle />, label: "Notifications", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "notifications" } }) },
-        { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
-      ];
-    } else if (user?.role === "staff") {
-      return [
-        { icon: <FiBell />, label: "Dashboard", active: false, onClick: () => navigate("/staff", { state: { activeTab: "overview" } }) },
-        { icon: <FiClock />, label: "My Schedule", active: true, onClick: () => navigate("/schedules") },
-        { icon: <FiBell />, label: "Notifications", active: false, onClick: () => navigate("/staff", { state: { activeTab: "notifications" } }) },
-        { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
-      ];
-    }
+    const managerItems = [
+      { icon: <FiActivity />, label: "Dashboard", active: false, onClick: () => navigate("/manager", { state: { activeTab: "overview" } }) },
+      { icon: <FiTrendingUp />, label: "Analytics", active: false, onClick: () => navigate("/manager", { state: { activeTab: "analytics" } }) },
+      { icon: <FiUsers />, label: "User Management", active: false, onClick: () => navigate("/manager", { state: { activeTab: "users" } }) },
+      { icon: <FiCheckCircle />, label: "Verification", active: false, onClick: () => navigate("/manager", { state: { activeTab: "verification" } }), badge: pendingCount },
+      { icon: <FiFolder />, label: "Categories", active: false, onClick: () => navigate("/manager", { state: { activeTab: "categories" } }) },
+      { icon: <FiHardDrive />, label: "Assets", active: false, onClick: () => navigate("/manager", { state: { activeTab: "assets" } }) },
+      { icon: <FiClipboard />, label: "Manual Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "manual-tasks" } }) },
+      { icon: <FiFileText />, label: "Scheduled Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "work-items" } }) },
+      { icon: <FiClock />, label: "Schedules", active: true, onClick: () => navigate("/schedules") },
+      { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
+    ];
+
+    const engineerItems = [
+      { icon: <FiCheckCircle />, label: "Dashboard", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "overview" } }) },
+      { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "work-items" } }) },
+      { icon: <FiClipboard />, label: "Reports", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "reports" } }) },
+      { icon: <FiClock />, label: "Schedule", active: true, onClick: () => navigate("/schedules") },
+      { icon: <FiCheckCircle />, label: "Notifications", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "notifications" } }) },
+      { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
+    ];
+
+    const staffItems = [
+      { icon: <FiBell />, label: "Dashboard", active: false, onClick: () => navigate("/staff", { state: { activeTab: "overview" } }) },
+      { icon: <FiTrendingUp />, label: "Analytics", active: false, onClick: () => navigate("/staff", { state: { activeTab: "analytics" } }) },
+      { icon: <FiCalendar />, label: "Maintenance Schedules", active: false, onClick: () => navigate("/staff", { state: { activeTab: "maintenance-schedules" } }) },
+      { icon: <FiClock />, label: "My Schedule", active: true, onClick: () => navigate("/schedules") },
+      { icon: <FiFolder />, label: "Categories", active: false, onClick: () => navigate("/staff", { state: { activeTab: "categories" } }) },
+      { icon: <FiHardDrive />, label: "Assets", active: false, onClick: () => navigate("/staff", { state: { activeTab: "assets" } }) },
+      { icon: <FiBell />, label: "Notifications", active: false, onClick: () => navigate("/staff", { state: { activeTab: "notifications" } }) },
+      { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
+    ];
+
+    if (user?.role === "manager") return managerItems;
+    if (user?.role === "engineer") return engineerItems;
+    if (user?.role === "staff") return staffItems;
     return [];
   };
 
   const sidebarItems = getSidebarItems();
 
-  // Get schedules for the selected role
+  // Get schedules for the selected type
   const filteredSchedules =
     filterRole === "all"
-      ? mockSchedules
-      : mockSchedules.filter((s) => {
-          const personRole = mockUsers.find((u) => u.id === s.userId)?.role;
-          return personRole === filterRole;
-        });
+      ? events
+      : events.filter((s) => s.type === filterRole);
 
   // Get week start (Monday)
   const getWeekStart = (date: Date) => {
@@ -127,32 +215,39 @@ export const SchedulesPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "scheduled":
-        return "bg-blue-100 text-primary-700";
+        return "bg-blue-50 text-blue-700 border-blue-200";
       case "in-progress":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case "completed":
-        return "bg-green-100 text-green-700";
+        return "bg-green-50 text-green-700 border-green-200";
       case "cancelled":
-        return "bg-red-100 text-red-700";
+        return "bg-red-50 text-red-700 border-red-200";
       default:
-        return "bg-slate-100 text-slate-700";
+        return "bg-slate-50 text-slate-700 border-slate-200";
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "shift":
-        return "👤";
-      case "maintenance":
+      case "scheduled":
         return "🔧";
-      case "training":
-        return "📚";
-      case "meeting":
+      case "manual":
         return "📋";
       default:
         return "📅";
     }
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout sidebarItems={sidebarItems}>
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-slate-500 font-medium">Loading schedules...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout sidebarItems={sidebarItems}>
@@ -173,11 +268,9 @@ export const SchedulesPage: React.FC = () => {
                 onChange={(e) => setFilterRole(e.target.value)}
                 className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-150 shadow-sm"
               >
-                <option value="all">All Roles</option>
-                <option value="admin">Admins</option>
-                <option value="engineer">Engineers</option>
-                <option value="staff">Staff Members</option>
-                <option value="manager">Managers</option>
+                <option value="all">All Tasks</option>
+                <option value="scheduled">Scheduled Tasks</option>
+                <option value="manual">Manual Tasks</option>
               </select>
             </div>
 
@@ -272,13 +365,10 @@ export const SchedulesPage: React.FC = () => {
                       </p>
                     ) : (
                       daySchedules.map((schedule) => {
-                        const person = mockUsers.find(
-                          (u) => u.id === schedule.userId
-                        );
                         return (
                           <div
                             key={schedule.id}
-                            className={`p-3 rounded-lg text-sm border border-slate-200 hover:shadow-md transition-shadow duration-200 cursor-pointer ${getStatusColor(
+                            className={`p-3 rounded-lg text-sm border hover:shadow-md transition-shadow duration-200 cursor-pointer ${getStatusColor(
                               schedule.status
                             )}`}
                           >
@@ -287,9 +377,9 @@ export const SchedulesPage: React.FC = () => {
                                 {getTypeIcon(schedule.type)}
                               </span>
                               <div className="flex-1">
-                                <p className="font-semibold">{person?.name}</p>
+                                <p className="font-semibold">{schedule.assignedToName}</p>
                                 <p className="text-xs opacity-75 capitalize">
-                                  {schedule.type}
+                                  {schedule.title}
                                 </p>
                               </div>
                             </div>
@@ -372,20 +462,17 @@ export const SchedulesPage: React.FC = () => {
                     </p>
                     <div className="space-y-1">
                       {daySchedules.slice(0, 2).map((schedule) => {
-                        const person = mockUsers.find(
-                          (u) => u.id === schedule.userId
-                        );
                         return (
                           <div
                             key={schedule.id}
-                            className={`text-xs px-2 py-1 rounded cursor-pointer hover:shadow-md transition-shadow duration-200 truncate ${getStatusColor(
+                            className={`text-xs px-2 py-1 rounded border cursor-pointer hover:shadow-md transition-shadow duration-200 truncate ${getStatusColor(
                               schedule.status
                             )}`}
                           >
                             <span className="mr-1">
                               {getTypeIcon(schedule.type)}
                             </span>
-                            {person?.name}
+                            {schedule.assignedToName}
                           </div>
                         );
                       })}

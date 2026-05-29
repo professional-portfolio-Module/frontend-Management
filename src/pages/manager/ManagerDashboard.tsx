@@ -8,7 +8,7 @@ import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
 import { Input, Select, TextArea } from "../../components/common/Form";
 import { useAuth } from "../../context/AuthContext";
-import { User } from "../../mock/users";
+import { User } from "../../services/userService";
 import { CreateAccountModal } from "../../components/common/CreateAccountModal";
 import { userService } from "../../services/userService";
 import { categoryService, Category } from "../../services/categoryService";

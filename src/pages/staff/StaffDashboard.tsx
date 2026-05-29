@@ -8,8 +8,8 @@ import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
 import { Input, Select, TextArea } from "../../components/common/Form";
 import { useAuth } from "../../context/AuthContext";
-import { mockSchedules, mockNotifications, mockMessages } from "../../mock/data";
 import { categoryService, Category } from "../../services/categoryService";
+import { notificationService, AppNotification } from "../../services/notificationService";
 import { assetService, Asset } from "../../services/assetService";
 import apiClient from "../../services/api";
 import { userService } from "../../services/userService";
@@ -150,10 +150,20 @@ export const StaffDashboard: React.FC = () => {
   const [schedAssignedTechs, setSchedAssignedTechs] = useState<string[]>([]);
   const [schedIsActive, setSchedIsActive] = useState(true);
 
-  const mySchedules = mockSchedules.filter((s) => s.userId === user?.id);
-  const unreadNotifications = mockNotifications.filter((n) => !n.read && n.userId === user?.id);
-  const myMessages = mockMessages.filter((m) => m.receiverId === user?.id || m.senderId === user?.id);
-  const unreadMessages = myMessages.filter((m) => !m.read && m.receiverId === user?.id);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [totalAssets, setTotalAssets] = useState(0);
+
+  const unreadNotifications = notifications.filter((n) => !n.read);
+
+  const fetchNotifications = async () => {
+    if (!user?.id) return;
+    try {
+      const data = await notificationService.getNotifications(user.id);
+      setNotifications(data);
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  };
   const handleUpdateProfile = async () => {
     if (!profileName.trim()) {
       alert("Name is required");
@@ -219,6 +229,7 @@ export const StaffDashboard: React.FC = () => {
       });
       setAssets(response.items);
       setAssetTotalPages(response.pagination.totalPages);
+      setTotalAssets(response.pagination.totalItems || response.items.length);
     } catch (err: any) {
       console.error("Failed to fetch assets:", err);
     } finally {
@@ -402,35 +413,41 @@ export const StaffDashboard: React.FC = () => {
   }, [user?.id, user?.hotelId]);
 
   useEffect(() => {
-    if (activeTab === "categories" || activeTab === "assets") {
+    if (selectedHotelId) {
       fetchCategories();
       fetchStatuses();
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab === "assets") {
-      fetchAssets();
-    }
-  }, [activeTab, assetPage, assetSearch, assetCategory, assetStatus, selectedHotelId]);
-
-  useEffect(() => {
-    if (activeTab === "maintenance-schedules" && selectedHotelId) {
-      fetchMaintenanceSchedules();
       fetchTechnicians();
       fetchAllAssetsForDropdown();
     }
-  }, [activeTab, selectedHotelId, schedulePage, scheduleSearch, scheduleMonthFilter, scheduleWeekFilter, scheduleAssetFilter]);
+  }, [selectedHotelId]);
+
+  useEffect(() => {
+    if (selectedHotelId) {
+      fetchAssets();
+    }
+  }, [selectedHotelId, assetPage, assetSearch, assetCategory, assetStatus]);
+
+  useEffect(() => {
+    if (selectedHotelId) {
+      fetchMaintenanceSchedules();
+    }
+  }, [selectedHotelId, schedulePage, scheduleSearch, scheduleMonthFilter, scheduleWeekFilter, scheduleAssetFilter]);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   const sidebarItems = [
     { icon: <FiBell />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
     { icon: <FiTrendingUp />, label: "Analytics", active: activeTab === "analytics", onClick: () => setActiveTab("analytics") },
     { icon: <FiCalendar />, label: "Maintenance Schedules", active: activeTab === "maintenance-schedules", onClick: () => setActiveTab("maintenance-schedules") },
-    { icon: <FiClock />, label: "My Schedule", active: activeTab === "schedule", onClick: () => navigate("/schedules") },
+    { icon: <FiClock />, label: "My Schedule", active: false, onClick: () => navigate("/schedules") },
     { icon: <FiFolder />, label: "Categories", active: activeTab === "categories", onClick: () => setActiveTab("categories") },
     { icon: <FiHardDrive />, label: "Assets", active: activeTab === "assets", onClick: () => setActiveTab("assets") },
     { icon: <FiBell />, label: "Notifications", active: activeTab === "notifications", onClick: () => setActiveTab("notifications"), badge: unreadNotifications.length },
-    { icon: <FiMessageSquare />, label: "Messages", active: activeTab === "messages", onClick: () => navigate("/messages"), badge: unreadMessages.length },
+    { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
   ];
 
   return (
@@ -439,22 +456,22 @@ export const StaffDashboard: React.FC = () => {
       {activeTab === "overview" && (
         <div className="space-y-8">
           <div className="grid md:grid-cols-3 gap-6">
-            <StatCard icon={<FiCalendar size={18} />} label="Scheduled Shifts" value={mySchedules.filter((s) => s.status === "scheduled").length} color="blue" />
-            <StatCard icon={<FiBell size={18} />} label="Notifications" value={unreadNotifications.length} color="yellow" />
-            <StatCard icon={<FiMessageSquare size={18} />} label="Messages" value={unreadMessages.length} color="red" />
+            <StatCard icon={<FiHardDrive size={18} />} label="Total Assets" value={totalAssets} color="blue" />
+            <StatCard icon={<FiCalendar size={18} />} label="Active Schedules" value={maintenanceSchedules.filter((s) => s.is_active).length} color="teal" />
+            <StatCard icon={<FiBell size={18} />} label="Unread Notifications" value={unreadNotifications.length} color="yellow" />
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
             <Card>
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Upcoming Schedule</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Schedules</h2>
               <Table
                 columns={[
-                  { key: "date", label: "Date" },
-                  { key: "startTime", label: "Start" },
-                  { key: "endTime", label: "End" },
-                  { key: "location", label: "Location" },
+                  { key: "title", label: "Schedule Title" },
+                  { key: "asset_description", label: "Asset" },
+                  { key: "month", label: "Month" },
+                  { key: "week_no", label: "Week No", render: (val) => `Week ${val}` },
                 ]}
-                data={mySchedules.slice(0, 5)}
+                data={maintenanceSchedules.slice(0, 5)}
               />
             </Card>
 
@@ -464,7 +481,7 @@ export const StaffDashboard: React.FC = () => {
                 {unreadNotifications.slice(0, 5).map((notif) => (
                   <div key={notif.id} className="p-3 rounded-md bg-primary-50/50 border border-primary-100">
                     <p className="text-sm font-medium text-slate-900">{notif.title}</p>
-                    <p className="text-xs text-slate-500 mt-1">{notif.message}</p>
+                    <p className="text-xs text-slate-500 mt-1">{notif.content}</p>
                   </div>
                 ))}
                 {unreadNotifications.length === 0 && <p className="text-slate-500 text-sm">No new notifications</p>}
@@ -694,7 +711,7 @@ export const StaffDashboard: React.FC = () => {
               { key: "type", label: "Type" },
               { key: "status", label: "Status" },
             ]}
-            data={mySchedules}
+            data={maintenanceSchedules}
           />
         </Card>
       )}
@@ -861,31 +878,44 @@ export const StaffDashboard: React.FC = () => {
       {/* Notifications Tab */}
       {activeTab === "notifications" && (
         <Card>
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Notifications</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">Notifications</h2>
+            {unreadNotifications.length > 0 && (
+              <Button
+                size="sm"
+                onClick={async () => {
+                  await notificationService.markAllAsRead(user!.id);
+                  fetchNotifications();
+                }}
+              >
+                Mark all as read
+              </Button>
+            )}
+          </div>
           <div className="space-y-2">
-            {mockNotifications.filter((n) => n.userId === user?.id).map((notif) => (
-              <div key={notif.id} className={`p-4 rounded-lg border ${notif.read ? "bg-slate-50 border-slate-200" : "bg-blue-50 border-blue-200"}`}>
+            {notifications.map((notif) => (
+              <div 
+                key={notif.id} 
+                className={`p-4 rounded-lg border cursor-pointer transition-colors duration-150 ${
+                  notif.read 
+                    ? "bg-slate-50 border-slate-200" 
+                    : "bg-blue-50 border-blue-200 hover:bg-blue-100"
+                }`}
+                onClick={async () => {
+                  if (!notif.read) {
+                    await notificationService.markAsRead(notif.id);
+                    fetchNotifications();
+                  }
+                }}
+              >
                 <p className={`font-semibold ${notif.read ? "text-slate-900" : "text-blue-900"}`}>{notif.title}</p>
-                <p className={`text-sm mt-1 ${notif.read ? "text-slate-600" : "text-blue-700"}`}>{notif.message}</p>
+                <p className={`text-sm mt-1 ${notif.read ? "text-slate-600" : "text-blue-700"}`}>{notif.content}</p>
               </div>
             ))}
+            {notifications.length === 0 && (
+              <p className="text-slate-500 text-sm">No notifications</p>
+            )}
           </div>
-        </Card>
-      )}
-
-      {/* Messages Tab */}
-      {activeTab === "messages" && (
-        <Card>
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Messages</h2>
-          <Table
-            columns={[
-              { key: "subject", label: "Subject" },
-              { key: "senderId", label: "From", render: (val) => `User ${val}` },
-              { key: "createdAt", label: "Date", render: (val) => new Date(val).toLocaleDateString() },
-              { key: "read", label: "Status", render: (val) => <span className={val ? "text-slate-500" : "font-bold text-primary-600"}>{ val ? "Read" : "Unread"}</span> },
-            ]}
-            data={myMessages}
-          />
         </Card>
       )}
 

@@ -1,5 +1,5 @@
 import apiClient from "./api";
-import { AuthUser } from "../mock/users";
+import { AuthUser } from "./userService";
 
 export interface LoginCredentials {
   email: string;

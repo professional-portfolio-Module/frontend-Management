@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   FiSearch,
   FiFileText,
@@ -17,9 +17,84 @@ import { Card } from "../../components/common/Card";
 import { Modal } from "../../components/common/Modal";
 import { Button } from "../../components/common/Button";
 import { Input, TextArea, Select } from "../../components/common/Form";
-import { mockReports, Report } from "../../mock/data";
+import { useAuth } from "../../context/AuthContext";
+import { scheduledTaskService, ScheduledTask } from "../../services/scheduledTaskService";
+import { manualTaskService, ManualTask } from "../../services/manualTaskService";
+
+export interface Report {
+  id: string; // "scheduled-{id}" or "manual-{id}"
+  reportId: string;
+  reportTitle: string;
+  deviceName: string;
+  deviceType: string;
+  technicianId: string;
+  technicianName: string;
+  uploadedDate: string;
+  maintenanceStatus: "pending-review" | "approved" | "needs-rework" | "closed";
+  priority: "urgent" | "high" | "medium" | "low";
+  issueDescription: string;
+  repairSummary: string;
+  attachments?: string[];
+  engineerRemarks?: string;
+  reviewedBy?: string;
+  reviewedDate?: string;
+  originalTask: any;
+}
+
+const mapScheduledTask = (task: ScheduledTask): Report => {
+  let status: Report["maintenanceStatus"] = "pending-review";
+  if (task.status === "completed") status = "approved";
+  else if (task.status === "rejected") status = "needs-rework";
+
+  return {
+    id: `scheduled-${task.task_id}`,
+    reportId: task.task_id,
+    reportTitle: task.schedule_title || "Scheduled Maintenance",
+    deviceName: task.asset_description || `Asset: ${task.asset_card_no || "N/A"}`,
+    deviceType: "General",
+    technicianId: task.done_by || "",
+    technicianName: task.done_by_name || "Unassigned",
+    uploadedDate: task.completed_at || task.due_date || new Date().toISOString(),
+    maintenanceStatus: status,
+    priority: task.priority === "emergency" ? "urgent" : "medium",
+    issueDescription: task.additional_details || "No description provided.",
+    repairSummary: task.technician_remarks || "No technician remarks provided.",
+    attachments: task.attachment_url ? [task.attachment_url] : [],
+    engineerRemarks: task.engineer_remarks || "",
+    reviewedBy: task.checked_by_name || "",
+    reviewedDate: task.completed_at || "",
+    originalTask: task
+  };
+};
+
+const mapManualTask = (task: ManualTask): Report => {
+  let status: Report["maintenanceStatus"] = "pending-review";
+  if (task.status === "completed") status = "approved";
+  else if (task.status === "rejected" || task.status === "expired") status = "needs-rework";
+
+  return {
+    id: `manual-${task.manual_task_id}`,
+    reportId: task.manual_task_id,
+    reportTitle: task.title || "Manual Task",
+    deviceName: task.asset_description || `Asset: ${task.card_no || "N/A"}`,
+    deviceType: "General",
+    technicianId: task.assigned_to || "",
+    technicianName: task.assigned_to_name || "Unassigned",
+    uploadedDate: task.completed_at || task.due_date || task.created_at || new Date().toISOString(),
+    maintenanceStatus: status,
+    priority: task.priority === "emergency" ? "urgent" : "medium",
+    issueDescription: task.description || "No description provided.",
+    repairSummary: task.tech_remarks || "No technician remarks provided.",
+    attachments: task.attachment_url ? [task.attachment_url] : [],
+    engineerRemarks: task.eng_remarks || "",
+    reviewedBy: task.checked_by_name || "",
+    reviewedDate: task.completed_at || "",
+    originalTask: task
+  };
+};
 
 export const ReportsPage: React.FC = () => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deviceTypeFilter, setDeviceTypeFilter] = useState("all");
@@ -30,22 +105,61 @@ export const ReportsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [engineerRemarks, setEngineerRemarks] = useState("");
   const [isRemarksSaving, setIsRemarksSaving] = useState(false);
-  const [markedAsReviewed, setMarkedAsReviewed] = useState<Set<string>>(new Set());
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const itemsPerPage = 9;
 
-  // Get unique technicians, device types
-  const uniqueTechnicians = Array.from(
-    new Set(mockReports.map((r) => r.technicianId))
-  ).map((id) => mockReports.find((r) => r.technicianId === id)!);
+  const fetchReports = async () => {
+    if (!user?.hotelId) return;
+    setLoading(true);
+    try {
+      const [scheduledRes, manualRes] = await Promise.all([
+        scheduledTaskService.getScheduledTasks(user.hotelId),
+        manualTaskService.getManualTasks({ hotel_id: user.hotelId })
+      ]);
+      
+      const filteredScheduled = scheduledRes.filter(t => 
+        t.status === "under_review" || t.status === "completed" || t.status === "rejected"
+      );
+      const filteredManual = manualRes.filter(t => 
+        t.status === "under_review" || t.status === "completed" || t.status === "rejected"
+      );
 
-  const uniqueDeviceTypes = Array.from(
-    new Set(mockReports.map((r) => r.deviceType))
-  );
+      const mappedReports = [
+        ...filteredScheduled.map(mapScheduledTask),
+        ...filteredManual.map(mapManualTask)
+      ];
+
+      mappedReports.sort((a, b) => new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime());
+      setReports(mappedReports);
+    } catch (err) {
+      console.error("Failed to fetch reports:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, [user?.hotelId]);
+
+  // Get unique technicians, device types
+  const uniqueTechnicians = useMemo(() => {
+    const uniqueIds = Array.from(new Set(reports.map(r => r.technicianId).filter(Boolean)));
+    return uniqueIds.map(id => {
+      const rep = reports.find(r => r.technicianId === id);
+      return { id, name: rep?.technicianName || "Unknown" };
+    });
+  }, [reports]);
+
+  const uniqueDeviceTypes = useMemo(() => {
+    return Array.from(new Set(reports.map((r) => r.deviceType).filter(Boolean)));
+  }, [reports]);
 
   // Filter reports
   const filteredReports = useMemo(() => {
-    return mockReports.filter((report) => {
+    return reports.filter((report) => {
       const matchesSearch =
         report.reportTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
         report.deviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -68,7 +182,7 @@ export const ReportsPage: React.FC = () => {
         matchesTechnician
       );
     });
-  }, [searchTerm, statusFilter, deviceTypeFilter, technicianFilter]);
+  }, [reports, searchTerm, statusFilter, deviceTypeFilter, technicianFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
@@ -89,22 +203,52 @@ export const ReportsPage: React.FC = () => {
     setEngineerRemarks("");
   };
 
-  const handleSaveRemarks = () => {
+  const handleSaveRemarks = async () => {
+    if (!selectedReport) return;
     setIsRemarksSaving(true);
-    setTimeout(() => {
-      setIsRemarksSaving(false);
+    try {
+      const isScheduled = selectedReport.id.startsWith("scheduled-");
+      const taskId = selectedReport.reportId;
+      if (isScheduled) {
+        await scheduledTaskService.updateScheduledTask(taskId, {
+          engineer_remarks: engineerRemarks
+        });
+      } else {
+        await manualTaskService.updateManualTask(taskId, {
+          eng_remarks: engineerRemarks
+        });
+      }
       alert("Remarks saved successfully!");
-    }, 1000);
+      fetchReports();
+    } catch (err: any) {
+      alert(err.message || "Failed to save remarks");
+    } finally {
+      setIsRemarksSaving(false);
+    }
   };
 
-  const handleMarkAsReviewed = () => {
-    if (selectedReport) {
-      setMarkedAsReviewed((prev) => {
-        const newSet = new Set(prev);
-        newSet.add(selectedReport.id);
-        return newSet;
-      });
-      alert(`Report ${selectedReport.reportId} marked as reviewed!`);
+  const handleUpdateStatus = async (newStatus: "approved" | "needs-rework") => {
+    if (!selectedReport) return;
+    try {
+      const isScheduled = selectedReport.id.startsWith("scheduled-");
+      const taskId = selectedReport.reportId;
+      const backendStatus = newStatus === "approved" ? "completed" : "rejected";
+      if (isScheduled) {
+        await scheduledTaskService.updateScheduledTask(taskId, {
+          status: backendStatus,
+          engineer_remarks: engineerRemarks
+        });
+      } else {
+        await manualTaskService.updateManualTask(taskId, {
+          status: backendStatus,
+          eng_remarks: engineerRemarks
+        });
+      }
+      alert(`Report marked as ${newStatus}!`);
+      closeReportModal();
+      fetchReports();
+    } catch (err: any) {
+      alert(err.message || "Failed to update status");
     }
   };
 
@@ -201,8 +345,8 @@ export const ReportsPage: React.FC = () => {
               options={[
                 { value: "all", label: "All Technicians" },
                 ...uniqueTechnicians.map((tech) => ({
-                  value: tech.technicianId,
-                  label: tech.technicianName,
+                  value: tech.id,
+                  label: tech.name,
                 })),
               ]}
               value={technicianFilter}
@@ -247,7 +391,13 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Reports Display */}
-      {filteredReports.length === 0 ? (
+      {loading ? (
+        <Card className="flex flex-col items-center justify-center py-12">
+          <div className="text-4xl text-primary-500 animate-spin mb-4">⏳</div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">Loading Reports...</h3>
+          <p className="text-slate-600">Please wait while we fetch the latest technician reports.</p>
+        </Card>
+      ) : filteredReports.length === 0 ? (
         // Empty State
         <Card className="flex flex-col items-center justify-center py-12">
           <div className="text-5xl text-slate-300 mb-4">📋</div>
@@ -273,7 +423,7 @@ export const ReportsPage: React.FC = () => {
           {paginatedReports.map((report) => {
             const statusConfig = getStatusBadge(report.maintenanceStatus);
             const StatusIcon = statusConfig.icon;
-            const isReviewed = markedAsReviewed.has(report.id);
+            const isReviewed = report.maintenanceStatus === "approved";
 
             return (
               <Card
@@ -373,7 +523,7 @@ export const ReportsPage: React.FC = () => {
               {paginatedReports.map((report) => {
                 const statusConfig = getStatusBadge(report.maintenanceStatus);
                 const StatusIcon = statusConfig.icon;
-                const isReviewed = markedAsReviewed.has(report.id);
+                const isReviewed = report.maintenanceStatus === "approved";
 
                 return (
                   <tr
@@ -640,11 +790,18 @@ export const ReportsPage: React.FC = () => {
                 {isRemarksSaving ? "Saving..." : "Save Remarks"}
               </Button>
               <Button
-                onClick={handleMarkAsReviewed}
+                onClick={() => handleUpdateStatus("approved")}
                 variant="secondary"
               >
-                <FiCheckCircle size={16} />
-                Mark as Reviewed
+                <FiCheckCircle size={16} className="mr-1" />
+                Approve & Complete
+              </Button>
+              <Button
+                onClick={() => handleUpdateStatus("needs-rework")}
+                variant="danger"
+              >
+                <FiAlertCircle size={16} className="mr-1" />
+                Request Rework
               </Button>
             </div>
           </div>

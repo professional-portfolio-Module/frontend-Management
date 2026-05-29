@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiSearch, FiSend, FiMoreVertical, FiArrowLeft, FiActivity, FiUsers, FiCheckCircle, FiFolder, FiHardDrive, FiFileText, FiClock, FiMessageSquare, FiBell, FiClipboard, FiHome, FiSettings, FiShield, FiTrendingUp } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
-import { User } from "../../mock/users";
+import { User } from "../../services/userService";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import { userService } from "../../services/userService";
