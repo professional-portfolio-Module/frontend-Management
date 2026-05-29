@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiBell, FiActivity, FiFolder, FiHardDrive, FiClipboard, FiSearch, FiTrendingUp } from "react-icons/fi";
+import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiActivity, FiFolder, FiHardDrive, FiClipboard, FiSearch, FiTrendingUp, FiAlertTriangle } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -8,7 +8,6 @@ import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
 import { Input, Select, TextArea } from "../../components/common/Form";
 import { useAuth } from "../../context/AuthContext";
-import { mockActivities, mockNotifications } from "../../mock/data";
 import { User } from "../../mock/users";
 import { CreateAccountModal } from "../../components/common/CreateAccountModal";
 import { userService } from "../../services/userService";
@@ -407,18 +406,25 @@ export const ManagerDashboard: React.FC = () => {
   }, [user?.id]);
 
   React.useEffect(() => {
-    if (activeTab === "verification") {
+    if (activeTab === "verification" || activeTab === "overview") {
       userService.getPendingUsers().then((users) => {
         setPendingUsers(users);
       });
-    } else if (activeTab === "categories" || activeTab === "assets") {
+    }
+
+    if (activeTab === "categories" || activeTab === "assets") {
       fetchCategories();
       fetchStatuses();
     }
 
-    if (activeTab === "overview" || activeTab === "users" || activeTab === "manual-tasks") {
+    if (activeTab === "overview") {
+      fetchUsers();
+      fetchManualTasks();
+      fetchScheduledTasks();
+    } else if (activeTab === "users") {
       fetchUsers();
     }
+
     if (activeTab === "manual-tasks") {
       fetchAllAssetsForTask();
       fetchManualTasks();
@@ -444,9 +450,6 @@ export const ManagerDashboard: React.FC = () => {
   }, [activeTab, scheduledTaskStatus, scheduledTaskPriority, selectedHotelId]);
 
 
-  const engineers = usersList.filter((u) => u.role === "engineer");
-  const staff = usersList.filter((u) => u.role === "staff");
-  const managers = usersList.filter((u) => u.role === "manager");
   const technicians = usersList.filter((u) => u.role === "technician");
   const filteredUsers = usersList.filter((u) => {
     if (u.role === "admin") return false;
@@ -460,7 +463,32 @@ export const ManagerDashboard: React.FC = () => {
     if (userStatusFilter && u.status !== userStatusFilter) return false;
     return true;
   });
-  const unreadNotifications = mockNotifications.filter((n) => !n.read && n.userId === user?.id);
+  // Combine all tasks for the recent updates feed
+  const allTasksFeed = [
+    ...scheduledTasks.map(t => ({
+      id: t.task_id,
+      title: t.schedule_title,
+      type: "Scheduled",
+      status: t.status,
+      priority: t.priority,
+      createdAt: t.created_at,
+      assignedTo: t.assigned_technicians?.map(at => at.technician_name).join(", ") || "Unassigned"
+    })),
+    ...manualTasks.map(t => ({
+      id: t.manual_task_id,
+      title: t.title,
+      type: "Manual",
+      status: t.status,
+      priority: t.priority,
+      createdAt: t.created_at || new Date().toISOString(),
+      assignedTo: t.assigned_to_name || "Unassigned"
+    }))
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const recentTasks = allTasksFeed.slice(0, 5);
+
+  const emergencyTasks = allTasksFeed.filter(t => t.priority === "emergency" && t.status !== "completed" && t.status !== "rejected");
+  const underReviewTasks = allTasksFeed.filter(t => t.status === "under_review");
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -725,50 +753,175 @@ export const ManagerDashboard: React.FC = () => {
       {/* Overview Tab */}
       {activeTab === "overview" && (
         <div className="space-y-8">
+          {/* Welcome greeting */}
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Welcome Back, {user?.name || "Manager"}!</h1>
+            <p className="text-sm text-slate-500 mt-1">Here is a real-time summary of the maintenance operations and registration verification requests.</p>
+          </div>
+
           {/* Statistics */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-            <StatCard icon={<FiUsers size={18} />} label="Total Engineers" value={engineers.length} color="blue" />
-            <StatCard icon={<FiCheckCircle size={18} />} label="Staff Members" value={staff.length} color="green" />
-            <StatCard icon={<FiUsers size={18} />} label="Technicians" value={technicians.length} color="teal" />
-            <StatCard icon={<FiUsers size={18} />} label="Managers" value={managers.length} color="purple" />
-            <StatCard icon={<FiClock size={18} />} label="Pending Verification" value={pendingUsers.length} color="yellow" trend="up" trendValue="2 this week" />
-            <StatCard icon={<FiBell size={18} />} label="Notifications" value={unreadNotifications.length} color="red" />
+            <StatCard 
+              icon={<FiAlertTriangle size={18} />} 
+              label="Emergency Alerts" 
+              value={emergencyTasks.length} 
+              color="red" 
+            />
+            <StatCard 
+              icon={<FiCheckCircle size={18} />} 
+              label="Under Review" 
+              value={underReviewTasks.length} 
+              color="purple" 
+            />
+            <StatCard 
+              icon={<FiFileText size={18} />} 
+              label="Pending Schedules" 
+              value={scheduledTasks.filter(t => t.status === 'pending' || t.status === 'in-progress').length} 
+              color="blue" 
+            />
+            <StatCard 
+              icon={<FiClipboard size={18} />} 
+              label="Open Manual Tasks" 
+              value={manualTasks.filter(t => t.status === 'pending' || t.status === 'in-progress').length} 
+              color="teal" 
+            />
+            <StatCard 
+              icon={<FiClock size={18} />} 
+              label="Pending Verifications" 
+              value={pendingUsers.length} 
+              color="yellow" 
+            />
+            <StatCard 
+              icon={<FiUsers size={18} />} 
+              label="Active Team Members" 
+              value={usersList.length} 
+              color="green" 
+            />
           </div>
 
           {/* Content Grid */}
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* Recent Activities */}
+            {/* Recent Task Updates */}
             <Card className="lg:col-span-2">
-              <h2 className="text-sm font-semibold text-slate-900 mb-5">Recent Activities</h2>
+              <div className="flex justify-between items-center mb-5 border-b border-slate-100 pb-4">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-900">Recent Task Updates</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Real-time status changes and assignments of your team</p>
+                </div>
+              </div>
               <div className="space-y-4">
-                {mockActivities.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex gap-4 pb-4 border-b border-slate-200 last:border-b-0 last:pb-0">
-                    <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 flex-shrink-0">
-                      <FiActivity size={14} />
+                {recentTasks.map((task) => (
+                  <div key={task.id} className="flex gap-4 pb-4 border-b border-slate-100 last:border-b-0 last:pb-0 hover:bg-slate-50/50 p-2 rounded transition-all">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      task.type === "Manual" ? "bg-teal-50 text-teal-600" : "bg-blue-50 text-blue-600"
+                    }`}>
+                      <FiFileText size={14} />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-900">{activity.action}</p>
-                      <p className="text-xs text-slate-500">{activity.description}</p>
-                      <p className="text-[11px] text-slate-400 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-4">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{task.title}</p>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                          task.priority === "emergency" ? "bg-rose-100 text-rose-800" : "bg-slate-100 text-slate-800"
+                        }`}>
+                          {task.priority}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1.5 text-xs text-slate-500">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-slate-600">{task.type} Task</span>
+                          <span>•</span>
+                          <span>Assigned to: <span className="font-medium text-slate-700">{task.assignedTo}</span></span>
+                        </div>
+                        <span>{new Date(task.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                        task.status === "completed" ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20" :
+                        task.status === "under_review" ? "bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20" :
+                        task.status === "in-progress" ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20" :
+                        task.status === "rejected" ? "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20" :
+                        "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20"
+                      }`}>
+                        {task.status.replace("_", " ")}
+                      </span>
                     </div>
                   </div>
                 ))}
+                {recentTasks.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-slate-400 text-sm">No recent task updates recorded.</p>
+                  </div>
+                )}
               </div>
             </Card>
 
-            {/* Notifications */}
-            <Card>
-              <h2 className="text-sm font-semibold text-slate-900 mb-4">Notifications</h2>
-              <div className="space-y-3">
-                {unreadNotifications.map((notif) => (
-                  <div key={notif.id} className="p-3 rounded-md bg-primary-50/50 border border-primary-100">
-                    <p className="text-sm font-medium text-slate-900">{notif.title}</p>
-                    <p className="text-xs text-slate-500 mt-1">{notif.message}</p>
+            {/* Quick Action Sidebar Panel */}
+            <div className="space-y-6">
+              {/* Emergency Alerts Panel */}
+              {emergencyTasks.length > 0 && (
+                <Card className="bg-rose-50/50 border-rose-200">
+                  <h2 className="text-sm font-semibold text-rose-900 mb-3 flex items-center gap-2">
+                    <FiAlertTriangle className="text-rose-600 animate-pulse" />
+                    Emergency Attention Required ({emergencyTasks.length})
+                  </h2>
+                  <div className="space-y-2.5">
+                    {emergencyTasks.slice(0, 3).map((task) => (
+                      <div key={task.id} className="p-3 bg-white border border-rose-100 rounded-md shadow-sm">
+                        <p className="text-xs font-bold text-rose-900 truncate">{task.title}</p>
+                        <div className="flex justify-between items-center mt-2 text-[10px] text-rose-700">
+                          <span>Type: {task.type}</span>
+                          <span>Assigned: {task.assignedTo}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                {unreadNotifications.length === 0 && <p className="text-slate-500 text-sm">No notifications</p>}
-              </div>
-            </Card>
+                </Card>
+              )}
+
+              {/* Registration Request Approval Queue */}
+              <Card>
+                <h2 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <FiCheckCircle className="text-emerald-500" />
+                  Quick Approval Queue
+                </h2>
+                <div className="space-y-3">
+                  {pendingUsers.slice(0, 3).map((notif) => (
+                    <div key={notif.id} className="p-3 rounded-lg border border-slate-100 bg-slate-50/50 flex flex-col justify-between gap-2.5">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{notif.name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{notif.email}</p>
+                        <span className="inline-flex mt-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-700">
+                          {notif.role}
+                        </span>
+                      </div>
+                      <div className="flex justify-end gap-2 border-t border-slate-100/70 pt-2.5">
+                        <Button 
+                          size="sm" 
+                          variant="primary" 
+                          onClick={async () => {
+                            try {
+                              await userService.verifyUser(notif.id);
+                              setPendingUsers(prev => prev.filter(u => u.id !== notif.id));
+                              alert("User approved successfully!");
+                            } catch (e: any) {
+                              alert(e.message || "Failed to approve user");
+                            }
+                          }}
+                        >
+                          Approve
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {pendingUsers.length === 0 && (
+                    <div className="text-center py-6">
+                      <p className="text-slate-400 text-sm">All registration requests reviewed.</p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       )}
@@ -1154,9 +1307,7 @@ export const ManagerDashboard: React.FC = () => {
 
           {/* Pagination Controls */}
           <div className="p-4 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white">
-            <span className="text-sm text-slate-500 font-medium">
-              Showing Page {assetTotalPages === 0 ? 0 : assetPage} of {assetTotalPages}
-            </span>
+            <span className="text-sm text-slate-500 font-medium"></span>
             <div className="flex gap-2">
               <Button
                 size="sm"

@@ -835,9 +835,7 @@ export const StaffDashboard: React.FC = () => {
 
           {/* Pagination Controls */}
           <div className="p-4 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white">
-            <span className="text-sm text-slate-500 font-medium">
-              Showing Page {assetTotalPages === 0 ? 0 : assetPage} of {assetTotalPages}
-            </span>
+            <span className="text-sm text-slate-500 font-medium"></span>
             <div className="flex gap-2">
               <Button
                 size="sm"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiCalendar, FiClock, FiMapPin, FiUsers, FiFilter, FiChevronLeft, FiChevronRight, FiCheckCircle, FiActivity, FiFolder, FiHardDrive, FiFileText, FiMessageSquare, FiBell, FiClipboard } from "react-icons/fi";
+import { FiCalendar, FiClock, FiMapPin, FiUsers, FiFilter, FiChevronLeft, FiChevronRight, FiCheckCircle, FiActivity, FiFolder, FiHardDrive, FiFileText, FiMessageSquare, FiBell, FiClipboard, FiTrendingUp } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import { mockSchedules } from "../../mock/data";
 import { mockUsers } from "../../mock/users";
@@ -26,11 +26,13 @@ export const SchedulesPage: React.FC = () => {
     if (user?.role === "manager") {
       return [
         { icon: <FiActivity />, label: "Dashboard", active: false, onClick: () => navigate("/manager", { state: { activeTab: "overview" } }) },
+        { icon: <FiTrendingUp />, label: "Analytics", active: false, onClick: () => navigate("/manager", { state: { activeTab: "analytics" } }) },
         { icon: <FiUsers />, label: "User Management", active: false, onClick: () => navigate("/manager", { state: { activeTab: "users" } }) },
         { icon: <FiCheckCircle />, label: "Verification", active: false, onClick: () => navigate("/manager", { state: { activeTab: "verification" } }), badge: pendingCount },
         { icon: <FiFolder />, label: "Categories", active: false, onClick: () => navigate("/manager", { state: { activeTab: "categories" } }) },
         { icon: <FiHardDrive />, label: "Assets", active: false, onClick: () => navigate("/manager", { state: { activeTab: "assets" } }) },
-        { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/manager", { state: { activeTab: "work-items" } }) },
+        { icon: <FiClipboard />, label: "Manual Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "manual-tasks" } }) },
+        { icon: <FiFileText />, label: "Scheduled Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "work-items" } }) },
         { icon: <FiClock />, label: "Schedules", active: true, onClick: () => navigate("/schedules") },
         { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
       ];
