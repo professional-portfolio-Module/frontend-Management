@@ -42,6 +42,25 @@ export const scheduledTaskService = {
       return response.data.data;
     }
     return [];
+  },
+
+  updateScheduledTask: async (
+    taskId: string,
+    payload: {
+      status?: string;
+      technician_remarks?: string;
+      engineer_remarks?: string;
+      attachment_url?: string;
+      done_by?: string;
+      checked_by?: string;
+      priority?: string;
+    }
+  ): Promise<ScheduledTask | null> => {
+    const response = await apiClient.patch(`/Main/router-backend/api/scheduled-tasks/${taskId}`, payload);
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    return null;
   }
 };
 
