@@ -293,7 +293,15 @@ export const ManagerDashboard: React.FC = () => {
         scheduledTaskStatus || undefined,
         scheduledTaskPriority || undefined
       );
-      setScheduledTasks(data);
+      
+      // Sort emergency priority tasks to the top, then sort by newest first
+      const sortedData = [...data].sort((a, b) => {
+        if (a.priority === 'emergency' && b.priority !== 'emergency') return -1;
+        if (a.priority !== 'emergency' && b.priority === 'emergency') return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      setScheduledTasks(sortedData);
     } catch (err: any) {
       console.error("Failed to fetch scheduled tasks:", err);
     } finally {
