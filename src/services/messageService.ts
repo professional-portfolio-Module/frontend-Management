@@ -40,7 +40,7 @@ async function deriveInitialKeys(senderId: string, receiverId: string): Promise<
     {
       name: "PBKDF2",
       salt: enc.encode(E2EE_SALT),
-      iterations: 100000,
+      iterations: 1000,
       hash: "SHA-256"
     },
     masterKey,
