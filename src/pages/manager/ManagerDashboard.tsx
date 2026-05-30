@@ -24,7 +24,8 @@ const SearchableAssetDropdown: React.FC<{
   value: string;
   onChange: (card_no: string) => void;
   assets: Asset[];
-}> = ({ label, required, value, onChange, assets }) => {
+  disabled?: boolean;
+}> = ({ label, required, value, onChange, assets, disabled }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -48,16 +49,18 @@ const SearchableAssetDropdown: React.FC<{
       </label>
       
       <div 
-        onClick={() => setIsOpen(!isOpen)}
-        className="input-field flex justify-between items-center cursor-pointer bg-white text-sm min-h-[38px] border border-slate-300 rounded-md px-3 py-2"
+        onClick={() => {
+          if (!disabled) setIsOpen(!isOpen);
+        }}
+        className={`input-field flex justify-between items-center text-sm min-h-[38px] border border-slate-300 rounded-md px-3 py-2 ${disabled ? "opacity-60 cursor-not-allowed bg-slate-50 text-slate-500" : "cursor-pointer bg-white text-slate-900"}`}
       >
         <span className={selectedAsset ? "text-slate-900" : "text-slate-400"}>
           {displayedLabel}
         </span>
-        <span className="text-slate-400 text-xs">▼</span>
+        {!disabled && <span className="text-slate-400 text-xs">▼</span>}
       </div>
 
-      {isOpen && (
+      {!disabled && isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute top-[75px] left-0 w-full bg-white border border-slate-200 rounded-md shadow-lg z-50 p-2 flex flex-col gap-2 max-h-[300px]">
@@ -1576,13 +1579,20 @@ export const ManagerDashboard: React.FC = () => {
                 label: "Actions",
                 render: (val, row: ManualTask) => (
                   <div className="flex gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => handleEditManualTask(row)}>
-
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => handleManualTaskDelete(val)}>
-                      Delete
-                    </Button>
+                    {row.status === 'pending' ? (
+                      <>
+                        <Button size="sm" variant="secondary" onClick={() => handleEditManualTask(row)}>
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="danger" onClick={() => handleManualTaskDelete(val)}>
+                          Delete
+                        </Button>
+                      </>
+                    ) : (
+                      <Button size="sm" variant="secondary" onClick={() => handleEditManualTask(row)}>
+                        View Details
+                      </Button>
+                    )}
                   </div>
                 )
               }
@@ -2254,7 +2264,7 @@ export const ManagerDashboard: React.FC = () => {
       {/* Edit Manual Task Modal */}
       <Modal
         isOpen={isEditManualTaskModalOpen}
-        title="Edit Manual Task"
+        title={selectedManualTask?.status === 'pending' ? "Edit Manual Task" : "View Manual Task Details"}
         onClose={() => setIsEditManualTaskModalOpen(false)}
       >
         <form onSubmit={handleEditManualTaskSubmit} className="space-y-4">
@@ -2269,12 +2279,14 @@ export const ManagerDashboard: React.FC = () => {
             value={editManualTaskForm.title}
             onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, title: e.target.value })}
             required
+            disabled={selectedManualTask?.status !== 'pending'}
           />
 
           <TextArea
             label="Task Description"
             value={editManualTaskForm.description}
             onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, description: e.target.value })}
+            disabled={selectedManualTask?.status !== 'pending'}
           />
 
           <div>
@@ -2284,8 +2296,9 @@ export const ManagerDashboard: React.FC = () => {
             <select
               value={editManualTaskForm.assigned_to}
               onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, assigned_to: e.target.value })}
-              className="input-field text-sm bg-white cursor-pointer"
+              className={`input-field text-sm cursor-pointer ${selectedManualTask?.status !== 'pending' ? 'bg-slate-50 cursor-not-allowed opacity-60' : 'bg-white'}`}
               required
+              disabled={selectedManualTask?.status !== 'pending'}
             >
               <option value="">Select Technician...</option>
               {technicians.map((t) => (
@@ -2302,6 +2315,7 @@ export const ManagerDashboard: React.FC = () => {
             value={editManualTaskForm.card_no}
             onChange={(card_no) => setEditManualTaskForm({ ...editManualTaskForm, card_no })}
             assets={allAssetsForTask}
+            disabled={selectedManualTask?.status !== 'pending'}
           />
 
           <div>
@@ -2309,7 +2323,8 @@ export const ManagerDashboard: React.FC = () => {
             <select
               value={editManualTaskForm.priority}
               onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, priority: e.target.value as any })}
-              className="input-field text-sm bg-white cursor-pointer"
+              className={`input-field text-sm cursor-pointer ${selectedManualTask?.status !== 'pending' ? 'bg-slate-50 cursor-not-allowed opacity-60' : 'bg-white'}`}
+              disabled={selectedManualTask?.status !== 'pending'}
             >
               <option value="normal">Normal</option>
               <option value="emergency">Emergency</option>
@@ -2321,7 +2336,8 @@ export const ManagerDashboard: React.FC = () => {
             <select
               value={editManualTaskForm.status}
               onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, status: e.target.value as any })}
-              className="input-field text-sm bg-white cursor-pointer"
+              className={`input-field text-sm cursor-pointer ${selectedManualTask?.status !== 'pending' ? 'bg-slate-50 cursor-not-allowed opacity-60' : 'bg-white'}`}
+              disabled={selectedManualTask?.status !== 'pending'}
             >
               <option value="pending">Pending</option>
               <option value="in-progress">In Progress</option>
@@ -2338,7 +2354,8 @@ export const ManagerDashboard: React.FC = () => {
               type="date"
               value={editManualTaskForm.due_date}
               onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, due_date: e.target.value })}
-              className="input-field text-sm bg-white"
+              className={`input-field text-sm ${selectedManualTask?.status !== 'pending' ? 'bg-slate-50 cursor-not-allowed opacity-60' : 'bg-white'}`}
+              disabled={selectedManualTask?.status !== 'pending'}
             />
           </div>
 
@@ -2346,12 +2363,14 @@ export const ManagerDashboard: React.FC = () => {
             label="Tech Remarks"
             value={editManualTaskForm.tech_remarks}
             onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, tech_remarks: e.target.value })}
+            disabled={selectedManualTask?.status !== 'pending'}
           />
 
           <TextArea
             label="Manager Remarks"
             value={editManualTaskForm.eng_remarks}
             onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, eng_remarks: e.target.value })}
+            disabled={selectedManualTask?.status !== 'pending'}
           />
 
           {selectedManualTask?.attachment_url && (
@@ -2373,12 +2392,20 @@ export const ManagerDashboard: React.FC = () => {
           )}
 
           <div className="flex gap-2 pt-4 justify-end">
-            <Button variant="secondary" onClick={() => setIsEditManualTaskModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">
-              Save Changes
-            </Button>
+            {selectedManualTask?.status === 'pending' ? (
+              <>
+                <Button variant="secondary" onClick={() => setIsEditManualTaskModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  Save Changes
+                </Button>
+              </>
+            ) : (
+              <Button variant="secondary" onClick={() => setIsEditManualTaskModalOpen(false)}>
+                Close
+              </Button>
+            )}
           </div>
         </form>
       </Modal>
