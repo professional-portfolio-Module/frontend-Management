@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiActivity, FiFolder, FiHardDrive, FiClipboard, FiSearch, FiTrendingUp, FiAlertTriangle } from "react-icons/fi";
+import { FiUsers, FiCheckCircle, FiClock, FiFileText, FiMessageSquare, FiActivity, FiFolder, FiHardDrive, FiClipboard, FiSearch, FiTrendingUp, FiAlertTriangle, FiBell } from "react-icons/fi";
 import { DashboardLayout } from "../../layouts/DashboardLayout";
 import { StatCard, Card } from "../../components/common/Card";
 import { Table } from "../../components/common/Table";
@@ -15,6 +15,7 @@ import { categoryService, Category } from "../../services/categoryService";
 import { assetService, Asset } from "../../services/assetService";
 import { manualTaskService, ManualTask } from "../../services/manualTaskService";
 import { scheduledTaskService, ScheduledTask } from "../../services/scheduledTaskService";
+import { notificationService, AppNotification } from "../../services/notificationService";
 import apiClient from "../../services/api";
 import { AnalyticsPage } from "../analytics/AnalyticsPage";
 
@@ -220,6 +221,9 @@ export const ManagerDashboard: React.FC = () => {
   });
   const [editScheduledTaskError, setEditScheduledTaskError] = useState("");
 
+  // Notifications state
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
 
 
   const fetchCategories = async () => {
@@ -319,6 +323,16 @@ export const ManagerDashboard: React.FC = () => {
       console.error("Failed to fetch scheduled tasks:", err);
     } finally {
       setScheduledTasksLoading(false);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    if (!user?.id) return;
+    try {
+      const data = await notificationService.getNotifications(user.id);
+      setNotifications(data);
+    } catch (err: any) {
+      console.error("Failed to fetch notifications:", err);
     }
   };
 
@@ -462,6 +476,20 @@ export const ManagerDashboard: React.FC = () => {
       fetchScheduledTasks();
     }
   }, [activeTab, scheduledTaskStatus, scheduledTaskPriority, selectedHotelId]);
+
+  React.useEffect(() => {
+    if (activeTab === "notifications") {
+      fetchNotifications();
+    }
+  }, [activeTab]);
+
+  React.useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  const unreadNotifications = notifications.filter(n => !n.read);
 
 
   const technicians = usersList.filter((u) => u.role === "technician");
@@ -789,6 +817,7 @@ export const ManagerDashboard: React.FC = () => {
     { icon: <FiClipboard />, label: "Manual Tasks", active: activeTab === "manual-tasks", onClick: () => setActiveTab("manual-tasks") },
     { icon: <FiFileText />, label: "Scheduled Tasks", active: activeTab === "work-items", onClick: () => setActiveTab("work-items") },
     { icon: <FiClock />, label: "Schedules", active: activeTab === "schedules", onClick: () => navigate("/schedules") },
+    { icon: <FiBell />, label: "Notifications", active: activeTab === "notifications", onClick: () => setActiveTab("notifications"), badge: unreadNotifications.length },
     { icon: <FiMessageSquare />, label: "Messages", active: activeTab === "messages", onClick: () => navigate("/messages") },
   ];
 
@@ -1840,6 +1869,50 @@ export const ManagerDashboard: React.FC = () => {
       {/* Analytics Tab */}
       {activeTab === "analytics" && (
         <AnalyticsPage role="manager" />
+      )}
+
+      {/* Notifications Tab */}
+      {activeTab === "notifications" && (
+        <Card>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">Notifications</h2>
+            {unreadNotifications.length > 0 && (
+              <Button size="sm" variant="secondary" onClick={async () => {
+                if (user?.id) {
+                  await notificationService.markAllAsRead(user.id);
+                  fetchNotifications();
+                }
+              }}>
+                Mark All as Read
+              </Button>
+            )}
+          </div>
+          <div className="space-y-3">
+            {notifications.map((notif) => (
+              <div 
+                key={notif.id} 
+                className={`p-4 rounded-lg border transition-all cursor-pointer ${notif.read ? "bg-slate-50 border-slate-200" : "bg-blue-50/70 border-blue-200 shadow-sm"}`}
+                onClick={async () => {
+                  if (!notif.read) {
+                    await notificationService.markAsRead(notif.id);
+                    fetchNotifications();
+                  }
+                }}
+              >
+                <p className={`font-semibold text-sm ${notif.read ? "text-slate-700" : "text-blue-900"}`}>{notif.title}</p>
+                <p className={`text-xs mt-1 ${notif.read ? "text-slate-500" : "text-blue-700"}`}>{notif.content}</p>
+                <span className="text-[10px] text-slate-400 mt-2 block">
+                  {new Date(notif.createdAt).toLocaleString()}
+                </span>
+              </div>
+            ))}
+            {notifications.length === 0 && (
+              <div className="text-center py-8 text-slate-500 text-sm">
+                No notifications found
+              </div>
+            )}
+          </div>
+        </Card>
       )}
 
       {/* Profile Modal */}

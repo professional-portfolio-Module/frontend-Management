@@ -115,8 +115,8 @@ export const ReportsPage: React.FC = () => {
     setLoading(true);
     try {
       const [scheduledRes, manualRes] = await Promise.all([
-        scheduledTaskService.getScheduledTasks(user.hotelId),
-        manualTaskService.getManualTasks({ hotel_id: user.hotelId })
+        scheduledTaskService.getScheduledTasks(user.hotelId, undefined, "emergency"),
+        manualTaskService.getManualTasks({ hotel_id: user.hotelId, priority: "emergency" })
       ]);
       
       const filteredScheduled = scheduledRes.filter(t => 

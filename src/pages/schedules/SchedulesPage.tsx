@@ -84,9 +84,10 @@ export const SchedulesPage: React.FC = () => {
       if (!hotelId) return;
       setLoading(true);
       try {
+        const isEngineer = user?.role === "engineer";
         const [scheduledRes, manualRes] = await Promise.all([
-          scheduledTaskService.getScheduledTasks(hotelId),
-          manualTaskService.getManualTasks({ hotel_id: hotelId })
+          scheduledTaskService.getScheduledTasks(hotelId, undefined, isEngineer ? "emergency" : undefined),
+          manualTaskService.getManualTasks({ hotel_id: hotelId, priority: isEngineer ? "emergency" : undefined })
         ]);
         
         if (active) {
@@ -105,7 +106,7 @@ export const SchedulesPage: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [user?.hotelId]);
+  }, [user?.hotelId, user?.role]);
 
   const getSidebarItems = () => {
     const managerItems = [

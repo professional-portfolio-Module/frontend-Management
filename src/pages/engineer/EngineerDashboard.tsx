@@ -39,9 +39,7 @@ export const EngineerDashboard: React.FC = () => {
 
   // Filters
   const [scheduledStatusFilter, setScheduledStatusFilter] = useState<string>("");
-  const [scheduledPriorityFilter, setScheduledPriorityFilter] = useState<string>("");
   const [manualStatusFilter, setManualStatusFilter] = useState<string>("");
-  const [manualPriorityFilter, setManualPriorityFilter] = useState<string>("");
   const [showOnlyMyTasks, setShowOnlyMyTasks] = useState(false);
 
   // Review Modal state
@@ -101,7 +99,7 @@ export const EngineerDashboard: React.FC = () => {
       const data = await scheduledTaskService.getScheduledTasks(
         selectedHotelId,
         scheduledStatusFilter || undefined,
-        scheduledPriorityFilter || undefined
+        "emergency"
       );
       setScheduledTasks(data);
     } catch (err) {
@@ -118,7 +116,7 @@ export const EngineerDashboard: React.FC = () => {
       const data = await manualTaskService.getManualTasks({
         hotel_id: selectedHotelId,
         status: manualStatusFilter || undefined,
-        priority: manualPriorityFilter || undefined
+        priority: "emergency"
       });
       setManualTasks(data);
     } catch (err) {
@@ -144,7 +142,7 @@ export const EngineerDashboard: React.FC = () => {
       fetchScheduledTasks();
       fetchManualTasks();
     }
-  }, [selectedHotelId, scheduledStatusFilter, scheduledPriorityFilter, manualStatusFilter, manualPriorityFilter]);
+  }, [selectedHotelId, scheduledStatusFilter, manualStatusFilter]);
 
   // Fetch notifications
   useEffect(() => {
@@ -412,7 +410,7 @@ export const EngineerDashboard: React.FC = () => {
           {activeSubTab === "scheduled" ? (
             <div className="space-y-6">
               {/* Scheduled Filters */}
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+              <div className="grid sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Status</label>
                   <select
@@ -427,18 +425,6 @@ export const EngineerDashboard: React.FC = () => {
                     <option value="completed">Completed</option>
                     <option value="rejected">Rejected</option>
                     <option value="expired">Expired</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Priority</label>
-                  <select
-                    value={scheduledPriorityFilter}
-                    onChange={(e) => setScheduledPriorityFilter(e.target.value)}
-                    className="input-field text-sm bg-white cursor-pointer"
-                  >
-                    <option value="">All Priorities</option>
-                    <option value="normal">Normal</option>
-                    <option value="emergency">Emergency</option>
                   </select>
                 </div>
               </div>
@@ -506,7 +492,7 @@ export const EngineerDashboard: React.FC = () => {
           ) : (
             <div className="space-y-6">
               {/* Manual Filters */}
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+              <div className="grid sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Status</label>
                   <select
@@ -521,18 +507,6 @@ export const EngineerDashboard: React.FC = () => {
                     <option value="completed">Completed</option>
                     <option value="rejected">Rejected</option>
                     <option value="expired">Expired</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Priority</label>
-                  <select
-                    value={manualPriorityFilter}
-                    onChange={(e) => setManualPriorityFilter(e.target.value)}
-                    className="input-field text-sm bg-white cursor-pointer"
-                  >
-                    <option value="">All Priorities</option>
-                    <option value="normal">Normal</option>
-                    <option value="emergency">Emergency</option>
                   </select>
                 </div>
               </div>
