@@ -206,6 +206,17 @@ export const ManagerDashboard: React.FC = () => {
   const [editManualTaskError, setEditManualTaskError] = useState("");
   const [allAssetsForTask, setAllAssetsForTask] = useState<Asset[]>([]);
 
+  // Scheduled tasks edit states
+  const [isEditScheduledTaskModalOpen, setIsEditScheduledTaskModalOpen] = useState(false);
+  const [selectedScheduledTask, setSelectedScheduledTask] = useState<ScheduledTask | null>(null);
+  const [editScheduledTaskForm, setEditScheduledTaskForm] = useState({
+    status: "pending" as any,
+    priority: "normal" as any,
+    technician_remarks: "",
+    engineer_remarks: ""
+  });
+  const [editScheduledTaskError, setEditScheduledTaskError] = useState("");
+
 
 
   const fetchCategories = async () => {
@@ -703,6 +714,37 @@ export const ManagerDashboard: React.FC = () => {
       fetchManualTasks();
     } catch (err: any) {
       alert(err.message || "Failed to delete manual task.");
+    }
+  };
+
+  const handleEditScheduledTask = (task: ScheduledTask) => {
+    setSelectedScheduledTask(task);
+    setEditScheduledTaskForm({
+      status: task.status,
+      priority: task.priority,
+      technician_remarks: task.technician_remarks || "",
+      engineer_remarks: task.engineer_remarks || "",
+    });
+    setIsEditScheduledTaskModalOpen(true);
+  };
+
+  const handleEditScheduledTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditScheduledTaskError("");
+    if (!selectedScheduledTask) return;
+    try {
+      await scheduledTaskService.updateScheduledTask(selectedScheduledTask.task_id, {
+        status: editScheduledTaskForm.status,
+        priority: editScheduledTaskForm.priority,
+        technician_remarks: editScheduledTaskForm.technician_remarks || undefined,
+        engineer_remarks: editScheduledTaskForm.engineer_remarks || undefined,
+        checked_by: editScheduledTaskForm.status === 'completed' ? user?.id : undefined
+      });
+      setIsEditScheduledTaskModalOpen(false);
+      setSelectedScheduledTask(null);
+      fetchScheduledTasks();
+    } catch (err: any) {
+      setEditScheduledTaskError(err.message || "Failed to update scheduled task.");
     }
   };
   const handleUpdateProfile = async () => {
@@ -1750,6 +1792,15 @@ export const ManagerDashboard: React.FC = () => {
                       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">{row.status}</span>;
                   }
                 }
+              },
+              {
+                key: "task_id",
+                label: "Actions",
+                render: (_val, row: ScheduledTask) => (
+                  <Button size="sm" variant="secondary" onClick={() => handleEditScheduledTask(row)}>
+                    View Details
+                  </Button>
+                )
               }
             ]}
             data={scheduledTasks}
@@ -2303,8 +2354,122 @@ export const ManagerDashboard: React.FC = () => {
             onChange={(e) => setEditManualTaskForm({ ...editManualTaskForm, eng_remarks: e.target.value })}
           />
 
+          {selectedManualTask?.attachment_url && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-slate-700">Photo Evidence</label>
+              <a 
+                href={selectedManualTask.attachment_url} 
+                target="_blank" 
+                rel="noreferrer"
+                className="block hover:opacity-95 transition-opacity"
+              >
+                <img 
+                  src={selectedManualTask.attachment_url} 
+                  alt="Work Evidence" 
+                  className="max-h-60 object-contain rounded-md border border-slate-200" 
+                />
+              </a>
+            </div>
+          )}
+
           <div className="flex gap-2 pt-4 justify-end">
             <Button variant="secondary" onClick={() => setIsEditManualTaskModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Scheduled Task Modal */}
+      <Modal
+        isOpen={isEditScheduledTaskModalOpen}
+        title="Edit Scheduled Task"
+        onClose={() => setIsEditScheduledTaskModalOpen(false)}
+      >
+        <form onSubmit={handleEditScheduledTaskSubmit} className="space-y-4">
+          {editScheduledTaskError && (
+            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md border border-red-200">
+              {editScheduledTaskError}
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Task Title</label>
+            <div className="text-sm font-semibold text-slate-900 bg-slate-50 p-2.5 rounded-md border border-slate-200">
+              {selectedScheduledTask?.schedule_title}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Asset</label>
+            <div className="text-sm font-semibold text-slate-900 bg-slate-50 p-2.5 rounded-md border border-slate-200">
+              {selectedScheduledTask?.asset_card_no} - {selectedScheduledTask?.asset_description || "N/A"}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
+            <select
+              value={editScheduledTaskForm.priority}
+              onChange={(e) => setEditScheduledTaskForm({ ...editScheduledTaskForm, priority: e.target.value as any })}
+              className="input-field text-sm bg-white cursor-pointer"
+            >
+              <option value="normal">Normal</option>
+              <option value="emergency">Emergency</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+            <select
+              value={editScheduledTaskForm.status}
+              onChange={(e) => setEditScheduledTaskForm({ ...editScheduledTaskForm, status: e.target.value as any })}
+              className="input-field text-sm bg-white cursor-pointer"
+            >
+              <option value="pending">Pending</option>
+              <option value="in-progress">In Progress</option>
+              <option value="under_review">Under Review</option>
+              <option value="completed">Completed</option>
+              <option value="rejected">Rejected</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+
+          <TextArea
+            label="Tech Remarks"
+            value={editScheduledTaskForm.technician_remarks}
+            onChange={(e) => setEditScheduledTaskForm({ ...editScheduledTaskForm, technician_remarks: e.target.value })}
+          />
+
+          <TextArea
+            label="Manager Remarks"
+            value={editScheduledTaskForm.engineer_remarks}
+            onChange={(e) => setEditScheduledTaskForm({ ...editScheduledTaskForm, engineer_remarks: e.target.value })}
+          />
+
+          {selectedScheduledTask?.attachment_url && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-slate-700">Photo Evidence</label>
+              <a 
+                href={selectedScheduledTask.attachment_url} 
+                target="_blank" 
+                rel="noreferrer"
+                className="block hover:opacity-95 transition-opacity"
+              >
+                <img 
+                  src={selectedScheduledTask.attachment_url} 
+                  alt="Work Evidence" 
+                  className="max-h-60 object-contain rounded-md border border-slate-200" 
+                />
+              </a>
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-4 justify-end">
+            <Button variant="secondary" onClick={() => setIsEditScheduledTaskModalOpen(false)}>
               Cancel
             </Button>
             <Button type="submit">
