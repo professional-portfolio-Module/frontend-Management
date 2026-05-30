@@ -435,8 +435,8 @@ export const EngineerDashboard: React.FC = () => {
                 <Table
                   columns={[
                     { key: "task_id", label: "Task ID", width: "w-20", render: (val) => <span className="font-mono text-xs">{val.substring(0, 8)}</span> },
-                    { key: "title", label: "Title" },
-                    { key: "card_no", label: "Asset Code" },
+                    { key: "schedule_title", label: "Title" },
+                    { key: "asset_card_no", label: "Asset Code" },
                     { 
                       key: "priority", 
                       label: "Priority", 
@@ -663,7 +663,7 @@ export const EngineerDashboard: React.FC = () => {
               </div>
               <div>
                 <span className="block text-xs font-semibold text-slate-400 uppercase">Asset Card No</span>
-                <span className="font-semibold text-slate-900">{selectedTask.card_no || "N/A"}</span>
+                <span className="font-semibold text-slate-900">{selectedTask.card_no || selectedTask.asset_card_no || "N/A"}</span>
               </div>
               <div>
                 <span className="block text-xs font-semibold text-slate-400 uppercase">Due Date</span>
