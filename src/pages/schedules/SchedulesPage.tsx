@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { 
-  FiCalendar, 
-  FiClock, 
-  FiMapPin, 
-  FiUsers, 
-  FiFilter, 
-  FiChevronLeft, 
-  FiChevronRight, 
-  FiCheckCircle, 
-  FiActivity, 
-  FiFolder, 
-  FiHardDrive, 
-  FiFileText, 
-  FiMessageSquare, 
-  FiBell, 
-  FiClipboard, 
+import {
+  FiCalendar,
+  FiClock,
+  FiMapPin,
+  FiUsers,
+  FiFilter,
+  FiChevronLeft,
+  FiChevronRight,
+  FiCheckCircle,
+  FiActivity,
+  FiFolder,
+  FiHardDrive,
+  FiFileText,
+  FiMessageSquare,
+  FiBell,
+  FiClipboard,
   FiTrendingUp,
   FiPlus,
   FiEdit,
@@ -101,13 +101,13 @@ const SearchableAssetDropdown: React.FC<{
   const [search, setSearch] = useState("");
 
   const selectedAsset = assets.find(a => a.card_no === value);
-  const displayedLabel = selectedAsset 
-    ? `${selectedAsset.card_no} - ${selectedAsset.description}` 
+  const displayedLabel = selectedAsset
+    ? `${selectedAsset.card_no} - ${selectedAsset.description}`
     : "Search and select asset...";
 
   const filteredAssets = assets
-    .filter(a => 
-      a.card_no.toLowerCase().includes(search.toLowerCase()) || 
+    .filter(a =>
+      a.card_no.toLowerCase().includes(search.toLowerCase()) ||
       (a.description || "").toLowerCase().includes(search.toLowerCase())
     )
     .slice(0, 50);
@@ -118,8 +118,8 @@ const SearchableAssetDropdown: React.FC<{
         {label}
         {required && <span className="text-red-600 ml-1">*</span>}
       </label>
-      
-      <div 
+
+      <div
         onClick={() => setIsOpen(!isOpen)}
         className="input-field flex justify-between items-center cursor-pointer bg-white text-sm min-h-[38px] border border-slate-300 rounded-md px-3 py-2"
       >
@@ -199,6 +199,39 @@ export const SchedulesPage: React.FC = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [allAssetsForDropdown, setAllAssetsForDropdown] = useState<Asset[]>([]);
 
+  // Custom Alert / Confirm states
+  const [popupConfig, setPopupConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "info" | "success" | "error" | "confirm";
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info"
+  });
+
+  const showAlert = (title: string, message: string, type: "success" | "error" | "info" = "info") => {
+    setPopupConfig({
+      isOpen: true,
+      title,
+      message,
+      type
+    });
+  };
+
+  const showConfirmPopup = (title: string, message: string, onConfirm: () => void) => {
+    setPopupConfig({
+      isOpen: true,
+      title,
+      message,
+      type: "confirm",
+      onConfirm
+    });
+  };
+
   // Modal / Form states for create/edit
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -220,7 +253,7 @@ export const SchedulesPage: React.FC = () => {
   useEffect(() => {
     if (user?.role === "manager") {
       import("../../services/userService").then(({ userService }) => {
-        userService.getPendingUsers().then((users) => setPendingCount(users.length)).catch(() => {});
+        userService.getPendingUsers().then((users) => setPendingCount(users.length)).catch(() => { });
       });
     }
   }, [user]);
@@ -264,7 +297,7 @@ export const SchedulesPage: React.FC = () => {
         scheduledTaskService.getScheduledTasks(hotelId, undefined, isEngineer ? "emergency" : undefined),
         manualTaskService.getManualTasks({ hotel_id: hotelId, priority: isEngineer ? "emergency" : undefined })
       ]);
-      
+
       const mappedSchedules = scheduledRes.map(mapScheduledTask);
       const mappedManual = manualRes.map(mapManualTask);
       setEvents([...mappedSchedules, ...mappedManual]);
@@ -367,7 +400,7 @@ export const SchedulesPage: React.FC = () => {
     const hotelId = selectedHotelId || user?.hotelId;
     if (!hotelId) return;
     if (!schedTitle.trim() || !schedCardNo || !schedMonth || !schedStartDate || !schedEndDate) {
-      alert("Please fill in all required fields.");
+      showAlert("Warning", "Please fill in all required fields.", "error");
       return;
     }
 
@@ -384,20 +417,20 @@ export const SchedulesPage: React.FC = () => {
         assigned_technicians: schedAssignedTechs,
         assigned_by: user!.id,
       });
-      alert("Maintenance schedule created successfully!");
+      showAlert("Success", "Maintenance schedule created successfully!", "success");
       setShowCreateModal(false);
       resetScheduleForm();
       fetchMaintenanceSchedules();
       fetchSchedules(); // sync calendar events
     } catch (err: any) {
-      alert(err.message || "Failed to create maintenance schedule");
+      showAlert("Error", err.message || "Failed to create maintenance schedule", "error");
     }
   };
 
   const handleUpdateSchedule = async () => {
     if (!selectedSchedule) return;
     if (!schedTitle.trim() || !schedCardNo || !schedMonth || !schedStartDate || !schedEndDate) {
-      alert("Please fill in all required fields.");
+      showAlert("Warning", "Please fill in all required fields.", "error");
       return;
     }
 
@@ -414,28 +447,32 @@ export const SchedulesPage: React.FC = () => {
         assigned_technicians: schedAssignedTechs,
         assigned_by: user!.id,
       });
-      alert("Maintenance schedule updated successfully!");
+      showAlert("Success", "Maintenance schedule updated successfully!", "success");
       setShowEditModal(false);
       setSelectedSchedule(null);
       resetScheduleForm();
       fetchMaintenanceSchedules();
       fetchSchedules(); // sync calendar events
     } catch (err: any) {
-      alert(err.message || "Failed to update maintenance schedule");
+      showAlert("Error", err.message || "Failed to update maintenance schedule", "error");
     }
   };
 
   const handleDeleteSchedule = async (id: string) => {
-    if (window.confirm("Are you sure you want to deactivate this maintenance schedule?")) {
-      try {
-        await maintenanceScheduleService.deleteMaintenanceSchedule(id);
-        alert("Maintenance schedule deactivated successfully.");
-        fetchMaintenanceSchedules();
-        fetchSchedules(); // sync calendar events
-      } catch (err: any) {
-        alert(err.message || "Failed to deactivate maintenance schedule");
+    showConfirmPopup(
+      "Deactivate Schedule",
+      "Are you sure you want to deactivate this maintenance schedule?",
+      async () => {
+        try {
+          await maintenanceScheduleService.deleteMaintenanceSchedule(id);
+          showAlert("Success", "Maintenance schedule deactivated successfully.", "success");
+          fetchMaintenanceSchedules();
+          fetchSchedules(); // sync calendar events
+        } catch (err: any) {
+          showAlert("Error", err.message || "Failed to deactivate maintenance schedule", "error");
+        }
       }
-    }
+    );
   };
 
   const openEditModal = (schedule: MaintenanceSchedule) => {
@@ -538,7 +575,7 @@ export const SchedulesPage: React.FC = () => {
     const parts = event.date.split("-");
     if (parts.length !== 3) return false;
     const eventTime = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).getTime();
-    
+
     if (viewMode === "week") {
       const start = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()).getTime();
       const end = start + 7 * 24 * 60 * 60 * 1000;
@@ -679,756 +716,793 @@ export const SchedulesPage: React.FC = () => {
 
   return (
     <DashboardLayout sidebarItems={sidebarItems}>
-        {/* Header with Switcher */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">Maintainance-Schedule</h1>
-            <p className="text-sm text-slate-500">Manage and view team schedules and recurring maintenance</p>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Hotel Selector */}
-            {userHotels.length > 1 && (
-              <select
-                value={selectedHotelId}
-                onChange={(e) => setSelectedHotelId(e.target.value)}
-                className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-slate-50 cursor-pointer text-slate-700 font-medium"
-              >
-                {userHotels.map((h) => (
-                  <option key={h.id} value={h.id}>
-                    {h.name} ({h.city})
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {/* Switch Tabs */}
-            <div className="flex border border-slate-200 bg-slate-100 p-1 rounded-lg w-fit shadow-sm">
-              <button
-                onClick={() => setActiveTab("calendar")}
-                className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${
-                  activeTab === "calendar"
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-900"
-                }`}
-              >
-                Task Calendar
-              </button>
-              <button
-                onClick={() => setActiveTab("yearly")}
-                className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${
-                  activeTab === "yearly"
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-900"
-                }`}
-              >
-                Yearly Schedules
-              </button>
-            </div>
-          </div>
+      {/* Header with Switcher */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Maintainance-Schedule</h1>
+          <p className="text-sm text-slate-500">Manage and view team schedules and recurring maintenance</p>
         </div>
 
-        {/* Tab 1: Task Calendar */}
-        {activeTab === "calendar" && (
-          <>
-            {/* Controls */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-5 mb-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                {/* Filter */}
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <FiFilter className="text-slate-600" size={20} />
-                  <select
-                    value={filterRole}
-                    onChange={(e) => setFilterRole(e.target.value)}
-                    className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-150 shadow-sm"
-                  >
-                    <option value="all">All Tasks</option>
-                    <option value="scheduled">Scheduled Tasks</option>
-                    <option value="manual">Manual Tasks</option>
-                  </select>
-                </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Hotel Selector */}
+          {userHotels.length > 1 && (
+            <select
+              value={selectedHotelId}
+              onChange={(e) => setSelectedHotelId(e.target.value)}
+              className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-slate-50 cursor-pointer text-slate-700 font-medium"
+            >
+              {userHotels.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.name} ({h.city})
+                </option>
+              ))}
+            </select>
+          )}
 
-                {/* View Toggle */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setViewMode("week")}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                      viewMode === "week"
-                        ? "bg-primary-500 text-white"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    } text-sm`}
-                  >
-                    Week
-                  </button>
-                  <button
-                    onClick={() => setViewMode("month")}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                      viewMode === "month"
-                        ? "bg-primary-500 text-white"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    } text-sm`}
-                  >
-                    Month
-                  </button>
-                </div>
+          {/* Switch Tabs */}
+          <div className="flex border border-slate-200 bg-slate-100 p-1 rounded-lg w-fit shadow-sm">
+            <button
+              onClick={() => setActiveTab("calendar")}
+              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${activeTab === "calendar"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
+                }`}
+            >
+              Task Calendar
+            </button>
+            <button
+              onClick={() => setActiveTab("yearly")}
+              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${activeTab === "yearly"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
+                }`}
+            >
+              Yearly Schedules
+            </button>
+          </div>
+        </div>
+      </div>
 
-                {/* Navigation */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={goToPreviousPeriod}
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200"
-                  >
-                    <FiChevronLeft size={20} />
-                  </button>
-                  <span className="text-sm font-semibold text-slate-700 min-w-fit">
-                    {viewMode === "week"
-                      ? `${weekStart.toLocaleDateString()} - ${new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}`
-                      : currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                  </span>
-                  <button
-                    onClick={goToNextPeriod}
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200"
-                  >
-                    <FiChevronRight size={20} />
-                  </button>
-                </div>
+      {/* Tab 1: Task Calendar */}
+      {activeTab === "calendar" && (
+        <>
+          {/* Controls */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-5 mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              {/* Filter */}
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <FiFilter className="text-slate-600" size={20} />
+                <select
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-150 shadow-sm"
+                >
+                  <option value="all">All Tasks</option>
+                  <option value="scheduled">Scheduled Tasks</option>
+                  <option value="manual">Manual Tasks</option>
+                </select>
+              </div>
+
+              {/* View Toggle */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setViewMode("week")}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${viewMode === "week"
+                      ? "bg-primary-500 text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    } text-sm`}
+                >
+                  Week
+                </button>
+                <button
+                  onClick={() => setViewMode("month")}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${viewMode === "month"
+                      ? "bg-primary-500 text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    } text-sm`}
+                >
+                  Month
+                </button>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={goToPreviousPeriod}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200"
+                >
+                  <FiChevronLeft size={20} />
+                </button>
+                <span className="text-sm font-semibold text-slate-700 min-w-fit">
+                  {viewMode === "week"
+                    ? `${weekStart.toLocaleDateString()} - ${new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}`
+                    : currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </span>
+                <button
+                  onClick={goToNextPeriod}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200"
+                >
+                  <FiChevronRight size={20} />
+                </button>
               </div>
             </div>
+          </div>
 
-            {loading ? (
-              <div className="flex flex-col items-center justify-center min-h-[400px]">
-                <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="mt-4 text-slate-500 font-medium">Loading schedules...</p>
-              </div>
-            ) : viewMode === "week" ? (
-              // Week View
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3 sm:gap-4">
-                {weekDays.map((day, index) => {
-                  const daySchedules = getSchedulesForDate(day);
-                  const isToday = day.toDateString() === new Date().toDateString();
+          {loading ? (
+            <div className="flex flex-col items-center justify-center min-h-[400px]">
+              <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-4 text-slate-500 font-medium">Loading schedules...</p>
+            </div>
+          ) : viewMode === "week" ? (
+            // Week View
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3 sm:gap-4">
+              {weekDays.map((day, index) => {
+                const daySchedules = getSchedulesForDate(day);
+                const isToday = day.toDateString() === new Date().toDateString();
 
-                  return (
-                    <div
-                      key={index}
-                      className={`rounded-lg border border-slate-200 overflow-hidden transition-all duration-200 ${
-                        isToday
-                          ? "border-2 border-primary-500 bg-primary-50"
-                          : "bg-white shadow-sm"
+                return (
+                  <div
+                    key={index}
+                    className={`rounded-lg border border-slate-200 overflow-hidden transition-all duration-200 ${isToday
+                        ? "border-2 border-primary-500 bg-primary-50"
+                        : "bg-white shadow-sm"
                       }`}
-                    >
-                      {/* Day Header */}
-                      <div
-                        className={`p-4 ${
-                          isToday
-                            ? "bg-primary-500 text-white"
-                            : "bg-gradient-to-r from-slate-100 to-slate-50"
+                  >
+                    {/* Day Header */}
+                    <div
+                      className={`p-4 ${isToday
+                          ? "bg-primary-500 text-white"
+                          : "bg-gradient-to-r from-slate-100 to-slate-50"
                         }`}
-                      >
-                        <p className="font-semibold">
-                          {day.toLocaleDateString("en-US", {
-                            weekday: "short",
-                          })}
-                        </p>
-                        <p className={`text-2xl font-bold ${isToday ? "" : "text-slate-900"}`}>
-                          {day.getDate()}
-                        </p>
-                      </div>
+                    >
+                      <p className="font-semibold">
+                        {day.toLocaleDateString("en-US", {
+                          weekday: "short",
+                        })}
+                      </p>
+                      <p className={`text-2xl font-bold ${isToday ? "" : "text-slate-900"}`}>
+                        {day.getDate()}
+                      </p>
+                    </div>
 
-                      {/* Schedules list */}
-                      <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
-                        {daySchedules.length === 0 ? (
-                          <p className="text-slate-500 text-sm text-center py-4">
-                            No schedules
-                          </p>
-                        ) : (
-                          daySchedules.map((schedule) => {
-                            return (
-                              <div
-                                key={schedule.id}
-                                className={`p-3 rounded-lg text-sm border hover:shadow-md transition-shadow duration-200 cursor-pointer ${getStatusColor(
-                                  schedule.status
-                                )}`}
-                              >
-                                <div className="flex items-start gap-2 mb-1">
-                                  <span className="text-lg">
-                                    {getTypeIcon(schedule.type)}
-                                  </span>
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-xs truncate">{schedule.assignedToName}</p>
-                                    <p className="text-[10px] opacity-75 capitalize truncate">
-                                      {schedule.title}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-1 text-[10px] mt-2">
-                                  <FiClock size={10} />
-                                  <span>
-                                    {schedule.startTime} - {schedule.endTime}
-                                  </span>
-                                </div>
-                                {schedule.location && (
-                                  <div className="flex items-center gap-1 text-[10px] mt-1">
-                                    <FiMapPin size={10} />
-                                    <span className="truncate">{schedule.location}</span>
-                                  </div>
-                                )}
-                                <div className="flex items-center gap-1 text-[10px] mt-1 opacity-75">
-                                  <span className="capitalize">{schedule.status}</span>
+                    {/* Schedules list */}
+                    <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+                      {daySchedules.length === 0 ? (
+                        <p className="text-slate-500 text-sm text-center py-4">
+                          No schedules
+                        </p>
+                      ) : (
+                        daySchedules.map((schedule) => {
+                          return (
+                            <div
+                              key={schedule.id}
+                              className={`p-3 rounded-lg text-sm border hover:shadow-md transition-shadow duration-200 cursor-pointer ${getStatusColor(
+                                schedule.status
+                              )}`}
+                            >
+                              <div className="flex items-start gap-2 mb-1">
+                                <span className="text-lg">
+                                  {getTypeIcon(schedule.type)}
+                                </span>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-xs truncate">{schedule.assignedToName}</p>
+                                  <p className="text-[10px] opacity-75 capitalize truncate">
+                                    {schedule.title}
+                                  </p>
                                 </div>
                               </div>
-                            );
-                          })
-                        )}
-                      </div>
+                              <div className="flex items-center gap-1 text-[10px] mt-2">
+                                <FiClock size={10} />
+                                <span>
+                                  {schedule.startTime} - {schedule.endTime}
+                                </span>
+                              </div>
+                              {schedule.location && (
+                                <div className="flex items-center gap-1 text-[10px] mt-1">
+                                  <FiMapPin size={10} />
+                                  <span className="truncate">{schedule.location}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1 text-[10px] mt-1 opacity-75">
+                                <span className="capitalize">{schedule.status}</span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              // Month View
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <div className="grid grid-cols-7 gap-0 border-collapse min-w-[640px]">
-                    {/* Day Headers */}
-                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                      (day) => (
-                        <div
-                          key={day}
-                          className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-2 sm:p-4 text-center font-semibold text-xs sm:text-sm"
-                        >
-                          {day}
-                        </div>
-                      )
-                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            // Month View
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <div className="grid grid-cols-7 gap-0 border-collapse min-w-[640px]">
+                  {/* Day Headers */}
+                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                    (day) => (
+                      <div
+                        key={day}
+                        className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-2 sm:p-4 text-center font-semibold text-xs sm:text-sm"
+                      >
+                        {day}
+                      </div>
+                    )
+                  )}
 
-                    {/* Calendar Days */}
-                    {monthDays.map((day, index) => {
-                      if (!day)
-                        return (
-                          <div
-                            key={`empty-${index}`}
-                            className="bg-slate-50 p-4 min-h-24 border border-slate-200"
-                          />
-                        );
-
-                      const daySchedules = getSchedulesForDate(day);
-                      const isToday = day.toDateString() === new Date().toDateString();
-
+                  {/* Calendar Days */}
+                  {monthDays.map((day, index) => {
+                    if (!day)
                       return (
                         <div
-                          key={day.toISOString()}
-                          className={`p-4 min-h-24 border border-slate-200 ${
-                            isToday
-                              ? "bg-primary-50 border-2 border-primary-500"
-                              : day.getMonth() !== currentDate.getMonth()
+                          key={`empty-${index}`}
+                          className="bg-slate-50 p-4 min-h-24 border border-slate-200"
+                        />
+                      );
+
+                    const daySchedules = getSchedulesForDate(day);
+                    const isToday = day.toDateString() === new Date().toDateString();
+
+                    return (
+                      <div
+                        key={day.toISOString()}
+                        className={`p-4 min-h-24 border border-slate-200 ${isToday
+                            ? "bg-primary-50 border-2 border-primary-500"
+                            : day.getMonth() !== currentDate.getMonth()
                               ? "bg-slate-50"
                               : "hover:bg-slate-50"
                           }`}
-                        >
-                          <p
-                            className={`font-semibold mb-2 ${
-                              isToday
-                                ? "text-primary-600"
-                                : day.getMonth() !== currentDate.getMonth()
+                      >
+                        <p
+                          className={`font-semibold mb-2 ${isToday
+                              ? "text-primary-600"
+                              : day.getMonth() !== currentDate.getMonth()
                                 ? "text-slate-400"
                                 : "text-slate-900"
                             }`}
-                          >
-                            {day.getDate()}
-                          </p>
-                          <div className="space-y-1">
-                            {daySchedules.slice(0, 2).map((schedule) => {
-                              return (
-                                <div
-                                  key={schedule.id}
-                                  className={`text-[10px] px-2 py-1 rounded border cursor-pointer hover:shadow-md transition-shadow duration-200 truncate ${getStatusColor(
-                                    schedule.status
-                                  )}`}
-                                >
-                                  <span className="mr-1">
-                                    {getTypeIcon(schedule.type)}
-                                  </span>
-                                  {schedule.assignedToName}
-                                </div>
-                              );
-                            })}
-                            {daySchedules.length > 2 && (
-                              <p className="text-[10px] text-slate-500 px-2">
-                                +{daySchedules.length - 2} more
-                              </p>
-                            )}
-                          </div>
+                        >
+                          {day.getDate()}
+                        </p>
+                        <div className="space-y-1">
+                          {daySchedules.slice(0, 2).map((schedule) => {
+                            return (
+                              <div
+                                key={schedule.id}
+                                className={`text-[10px] px-2 py-1 rounded border cursor-pointer hover:shadow-md transition-shadow duration-200 truncate ${getStatusColor(
+                                  schedule.status
+                                )}`}
+                              >
+                                <span className="mr-1">
+                                  {getTypeIcon(schedule.type)}
+                                </span>
+                                {schedule.assignedToName}
+                              </div>
+                            );
+                          })}
+                          {daySchedules.length > 2 && (
+                            <p className="text-[10px] text-slate-500 px-2">
+                              +{daySchedules.length - 2} more
+                            </p>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Stats section */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-8">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <FiCalendar size={24} className="text-primary-600" />
+                </div>
+                <div>
+                  <p className="text-slate-600 text-sm">Total Tasks (Active View)</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {currentPeriodTasks.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <FiClock size={24} className="text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-slate-600 text-sm">Pending (Active View)</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {currentPeriodTasks.filter((s) => s.status === "scheduled").length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-yellow-100 rounded-lg">
+                  <FiClock size={24} className="text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-slate-600 text-sm">In Progress (Active View)</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {currentPeriodTasks.filter((s) => s.status === "in-progress").length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <FiCheckCircle size={24} className="text-green-600" />
+                </div>
+                <div>
+                  <p className="text-slate-600 text-sm">Completed (Active View)</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {currentPeriodTasks.filter((s) => s.status === "completed").length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Tab 2: Yearly Maintenance Schedules */}
+      {activeTab === "yearly" && (
+        <Card padding="none">
+          <div className="p-5 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Yearly Maintenance Schedules</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Total: <span className="font-semibold text-slate-800">{scheduleTotalItems}</span> schedules matching filters
+              </p>
+            </div>
+            {canEdit && (
+              <Button size="sm" onClick={() => { resetScheduleForm(); setShowCreateModal(true); }}>
+                <FiPlus className="mr-1" /> Create Schedule
+              </Button>
             )}
+          </div>
 
-            {/* Stats section */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-8">
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <FiCalendar size={24} className="text-primary-600" />
-                  </div>
-                  <div>
-                    <p className="text-slate-600 text-sm">Total Tasks (Active View)</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {currentPeriodTasks.length}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <FiClock size={24} className="text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-slate-600 text-sm">Pending (Active View)</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {currentPeriodTasks.filter((s) => s.status === "scheduled").length}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-yellow-100 rounded-lg">
-                    <FiClock size={24} className="text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="text-slate-600 text-sm">In Progress (Active View)</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {currentPeriodTasks.filter((s) => s.status === "in-progress").length}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-green-100 rounded-lg">
-                    <FiCheckCircle size={24} className="text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-slate-600 text-sm">Completed (Active View)</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {currentPeriodTasks.filter((s) => s.status === "completed").length}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Tab 2: Yearly Maintenance Schedules */}
-        {activeTab === "yearly" && (
-          <Card padding="none">
-            <div className="p-5 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900">Yearly Maintenance Schedules</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Total: <span className="font-semibold text-slate-800">{scheduleTotalItems}</span> schedules matching filters
-                </p>
-              </div>
-              {canEdit && (
-                <Button size="sm" onClick={() => { resetScheduleForm(); setShowCreateModal(true); }}>
-                  <FiPlus className="mr-1" /> Create Schedule
-                </Button>
-              )}
+          {/* Search & Filters Toolbar */}
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-3 items-center">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <FiSearch className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search schedule title or description..."
+                value={scheduleSearch}
+                onChange={(e) => {
+                  setScheduleSearch(e.target.value);
+                  setSchedulePage(1);
+                }}
+                className="pl-9 w-full rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white"
+              />
             </div>
 
-            {/* Search & Filters Toolbar */}
-            <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-3 items-center">
-              {/* Search Input */}
-              <div className="relative flex-1 min-w-[200px]">
-                <FiSearch className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search schedule title or description..."
-                  value={scheduleSearch}
-                  onChange={(e) => {
-                    setScheduleSearch(e.target.value);
-                    setSchedulePage(1);
-                  }}
-                  className="pl-9 w-full rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white"
-                />
-              </div>
-              
-              {/* Month Filter */}
-              <select
-                value={scheduleMonthFilter}
-                onChange={(e) => {
-                  setScheduleMonthFilter(e.target.value);
+            {/* Month Filter */}
+            <select
+              value={scheduleMonthFilter}
+              onChange={(e) => {
+                setScheduleMonthFilter(e.target.value);
+                setSchedulePage(1);
+              }}
+              className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium cursor-pointer"
+            >
+              <option value="">All Months</option>
+              <option value="Jan">January</option>
+              <option value="Feb">February</option>
+              <option value="Mar">March</option>
+              <option value="Apr">April</option>
+              <option value="May">May</option>
+              <option value="Jun">June</option>
+              <option value="Jul">July</option>
+              <option value="Aug">August</option>
+              <option value="Sep">September</option>
+              <option value="Oct">October</option>
+              <option value="Nov">November</option>
+              <option value="Dec">December</option>
+            </select>
+
+            {/* Week Filter */}
+            <select
+              value={scheduleWeekFilter}
+              onChange={(e) => {
+                setScheduleWeekFilter(e.target.value);
+                setSchedulePage(1);
+              }}
+              className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium cursor-pointer"
+            >
+              <option value="">All Weeks</option>
+              <option value="1">Week 1</option>
+              <option value="2">Week 2</option>
+              <option value="3">Week 3</option>
+              <option value="4">Week 4</option>
+              <option value="5">Week 5</option>
+            </select>
+
+            {/* Asset Filter */}
+            <select
+              value={scheduleAssetFilter}
+              onChange={(e) => {
+                setScheduleAssetFilter(e.target.value);
+                setSchedulePage(1);
+              }}
+              className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium max-w-[200px] cursor-pointer"
+            >
+              <option value="">All Assets</option>
+              {allAssetsForDropdown.map((asset) => (
+                <option key={asset.id} value={asset.card_no}>
+                  {asset.card_no} - {asset.description}
+                </option>
+              ))}
+            </select>
+
+            {/* Clear Filters Button */}
+            {(scheduleSearch || scheduleMonthFilter || scheduleWeekFilter || scheduleAssetFilter) && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setScheduleSearch("");
+                  setScheduleMonthFilter("");
+                  setScheduleWeekFilter("");
+                  setScheduleAssetFilter("");
                   setSchedulePage(1);
                 }}
-                className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium cursor-pointer"
               >
-                <option value="">All Months</option>
-                <option value="Jan">January</option>
-                <option value="Feb">February</option>
-                <option value="Mar">March</option>
-                <option value="Apr">April</option>
-                <option value="May">May</option>
-                <option value="Jun">June</option>
-                <option value="Jul">July</option>
-                <option value="Aug">August</option>
-                <option value="Sep">September</option>
-                <option value="Oct">October</option>
-                <option value="Nov">November</option>
-                <option value="Dec">December</option>
-              </select>
+                Clear Filters
+              </Button>
+            )}
+          </div>
 
-              {/* Week Filter */}
-              <select
-                value={scheduleWeekFilter}
-                onChange={(e) => {
-                  setScheduleWeekFilter(e.target.value);
-                  setSchedulePage(1);
-                }}
-                className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium cursor-pointer"
-              >
-                <option value="">All Weeks</option>
-                <option value="1">Week 1</option>
-                <option value="2">Week 2</option>
-                <option value="3">Week 3</option>
-                <option value="4">Week 4</option>
-                <option value="5">Week 5</option>
-              </select>
+          <Table
+            loading={schedulesLoading}
+            columns={yearlyTableColumns}
+            data={maintenanceSchedules}
+          />
 
-              {/* Asset Filter */}
-              <select
-                value={scheduleAssetFilter}
-                onChange={(e) => {
-                  setScheduleAssetFilter(e.target.value);
-                  setSchedulePage(1);
-                }}
-                className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white text-slate-700 font-medium max-w-[200px] cursor-pointer"
-              >
-                <option value="">All Assets</option>
-                {allAssetsForDropdown.map((asset) => (
-                  <option key={asset.id} value={asset.card_no}>
-                    {asset.card_no} - {asset.description}
-                  </option>
-                ))}
-              </select>
-
-              {/* Clear Filters Button */}
-              {(scheduleSearch || scheduleMonthFilter || scheduleWeekFilter || scheduleAssetFilter) && (
+          {/* Pagination */}
+          {scheduleTotalPages > 1 && (
+            <div className="px-5 py-3 border-t border-slate-200 flex items-center justify-between bg-white">
+              <p className="text-xs text-slate-500">
+                Page {schedulePage} of {scheduleTotalPages}
+              </p>
+              <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="secondary"
+                  disabled={schedulePage <= 1}
+                  onClick={() => setSchedulePage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={schedulePage >= scheduleTotalPages}
+                  onClick={() => setSchedulePage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Create Maintenance Schedule Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        title="Create Maintenance Schedule"
+        size="lg"
+        onClose={() => {
+          setShowCreateModal(false);
+          resetScheduleForm();
+        }}
+      >
+        <div className="space-y-4 pr-1">
+          <Input
+            label="Title"
+            required
+            value={schedTitle}
+            onChange={(e) => setSchedTitle(e.target.value)}
+            placeholder="e.g. Air Conditioner Monthly Servicing"
+          />
+
+          <SearchableAssetDropdown
+            label="Asset Code"
+            required
+            value={schedCardNo}
+            onChange={(card_no) => setSchedCardNo(card_no)}
+            assets={allAssetsForDropdown}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Month"
+              required
+              value={schedMonth}
+              onChange={(e) => setSchedMonth(e.target.value)}
+              options={[
+                { value: "JAN", label: "JAN" },
+                { value: "FEB", label: "FEB" },
+                { value: "MAR", label: "MAR" },
+                { value: "APR", label: "APR" },
+                { value: "MAY", label: "MAY" },
+                { value: "JUN", label: "JUN" },
+                { value: "JUL", label: "JUL" },
+                { value: "AUG", label: "AUG" },
+                { value: "SEP", label: "SEP" },
+                { value: "OCT", label: "OCT" },
+                { value: "NOV", label: "NOV" },
+                { value: "DEC", label: "DEC" },
+              ]}
+            />
+            <Select
+              label="Week No"
+              required
+              value={schedWeekNo}
+              onChange={(e) => setSchedWeekNo(Number(e.target.value))}
+              options={[
+                { value: 1, label: "Week 1" },
+                { value: 2, label: "Week 2" },
+                { value: 3, label: "Week 3" },
+                { value: 4, label: "Week 4" },
+                { value: 5, label: "Week 5" },
+              ]}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="date"
+              label="Start Date"
+              required
+              value={schedStartDate}
+              onChange={(e) => setSchedStartDate(e.target.value)}
+            />
+            <Input
+              type="date"
+              label="End Date"
+              required
+              value={schedEndDate}
+              onChange={(e) => setSchedEndDate(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <label className="text-sm font-semibold text-slate-700 tracking-tight">Assign Technicians</label>
+            <div className="border border-slate-200 rounded-md p-3 max-h-[150px] overflow-y-auto space-y-2 bg-slate-50">
+              {technicians.map((tech) => (
+                <label key={tech.id} className="flex items-center gap-2.5 text-sm text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={schedAssignedTechs.includes(tech.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSchedAssignedTechs([...schedAssignedTechs, tech.id]);
+                      } else {
+                        setSchedAssignedTechs(schedAssignedTechs.filter(id => id !== tech.id));
+                      }
+                    }}
+                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span>{tech.name}</span>
+                </label>
+              ))}
+              {technicians.length === 0 && <p className="text-xs text-slate-500">No technicians found.</p>}
+            </div>
+          </div>
+
+          <TextArea
+            label="Default Description (for Manager)"
+            value={schedDescription}
+            onChange={(e) => setSchedDescription(e.target.value)}
+            placeholder="Provide any description or instructions..."
+          />
+
+          <div className="flex gap-3 pt-4 border-t border-slate-100">
+            <Button fullWidth onClick={handleCreateSchedule}>
+              Create Schedule
+            </Button>
+            <Button fullWidth variant="secondary" onClick={() => { setShowCreateModal(false); resetScheduleForm(); }}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Maintenance Schedule Modal */}
+      <Modal
+        isOpen={showEditModal}
+        title="Edit Maintenance Schedule"
+        size="lg"
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedSchedule(null);
+          resetScheduleForm();
+        }}
+      >
+        <div className="space-y-4 pr-1">
+          <Input
+            label="Title"
+            required
+            value={schedTitle}
+            onChange={(e) => setSchedTitle(e.target.value)}
+            placeholder="e.g. Air Conditioner Monthly Servicing"
+          />
+
+          <SearchableAssetDropdown
+            label="Asset Code"
+            required
+            value={schedCardNo}
+            onChange={(card_no) => setSchedCardNo(card_no)}
+            assets={allAssetsForDropdown}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Month"
+              required
+              value={schedMonth}
+              onChange={(e) => setSchedMonth(e.target.value)}
+              options={[
+                { value: "JAN", label: "JAN" },
+                { value: "FEB", label: "FEB" },
+                { value: "MAR", label: "MAR" },
+                { value: "APR", label: "APR" },
+                { value: "MAY", label: "MAY" },
+                { value: "JUN", label: "JUN" },
+                { value: "JUL", label: "JUL" },
+                { value: "AUG", label: "AUG" },
+                { value: "SEP", label: "SEP" },
+                { value: "OCT", label: "OCT" },
+                { value: "NOV", label: "NOV" },
+                { value: "DEC", label: "DEC" },
+              ]}
+            />
+            <Select
+              label="Week No"
+              required
+              value={schedWeekNo}
+              onChange={(e) => setSchedWeekNo(Number(e.target.value))}
+              options={[
+                { value: 1, label: "Week 1" },
+                { value: 2, label: "Week 2" },
+                { value: 3, label: "Week 3" },
+                { value: 4, label: "Week 4" },
+                { value: 5, label: "Week 5" },
+              ]}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="date"
+              label="Start Date"
+              required
+              value={schedStartDate}
+              onChange={(e) => setSchedStartDate(e.target.value)}
+            />
+            <Input
+              type="date"
+              label="End Date"
+              required
+              value={schedEndDate}
+              onChange={(e) => setSchedEndDate(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <label className="text-sm font-semibold text-slate-700 tracking-tight">Assign Technicians</label>
+            <div className="border border-slate-200 rounded-md p-3 max-h-[150px] overflow-y-auto space-y-2 bg-slate-50">
+              {technicians.map((tech) => (
+                <label key={tech.id} className="flex items-center gap-2.5 text-sm text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={schedAssignedTechs.includes(tech.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSchedAssignedTechs([...schedAssignedTechs, tech.id]);
+                      } else {
+                        setSchedAssignedTechs(schedAssignedTechs.filter(id => id !== tech.id));
+                      }
+                    }}
+                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span>{tech.name}</span>
+                </label>
+              ))}
+              {technicians.length === 0 && <p className="text-xs text-slate-500">No technicians found.</p>}
+            </div>
+          </div>
+
+          <TextArea
+            label="Default Description (for Manager)"
+            value={schedDescription}
+            onChange={(e) => setSchedDescription(e.target.value)}
+            placeholder="Provide any description or instructions..."
+          />
+
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="checkbox"
+              id="schedIsActive"
+              checked={schedIsActive}
+              onChange={(e) => setSchedIsActive(e.target.checked)}
+              className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 h-4 w-4"
+            />
+            <label htmlFor="schedIsActive" className="text-sm font-semibold text-slate-700 cursor-pointer select-none">
+              Schedule Active
+            </label>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-slate-100">
+            <Button fullWidth onClick={handleUpdateSchedule}>
+              Save Changes
+            </Button>
+            <Button fullWidth variant="secondary" onClick={() => { setShowEditModal(false); setSelectedSchedule(null); resetScheduleForm(); }}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Custom Alert/Confirm Popup Modal */}
+      <Modal
+        isOpen={popupConfig.isOpen}
+        title={popupConfig.title}
+        size="md"
+        onClose={() => setPopupConfig(prev => ({ ...prev, isOpen: false }))}
+      >
+        <div className="space-y-4 pt-1">
+          <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+            {popupConfig.message}
+          </p>
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+            {popupConfig.type === "confirm" ? (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setPopupConfig(prev => ({ ...prev, isOpen: false }))}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={() => {
-                    setScheduleSearch("");
-                    setScheduleMonthFilter("");
-                    setScheduleWeekFilter("");
-                    setScheduleAssetFilter("");
-                    setSchedulePage(1);
+                    setPopupConfig(prev => ({ ...prev, isOpen: false }));
+                    if (popupConfig.onConfirm) popupConfig.onConfirm();
                   }}
                 >
-                  Clear Filters
+                  Deactivate
                 </Button>
-              )}
-            </div>
-
-            <Table
-              loading={schedulesLoading}
-              columns={yearlyTableColumns}
-              data={maintenanceSchedules}
-            />
-
-            {/* Pagination */}
-            {scheduleTotalPages > 1 && (
-              <div className="px-5 py-3 border-t border-slate-200 flex items-center justify-between bg-white">
-                <p className="text-xs text-slate-500">
-                  Page {schedulePage} of {scheduleTotalPages}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={schedulePage <= 1}
-                    onClick={() => setSchedulePage((p) => Math.max(1, p - 1))}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={schedulePage >= scheduleTotalPages}
-                    onClick={() => setSchedulePage((p) => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
+              </>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setPopupConfig(prev => ({ ...prev, isOpen: false }))}
+              >
+                OK
+              </Button>
             )}
-          </Card>
-        )}
-
-        {/* Create Maintenance Schedule Modal */}
-        <Modal
-          isOpen={showCreateModal}
-          title="Create Maintenance Schedule"
-          size="lg"
-          onClose={() => {
-            setShowCreateModal(false);
-            resetScheduleForm();
-          }}
-        >
-          <div className="space-y-4 pr-1">
-            <Input
-              label="Title"
-              required
-              value={schedTitle}
-              onChange={(e) => setSchedTitle(e.target.value)}
-              placeholder="e.g. Air Conditioner Monthly Servicing"
-            />
-
-            <SearchableAssetDropdown
-              label="Asset Code"
-              required
-              value={schedCardNo}
-              onChange={(card_no) => setSchedCardNo(card_no)}
-              assets={allAssetsForDropdown}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Month"
-                required
-                value={schedMonth}
-                onChange={(e) => setSchedMonth(e.target.value)}
-                options={[
-                  { value: "JAN", label: "JAN" },
-                  { value: "FEB", label: "FEB" },
-                  { value: "MAR", label: "MAR" },
-                  { value: "APR", label: "APR" },
-                  { value: "MAY", label: "MAY" },
-                  { value: "JUN", label: "JUN" },
-                  { value: "JUL", label: "JUL" },
-                  { value: "AUG", label: "AUG" },
-                  { value: "SEP", label: "SEP" },
-                  { value: "OCT", label: "OCT" },
-                  { value: "NOV", label: "NOV" },
-                  { value: "DEC", label: "DEC" },
-                ]}
-              />
-              <Select
-                label="Week No"
-                required
-                value={schedWeekNo}
-                onChange={(e) => setSchedWeekNo(Number(e.target.value))}
-                options={[
-                  { value: 1, label: "Week 1" },
-                  { value: 2, label: "Week 2" },
-                  { value: 3, label: "Week 3" },
-                  { value: 4, label: "Week 4" },
-                  { value: 5, label: "Week 5" },
-                ]}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                type="date"
-                label="Start Date"
-                required
-                value={schedStartDate}
-                onChange={(e) => setSchedStartDate(e.target.value)}
-              />
-              <Input
-                type="date"
-                label="End Date"
-                required
-                value={schedEndDate}
-                onChange={(e) => setSchedEndDate(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2.5">
-              <label className="text-sm font-semibold text-slate-700 tracking-tight">Assign Technicians</label>
-              <div className="border border-slate-200 rounded-md p-3 max-h-[150px] overflow-y-auto space-y-2 bg-slate-50">
-                {technicians.map((tech) => (
-                  <label key={tech.id} className="flex items-center gap-2.5 text-sm text-slate-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={schedAssignedTechs.includes(tech.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSchedAssignedTechs([...schedAssignedTechs, tech.id]);
-                        } else {
-                          setSchedAssignedTechs(schedAssignedTechs.filter(id => id !== tech.id));
-                        }
-                      }}
-                      className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span>{tech.name}</span>
-                  </label>
-                ))}
-                {technicians.length === 0 && <p className="text-xs text-slate-500">No technicians found.</p>}
-              </div>
-            </div>
-
-            <TextArea
-              label="Default Description (for Manager)"
-              value={schedDescription}
-              onChange={(e) => setSchedDescription(e.target.value)}
-              placeholder="Provide any description or instructions..."
-            />
-
-            <div className="flex gap-3 pt-4 border-t border-slate-100">
-              <Button fullWidth onClick={handleCreateSchedule}>
-                Create Schedule
-              </Button>
-              <Button fullWidth variant="secondary" onClick={() => { setShowCreateModal(false); resetScheduleForm(); }}>
-                Cancel
-              </Button>
-            </div>
           </div>
-        </Modal>
-
-        {/* Edit Maintenance Schedule Modal */}
-        <Modal
-          isOpen={showEditModal}
-          title="Edit Maintenance Schedule"
-          size="lg"
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedSchedule(null);
-            resetScheduleForm();
-          }}
-        >
-          <div className="space-y-4 pr-1">
-            <Input
-              label="Title"
-              required
-              value={schedTitle}
-              onChange={(e) => setSchedTitle(e.target.value)}
-              placeholder="e.g. Air Conditioner Monthly Servicing"
-            />
-
-            <SearchableAssetDropdown
-              label="Asset Code"
-              required
-              value={schedCardNo}
-              onChange={(card_no) => setSchedCardNo(card_no)}
-              assets={allAssetsForDropdown}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Month"
-                required
-                value={schedMonth}
-                onChange={(e) => setSchedMonth(e.target.value)}
-                options={[
-                  { value: "JAN", label: "JAN" },
-                  { value: "FEB", label: "FEB" },
-                  { value: "MAR", label: "MAR" },
-                  { value: "APR", label: "APR" },
-                  { value: "MAY", label: "MAY" },
-                  { value: "JUN", label: "JUN" },
-                  { value: "JUL", label: "JUL" },
-                  { value: "AUG", label: "AUG" },
-                  { value: "SEP", label: "SEP" },
-                  { value: "OCT", label: "OCT" },
-                  { value: "NOV", label: "NOV" },
-                  { value: "DEC", label: "DEC" },
-                ]}
-              />
-              <Select
-                label="Week No"
-                required
-                value={schedWeekNo}
-                onChange={(e) => setSchedWeekNo(Number(e.target.value))}
-                options={[
-                  { value: 1, label: "Week 1" },
-                  { value: 2, label: "Week 2" },
-                  { value: 3, label: "Week 3" },
-                  { value: 4, label: "Week 4" },
-                  { value: 5, label: "Week 5" },
-                ]}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                type="date"
-                label="Start Date"
-                required
-                value={schedStartDate}
-                onChange={(e) => setSchedStartDate(e.target.value)}
-              />
-              <Input
-                type="date"
-                label="End Date"
-                required
-                value={schedEndDate}
-                onChange={(e) => setSchedEndDate(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2.5">
-              <label className="text-sm font-semibold text-slate-700 tracking-tight">Assign Technicians</label>
-              <div className="border border-slate-200 rounded-md p-3 max-h-[150px] overflow-y-auto space-y-2 bg-slate-50">
-                {technicians.map((tech) => (
-                  <label key={tech.id} className="flex items-center gap-2.5 text-sm text-slate-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={schedAssignedTechs.includes(tech.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSchedAssignedTechs([...schedAssignedTechs, tech.id]);
-                        } else {
-                          setSchedAssignedTechs(schedAssignedTechs.filter(id => id !== tech.id));
-                        }
-                      }}
-                      className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span>{tech.name}</span>
-                  </label>
-                ))}
-                {technicians.length === 0 && <p className="text-xs text-slate-500">No technicians found.</p>}
-              </div>
-            </div>
-
-            <TextArea
-              label="Default Description (for Manager)"
-              value={schedDescription}
-              onChange={(e) => setSchedDescription(e.target.value)}
-              placeholder="Provide any description or instructions..."
-            />
-
-            <div className="flex items-center gap-2 mb-4">
-              <input
-                type="checkbox"
-                id="schedIsActive"
-                checked={schedIsActive}
-                onChange={(e) => setSchedIsActive(e.target.checked)}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 h-4 w-4"
-              />
-              <label htmlFor="schedIsActive" className="text-sm font-semibold text-slate-700 cursor-pointer select-none">
-                Schedule Active
-              </label>
-            </div>
-
-            <div className="flex gap-3 pt-4 border-t border-slate-100">
-              <Button fullWidth onClick={handleUpdateSchedule}>
-                Save Changes
-              </Button>
-              <Button fullWidth variant="secondary" onClick={() => { setShowEditModal(false); setSelectedSchedule(null); resetScheduleForm(); }}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </Modal>
+        </div>
+      </Modal>
     </DashboardLayout>
   );
 };
