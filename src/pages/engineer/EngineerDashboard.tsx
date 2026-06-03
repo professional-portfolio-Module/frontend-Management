@@ -264,7 +264,7 @@ export const EngineerDashboard: React.FC = () => {
     { icon: <FiTrendingUp />, label: "Analytics", active: activeTab === "analytics", onClick: () => setActiveTab("analytics") },
     { icon: <FiFileText />, label: "Work Items", active: activeTab === "work-items", onClick: () => setActiveTab("work-items"), badge: stats.pending },
     { icon: <FiClipboard />, label: "Reports", active: activeTab === "reports", onClick: () => setActiveTab("reports") },
-    { icon: <FiClock />, label: "Schedule", active: activeTab === "schedule", onClick: () => navigate("/schedules") },
+    { icon: <FiClock />, label: "Maintainance-Schedule", active: activeTab === "schedule", onClick: () => navigate("/schedules") },
     { icon: <FiCheckCircle />, label: "Notifications", active: activeTab === "notifications", onClick: () => setActiveTab("notifications"), badge: unreadNotifications.length },
     { icon: <FiMessageSquare />, label: "Messages", active: activeTab === "messages", onClick: () => navigate("/messages") },
   ];

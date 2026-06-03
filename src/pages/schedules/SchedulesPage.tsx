@@ -464,7 +464,7 @@ export const SchedulesPage: React.FC = () => {
       { icon: <FiHardDrive />, label: "Assets", active: false, onClick: () => navigate("/manager", { state: { activeTab: "assets" } }) },
       { icon: <FiClipboard />, label: "Manual Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "manual-tasks" } }) },
       { icon: <FiFileText />, label: "Scheduled Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "work-items" } }) },
-      { icon: <FiClock />, label: "Schedules", active: true, onClick: () => navigate("/schedules") },
+      { icon: <FiClock />, label: "Maintainance-Schedule", active: true, onClick: () => navigate("/schedules") },
       { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
     ];
 
@@ -472,7 +472,7 @@ export const SchedulesPage: React.FC = () => {
       { icon: <FiCheckCircle />, label: "Dashboard", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "overview" } }) },
       { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "work-items" } }) },
       { icon: <FiClipboard />, label: "Reports", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "reports" } }) },
-      { icon: <FiClock />, label: "Schedule", active: true, onClick: () => navigate("/schedules") },
+      { icon: <FiClock />, label: "Maintainance-Schedule", active: true, onClick: () => navigate("/schedules") },
       { icon: <FiCheckCircle />, label: "Notifications", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "notifications" } }) },
       { icon: <FiMessageSquare />, label: "Messages", active: false, onClick: () => navigate("/messages") },
     ];
@@ -481,7 +481,7 @@ export const SchedulesPage: React.FC = () => {
       { icon: <FiBell />, label: "Dashboard", active: false, onClick: () => navigate("/staff", { state: { activeTab: "overview" } }) },
       { icon: <FiTrendingUp />, label: "Analytics", active: false, onClick: () => navigate("/staff", { state: { activeTab: "analytics" } }) },
       { icon: <FiCalendar />, label: "Maintenance Schedules", active: false, onClick: () => navigate("/staff", { state: { activeTab: "maintenance-schedules" } }) },
-      { icon: <FiClock />, label: "My Schedule", active: true, onClick: () => navigate("/schedules") },
+      { icon: <FiClock />, label: "Maintainance-Schedule", active: true, onClick: () => navigate("/schedules") },
       { icon: <FiFolder />, label: "Categories", active: false, onClick: () => navigate("/staff", { state: { activeTab: "categories" } }) },
       { icon: <FiHardDrive />, label: "Assets", active: false, onClick: () => navigate("/staff", { state: { activeTab: "assets" } }) },
       { icon: <FiBell />, label: "Notifications", active: false, onClick: () => navigate("/staff", { state: { activeTab: "notifications" } }) },
@@ -647,7 +647,7 @@ export const SchedulesPage: React.FC = () => {
         {/* Header with Switcher */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">Schedules</h1>
+            <h1 className="text-2xl font-bold text-slate-900 mb-1">Maintainance-Schedule</h1>
             <p className="text-sm text-slate-500">Manage and view team schedules and recurring maintenance</p>
           </div>
           
@@ -1008,7 +1008,7 @@ export const SchedulesPage: React.FC = () => {
         {activeTab === "yearly" && (
           <Card padding="none">
             <div className="p-5 border-b border-slate-200 bg-white flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-slate-900">Maintainance Schedule</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Yearly Maintenance Schedules</h2>
               {canEdit && (
                 <Button size="sm" onClick={() => { resetScheduleForm(); setShowCreateModal(true); }}>
                   <FiPlus className="mr-1" /> Create Schedule

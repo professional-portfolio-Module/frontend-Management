@@ -216,7 +216,7 @@ export const MessagingPage: React.FC = () => {
         { icon: <FiHardDrive />, label: "Assets", active: false, onClick: () => navigate("/manager", { state: { activeTab: "assets" } }) },
         { icon: <FiClipboard />, label: "Manual Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "manual-tasks" } }) },
         { icon: <FiFileText />, label: "Scheduled Tasks", active: false, onClick: () => navigate("/manager", { state: { activeTab: "work-items" } }) },
-        { icon: <FiClock />, label: "Schedules", active: false, onClick: () => navigate("/schedules") },
+        { icon: <FiClock />, label: "Maintainance-Schedule", active: false, onClick: () => navigate("/schedules") },
         { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
       ];
     } else if (user?.role === "engineer") {
@@ -224,14 +224,14 @@ export const MessagingPage: React.FC = () => {
         { icon: <FiCheckCircle />, label: "Dashboard", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "overview" } }) },
         { icon: <FiFileText />, label: "Work Items", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "work-items" } }) },
         { icon: <FiClipboard />, label: "Reports", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "reports" } }) },
-        { icon: <FiClock />, label: "Schedule", active: false, onClick: () => navigate("/schedules") },
+        { icon: <FiClock />, label: "Maintainance-Schedule", active: false, onClick: () => navigate("/schedules") },
         { icon: <FiCheckCircle />, label: "Notifications", active: false, onClick: () => navigate("/engineer", { state: { activeTab: "notifications" } }) },
         { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
       ];
     } else if (user?.role === "staff") {
       return [
         { icon: <FiBell />, label: "Dashboard", active: false, onClick: () => navigate("/staff", { state: { activeTab: "overview" } }) },
-        { icon: <FiClock />, label: "My Schedule", active: false, onClick: () => navigate("/schedules") },
+        { icon: <FiClock />, label: "Maintainance-Schedule", active: false, onClick: () => navigate("/schedules") },
         { icon: <FiBell />, label: "Notifications", active: false, onClick: () => navigate("/staff", { state: { activeTab: "notifications" } }) },
         { icon: <FiMessageSquare />, label: "Messages", active: true, onClick: () => navigate("/messages") },
       ];

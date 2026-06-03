@@ -816,7 +816,7 @@ export const ManagerDashboard: React.FC = () => {
     { icon: <FiHardDrive />, label: "Assets", active: activeTab === "assets", onClick: () => setActiveTab("assets") },
     { icon: <FiClipboard />, label: "Manual Tasks", active: activeTab === "manual-tasks", onClick: () => setActiveTab("manual-tasks") },
     { icon: <FiFileText />, label: "Scheduled Tasks", active: activeTab === "work-items", onClick: () => setActiveTab("work-items") },
-    { icon: <FiClock />, label: "Schedules", active: activeTab === "schedules", onClick: () => navigate("/schedules") },
+    { icon: <FiClock />, label: "Maintainance-Schedule", active: activeTab === "schedules", onClick: () => navigate("/schedules") },
     { icon: <FiBell />, label: "Notifications", active: activeTab === "notifications", onClick: () => setActiveTab("notifications"), badge: unreadNotifications.length },
     { icon: <FiMessageSquare />, label: "Messages", active: activeTab === "messages", onClick: () => navigate("/messages") },
   ];

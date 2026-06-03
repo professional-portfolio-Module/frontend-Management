@@ -443,7 +443,7 @@ export const StaffDashboard: React.FC = () => {
     { icon: <FiBell />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
     { icon: <FiTrendingUp />, label: "Analytics", active: activeTab === "analytics", onClick: () => setActiveTab("analytics") },
     { icon: <FiCalendar />, label: "Maintenance Schedules", active: activeTab === "maintenance-schedules", onClick: () => setActiveTab("maintenance-schedules") },
-    { icon: <FiClock />, label: "My Schedule", active: false, onClick: () => navigate("/schedules") },
+    { icon: <FiClock />, label: "Maintainance-Schedule", active: false, onClick: () => navigate("/schedules") },
     { icon: <FiFolder />, label: "Categories", active: activeTab === "categories", onClick: () => setActiveTab("categories") },
     { icon: <FiHardDrive />, label: "Assets", active: activeTab === "assets", onClick: () => setActiveTab("assets") },
     { icon: <FiBell />, label: "Notifications", active: activeTab === "notifications", onClick: () => setActiveTab("notifications"), badge: unreadNotifications.length },
