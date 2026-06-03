@@ -29,6 +29,7 @@ export const AdminDashboard: React.FC = () => {
   const [adminHotel, setAdminHotel] = useState<any>(null);
   const [scannerPaused, setScannerPaused] = useState<boolean>(false);
   const [scannerLoading, setScannerLoading] = useState<boolean>(false);
+  const [showPauseConfirmModal, setShowPauseConfirmModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -80,17 +81,17 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [activeTab]);
 
-  const handleToggleScanner = async (newVal: boolean) => {
-    // If the admin is trying to PAUSE (newVal is true), show a warning confirmation popup
-    if (newVal === true) {
-      const confirmPause = window.confirm(
-        "⚠️ WARNING: Pausing automated task generation will stop the system from automatically creating recurring maintenance tasks. Technicians will not receive new assignments. Are you sure you want to proceed?"
-      );
-      if (!confirmPause) {
-        return; // Cancel the operation
-      }
+  const handleToggleClick = () => {
+    if (!scannerPaused) {
+      // Trying to pause: show warning modal first
+      setShowPauseConfirmModal(true);
+    } else {
+      // Trying to resume: execute immediately
+      executeToggleScanner(false);
     }
+  };
 
+  const executeToggleScanner = async (newVal: boolean) => {
     setScannerLoading(true);
     try {
       const res = await apiClient.post("/Main/router-backend/api/scheduled-tasks/scanner-toggle", {
@@ -732,7 +733,7 @@ export const AdminDashboard: React.FC = () => {
                     </p>
                   </div>
                   <button
-                    onClick={() => handleToggleScanner(!scannerPaused)}
+                    onClick={handleToggleClick}
                     disabled={scannerLoading}
                     className={`w-11 h-6 rounded-full relative transition-colors focus:outline-none ${
                       scannerPaused ? "bg-slate-200" : "bg-emerald-500"
@@ -750,6 +751,49 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </Card>
       )}
+
+      {/* In-App Custom Pause Confirmation Modal */}
+      <Modal
+        isOpen={showPauseConfirmModal}
+        title="⚠️ Pause Automated Tasks?"
+        onClose={() => setShowPauseConfirmModal(false)}
+      >
+        <div className="space-y-6">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-850 text-sm flex gap-3">
+            <FiAlertTriangle className="flex-shrink-0 mt-0.5 text-amber-600" size={18} />
+            <div>
+              <p className="font-semibold mb-1 text-amber-900">System-Wide Suspension Warning</p>
+              <p className="leading-relaxed text-amber-800">
+                Pausing automated task generation will stop the background system from automatically creating recurring maintenance tasks. Technicians will not receive new assignments.
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-slate-600">
+            Are you sure you want to pause this automated process? You can resume it at any time.
+          </p>
+          <div className="flex gap-3 pt-4 border-t border-slate-100">
+            <Button 
+              fullWidth 
+              variant="danger" 
+              onClick={() => {
+                setShowPauseConfirmModal(false);
+                executeToggleScanner(true);
+              }}
+              disabled={scannerLoading}
+            >
+              Confirm Pause
+            </Button>
+            <Button 
+              fullWidth 
+              variant="secondary" 
+              onClick={() => setShowPauseConfirmModal(false)}
+              disabled={scannerLoading}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </DashboardLayout>
   );
 };
