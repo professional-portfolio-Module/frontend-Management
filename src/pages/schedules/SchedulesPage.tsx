@@ -687,7 +687,7 @@ export const SchedulesPage: React.FC = () => {
                     : "text-slate-500 hover:text-slate-900"
                 }`}
               >
-                Maintainance Schedule
+                Yearly Schedules
               </button>
             </div>
           </div>
