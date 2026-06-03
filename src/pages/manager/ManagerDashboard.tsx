@@ -529,7 +529,7 @@ export const ManagerDashboard: React.FC = () => {
 
   const recentTasks = allTasksFeed.slice(0, 5);
 
-  const emergencyTasks = allTasksFeed.filter(t => t.priority === "emergency" && t.status !== "completed" && t.status !== "rejected");
+  const emergencyTasks = allTasksFeed.filter(t => t.priority === "emergency" && t.status !== "completed" && t.status !== "rejected" && t.status !== "expired");
   const underReviewTasks = allTasksFeed.filter(t => t.status === "under_review");
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
@@ -1435,7 +1435,7 @@ export const ManagerDashboard: React.FC = () => {
           <div className="p-5 bg-slate-50/50 border-b border-slate-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
             <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Total Tasks</span>
-              <span className="text-lg font-bold text-slate-800 mt-1">{manualTasks.length}</span>
+              <span className="text-lg font-bold text-slate-800 mt-1">{manualTasks.filter(t => t.status !== 'expired').length}</span>
             </div>
             <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
               <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">Pending</span>
@@ -1645,7 +1645,7 @@ export const ManagerDashboard: React.FC = () => {
           <div className="p-5 bg-slate-50/50 border-b border-slate-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
             <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Total Tasks</span>
-              <span className="text-lg font-bold text-slate-800 mt-1">{scheduledTasks.length}</span>
+              <span className="text-lg font-bold text-slate-800 mt-1">{scheduledTasks.filter(t => t.status !== 'expired').length}</span>
             </div>
             <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-sm flex flex-col justify-between">
               <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">Pending</span>
