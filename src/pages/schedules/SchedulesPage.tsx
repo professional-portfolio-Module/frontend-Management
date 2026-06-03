@@ -29,6 +29,7 @@ import { manualTaskService, ManualTask } from "../../services/manualTaskService"
 import { maintenanceScheduleService, MaintenanceSchedule } from "../../services/maintenanceScheduleService";
 import { assetService, Asset } from "../../services/assetService";
 import { userService } from "../../services/userService";
+import { reportService } from "../../services/reportService";
 import apiClient from "../../services/api";
 
 import { Card } from "../../components/common/Card";
@@ -172,7 +173,7 @@ export const SchedulesPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Tab control state
-  const [activeTab, setActiveTab] = useState<"calendar" | "yearly">("calendar");
+  const [activeTab, setActiveTab] = useState<"calendar" | "yearly" | "reports">("calendar");
 
   // Filter & Navigation states for task calendar
   const [filterRole, setFilterRole] = useState<string>("all");
@@ -198,6 +199,12 @@ export const SchedulesPage: React.FC = () => {
   const [scheduleAssetFilter, setScheduleAssetFilter] = useState("");
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [allAssetsForDropdown, setAllAssetsForDropdown] = useState<Asset[]>([]);
+
+  // Technician Reports state
+  const [reportsList, setReportsList] = useState<any[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportSeverityFilter, setReportSeverityFilter] = useState<string>("all");
+  const [reportSearchQuery, setReportSearchQuery] = useState<string>("");
 
   // Custom Alert / Confirm states
   const [popupConfig, setPopupConfig] = useState<{
@@ -395,6 +402,41 @@ export const SchedulesPage: React.FC = () => {
       fetchMaintenanceSchedules();
     }
   }, [selectedHotelId, user?.hotelId, schedulePage, scheduleSearch, scheduleMonthFilter, scheduleWeekFilter, scheduleAssetFilter]);
+
+  // Fetch technician reports
+  const fetchTechnicianReports = async () => {
+    const hotelId = selectedHotelId || user?.hotelId;
+    if (!hotelId) return;
+    setReportsLoading(true);
+    try {
+      const isCritical = reportSeverityFilter === "critical" ? true : reportSeverityFilter === "normal" ? false : undefined;
+      const reports = await reportService.fetchReports(hotelId, {
+        is_critical: isCritical,
+      });
+
+      // Filter by search query (technician name or report text) locally
+      const filtered = reports.filter((r) => {
+        const query = reportSearchQuery.toLowerCase().trim();
+        if (!query) return true;
+        return (
+          (r.technician_name || "").toLowerCase().includes(query) ||
+          (r.report_text || "").toLowerCase().includes(query)
+        );
+      });
+
+      setReportsList(filtered);
+    } catch (err: any) {
+      console.error("Failed to fetch technician reports:", err);
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "reports") {
+      fetchTechnicianReports();
+    }
+  }, [activeTab, selectedHotelId, reportSeverityFilter, reportSearchQuery]);
 
   const handleCreateSchedule = async () => {
     const hotelId = selectedHotelId || user?.hotelId;
@@ -765,6 +807,15 @@ export const SchedulesPage: React.FC = () => {
                 }`}
             >
               Yearly Schedules
+            </button>
+            <button
+              onClick={() => setActiveTab("reports")}
+              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${activeTab === "reports"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
+                }`}
+            >
+              Technician Reports
             </button>
           </div>
         </div>
@@ -1205,6 +1256,124 @@ export const SchedulesPage: React.FC = () => {
               </div>
             </div>
           )}
+        </Card>
+      )}
+
+      {activeTab === "reports" && (
+        <Card padding="none">
+          <div className="p-5 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Technician Weekly Reports</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Total: <span className="font-semibold text-slate-800">{reportsList.length}</span> reports submitted
+              </p>
+            </div>
+          </div>
+
+          {/* Filters Toolbar */}
+          <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-3 items-center">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <FiSearch className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search technician name or report details..."
+                value={reportSearchQuery}
+                onChange={(e) => setReportSearchQuery(e.target.value)}
+                className="pl-9 w-full rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white"
+              />
+            </div>
+
+            {/* Severity Filter */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-500">Priority:</label>
+              <select
+                value={reportSeverityFilter}
+                onChange={(e) => setReportSeverityFilter(e.target.value)}
+                className="rounded-md border-slate-300 text-xs shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 px-3 bg-white cursor-pointer"
+              >
+                <option value="all">All Priorities</option>
+                <option value="critical">Critical Only</option>
+                <option value="normal">Normal Only</option>
+              </select>
+            </div>
+
+            {/* Clear button */}
+            {(reportSearchQuery || reportSeverityFilter !== "all") && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setReportSearchQuery("");
+                  setReportSeverityFilter("all");
+                }}
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+
+          <Table
+            loading={reportsLoading}
+            columns={[
+              {
+                key: "created_at",
+                label: "Date & Time",
+                render: (val: string) => {
+                  const dateObj = new Date(val);
+                  return (
+                    <span className="text-xs text-slate-600 font-medium">
+                      {dateObj.toLocaleDateString()} {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  );
+                }
+              },
+              {
+                key: "technician_name",
+                label: "Technician",
+                render: (_: any, row: any) => (
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-slate-800">{row.technician_name}</span>
+                    <span className="text-[10px] text-slate-400">{row.technician_email}</span>
+                  </div>
+                )
+              },
+              {
+                key: "report_text",
+                label: "Report Activities & Details",
+                render: (val: string) => (
+                  <p className="text-xs text-slate-600 max-w-xl whitespace-pre-wrap leading-relaxed py-1">
+                    {val}
+                  </p>
+                )
+              },
+              {
+                key: "is_critical",
+                label: "Priority",
+                render: (val: boolean) => (
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      val
+                        ? "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20"
+                        : "bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/10"
+                    }`}
+                  >
+                    {val ? "🚨 Critical" : "Normal"}
+                  </span>
+                )
+              },
+              {
+                key: "recipient_role",
+                label: "Routed To",
+                render: (val: string) => (
+                  <span className="text-xs text-slate-500 capitalize font-semibold">
+                    {val}
+                  </span>
+                )
+              }
+            ]}
+            data={reportsList}
+          />
         </Card>
       )}
 
