@@ -563,8 +563,15 @@ export const SchedulesPage: React.FC = () => {
     return new Date(d.setDate(diff));
   };
 
+  const getLocalDateString = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const getSchedulesForDate = (date: Date) => {
-    return filteredSchedules.filter((s) => s.date === date.toISOString().split("T")[0]);
+    return filteredSchedules.filter((s) => s.date === getLocalDateString(date));
   };
 
   const weekStart = getWeekStart(currentDate);
@@ -947,7 +954,7 @@ export const SchedulesPage: React.FC = () => {
 
                     return (
                       <div
-                        key={day.toISOString()}
+                        key={getLocalDateString(day)}
                         className={`p-4 min-h-24 border border-slate-200 ${isToday
                             ? "bg-primary-50 border-2 border-primary-500"
                             : day.getMonth() !== currentDate.getMonth()
