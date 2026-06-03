@@ -687,7 +687,7 @@ export const SchedulesPage: React.FC = () => {
                     : "text-slate-500 hover:text-slate-900"
                 }`}
               >
-                Yearly Schedules
+                Maintainance Schedule
               </button>
             </div>
           </div>
@@ -1008,7 +1008,7 @@ export const SchedulesPage: React.FC = () => {
         {activeTab === "yearly" && (
           <Card padding="none">
             <div className="p-5 border-b border-slate-200 bg-white flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-slate-900">Yearly Maintenance Schedules</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Maintainance Schedule</h2>
               {canEdit && (
                 <Button size="sm" onClick={() => { resetScheduleForm(); setShowCreateModal(true); }}>
                   <FiPlus className="mr-1" /> Create Schedule
