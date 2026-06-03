@@ -293,7 +293,22 @@ export const SchedulesPage: React.FC = () => {
         week_no: scheduleWeekFilter ? Number(scheduleWeekFilter) : undefined,
         search: scheduleSearch.trim() || undefined,
       });
-      setMaintenanceSchedules(result.items);
+
+      const MONTH_ORDER: Record<string, number> = {
+        JAN: 1, FEB: 2, MAR: 3, APR: 4, MAY: 5, JUN: 6,
+        JUL: 7, AUG: 8, SEP: 9, OCT: 10, NOV: 11, DEC: 12
+      };
+
+      const sortedItems = [...result.items].sort((a, b) => {
+        const aMonthVal = MONTH_ORDER[(a.month || "").toUpperCase()] || 99;
+        const bMonthVal = MONTH_ORDER[(b.month || "").toUpperCase()] || 99;
+        if (aMonthVal !== bMonthVal) {
+          return aMonthVal - bMonthVal;
+        }
+        return (a.week_no || 0) - (b.week_no || 0);
+      });
+
+      setMaintenanceSchedules(sortedItems);
       setScheduleTotalPages(result.pagination.totalPages);
     } catch (err: any) {
       console.error("Failed to fetch maintenance schedules:", err);
