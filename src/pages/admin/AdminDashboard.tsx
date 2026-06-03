@@ -27,6 +27,8 @@ export const AdminDashboard: React.FC = () => {
   const [profilePhone, setProfilePhone] = useState(user?.phone || "");
 
   const [adminHotel, setAdminHotel] = useState<any>(null);
+  const [scannerPaused, setScannerPaused] = useState<boolean>(false);
+  const [scannerLoading, setScannerLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -59,6 +61,43 @@ export const AdminDashboard: React.FC = () => {
       setActiveTab("users");
     }
   }, [location.state, user?.role]);
+
+  useEffect(() => {
+    if (activeTab === "settings") {
+      setScannerLoading(true);
+      apiClient.get("/Main/router-backend/api/scheduled-tasks/scanner-status")
+        .then((res) => {
+          if (res.data && res.data.success) {
+            setScannerPaused(res.data.data.paused);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch scanner status:", err);
+        })
+        .finally(() => {
+          setScannerLoading(false);
+        });
+    }
+  }, [activeTab]);
+
+  const handleToggleScanner = async (newVal: boolean) => {
+    setScannerLoading(true);
+    try {
+      const res = await apiClient.post("/Main/router-backend/api/scheduled-tasks/scanner-toggle", {
+        paused: newVal
+      });
+      if (res.data && res.data.success) {
+        setScannerPaused(newVal);
+      } else {
+        alert(res.data.message || "Failed to update scanner status");
+      }
+    } catch (err: any) {
+      console.error("Failed to toggle scanner:", err);
+      alert(err.response?.data?.message || "Failed to toggle scanner status");
+    } finally {
+      setScannerLoading(false);
+    }
+  };
 
   const handleUpdateProfile = async () => {
     if (!profileName.trim()) {
@@ -672,6 +711,29 @@ export const AdminDashboard: React.FC = () => {
                   <div className="w-11 h-6 bg-primary-600 rounded-full relative cursor-pointer">
                     <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1 shadow-sm"></div>
                   </div>
+                </div>
+                <div className="flex items-center justify-between py-3 border-b border-slate-100">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Automated Task Generation</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {scannerPaused 
+                        ? "⏸️ Paused: Recurring tasks will not be created automatically." 
+                        : "Active: Recurring maintenance tasks are automatically generated on schedule."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleScanner(!scannerPaused)}
+                    disabled={scannerLoading}
+                    className={`w-11 h-6 rounded-full relative transition-colors focus:outline-none ${
+                      scannerPaused ? "bg-slate-200" : "bg-emerald-500"
+                    } ${scannerLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <span
+                      className={`w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-all ${
+                        scannerPaused ? "left-1" : "right-1"
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
             </div>
