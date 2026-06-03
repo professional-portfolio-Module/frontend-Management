@@ -81,6 +81,16 @@ export const AdminDashboard: React.FC = () => {
   }, [activeTab]);
 
   const handleToggleScanner = async (newVal: boolean) => {
+    // If the admin is trying to PAUSE (newVal is true), show a warning confirmation popup
+    if (newVal === true) {
+      const confirmPause = window.confirm(
+        "⚠️ WARNING: Pausing automated task generation will stop the system from automatically creating recurring maintenance tasks. Technicians will not receive new assignments. Are you sure you want to proceed?"
+      );
+      if (!confirmPause) {
+        return; // Cancel the operation
+      }
+    }
+
     setScannerLoading(true);
     try {
       const res = await apiClient.post("/Main/router-backend/api/scheduled-tasks/scanner-toggle", {
