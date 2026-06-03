@@ -30,6 +30,9 @@ export const AdminDashboard: React.FC = () => {
   const [scannerPaused, setScannerPaused] = useState<boolean>(false);
   const [scannerLoading, setScannerLoading] = useState<boolean>(false);
   const [showPauseConfirmModal, setShowPauseConfirmModal] = useState<boolean>(false);
+  const [maintenanceActive, setMaintenanceActive] = useState<boolean>(false);
+  const [maintenanceLoading, setMaintenanceLoading] = useState<boolean>(false);
+  const [showMaintenanceConfirmModal, setShowMaintenanceConfirmModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -66,17 +69,25 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     if (activeTab === "settings") {
       setScannerLoading(true);
-      apiClient.get("/Main/router-backend/api/scheduled-tasks/scanner-status")
-        .then((res) => {
-          if (res.data && res.data.success) {
-            setScannerPaused(res.data.data.paused);
+      setMaintenanceLoading(true);
+      Promise.all([
+        apiClient.get("/Main/router-backend/api/scheduled-tasks/scanner-status"),
+        apiClient.get("/Main/router-backend/api/system/maintenance-status")
+      ])
+        .then(([scannerRes, maintenanceRes]) => {
+          if (scannerRes.data && scannerRes.data.success) {
+            setScannerPaused(scannerRes.data.data.paused);
+          }
+          if (maintenanceRes.data && maintenanceRes.data.success) {
+            setMaintenanceActive(maintenanceRes.data.data.enabled);
           }
         })
         .catch((err) => {
-          console.error("Failed to fetch scanner status:", err);
+          console.error("Failed to fetch system configurations:", err);
         })
         .finally(() => {
           setScannerLoading(false);
+          setMaintenanceLoading(false);
         });
     }
   }, [activeTab]);
@@ -107,6 +118,35 @@ export const AdminDashboard: React.FC = () => {
       alert(err.response?.data?.message || "Failed to toggle scanner status");
     } finally {
       setScannerLoading(false);
+    }
+  };
+
+  const handleMaintenanceToggleClick = () => {
+    if (!maintenanceActive) {
+      // Trying to enable maintenance: show warning modal first
+      setShowMaintenanceConfirmModal(true);
+    } else {
+      // Trying to disable: execute immediately
+      executeToggleMaintenance(false);
+    }
+  };
+
+  const executeToggleMaintenance = async (newVal: boolean) => {
+    setMaintenanceLoading(true);
+    try {
+      const res = await apiClient.post("/Main/router-backend/api/system/maintenance-toggle", {
+        enabled: newVal
+      });
+      if (res.data && res.data.success) {
+        setMaintenanceActive(newVal);
+      } else {
+        alert(res.data.message || "Failed to update maintenance status");
+      }
+    } catch (err: any) {
+      console.error("Failed to toggle maintenance mode:", err);
+      alert(err.response?.data?.message || "Failed to toggle maintenance status");
+    } finally {
+      setMaintenanceLoading(false);
     }
   };
 
@@ -708,11 +748,25 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex items-center justify-between py-3 border-b border-slate-100">
                   <div>
                     <p className="text-sm font-medium text-slate-900">Maintenance Mode</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Suspend all non-admin access to the system</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {maintenanceActive 
+                        ? "🚨 Active: Non-admin users are blocked from accessing the system." 
+                        : "Inactive: All users can access the system normally."}
+                    </p>
                   </div>
-                  <div className="w-11 h-6 bg-slate-200 rounded-full relative cursor-pointer">
-                    <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1 shadow-sm"></div>
-                  </div>
+                  <button
+                    onClick={handleMaintenanceToggleClick}
+                    disabled={maintenanceLoading}
+                    className={`w-11 h-6 rounded-full relative transition-colors focus:outline-none ${
+                      maintenanceActive ? "bg-red-500" : "bg-slate-200"
+                    } ${maintenanceLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <span
+                      className={`w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-all ${
+                        maintenanceActive ? "right-1" : "left-1"
+                      }`}
+                    />
+                  </button>
                 </div>
                 <div className="flex items-center justify-between py-3 border-b border-slate-100">
                   <div>
@@ -788,6 +842,49 @@ export const AdminDashboard: React.FC = () => {
               variant="secondary" 
               onClick={() => setShowPauseConfirmModal(false)}
               disabled={scannerLoading}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* In-App Custom Maintenance Mode Confirmation Modal */}
+      <Modal
+        isOpen={showMaintenanceConfirmModal}
+        title="🚨 Activate Maintenance Mode?"
+        onClose={() => setShowMaintenanceConfirmModal(false)}
+      >
+        <div className="space-y-6">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-850 text-sm flex gap-3">
+            <FiAlertTriangle className="flex-shrink-0 mt-0.5 text-red-600" size={18} />
+            <div>
+              <p className="font-semibold mb-1 text-red-900">System-Wide Access Suspension Warning</p>
+              <p className="leading-relaxed text-red-800">
+                Enabling Maintenance Mode will immediately block all technicians, engineers, and non-admin users from accessing their apps and APIs. Background task generation will also be paused.
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-slate-600">
+            Only administrators will be allowed access. Are you sure you want to proceed and activate Maintenance Mode?
+          </p>
+          <div className="flex gap-3 pt-4 border-t border-slate-100">
+            <Button 
+              fullWidth 
+              variant="danger" 
+              onClick={() => {
+                setShowMaintenanceConfirmModal(false);
+                executeToggleMaintenance(true);
+              }}
+              disabled={maintenanceLoading}
+            >
+              Activate Maintenance
+            </Button>
+            <Button 
+              fullWidth 
+              variant="secondary" 
+              onClick={() => setShowMaintenanceConfirmModal(false)}
+              disabled={maintenanceLoading}
             >
               Cancel
             </Button>

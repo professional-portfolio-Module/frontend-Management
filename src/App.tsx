@@ -14,6 +14,7 @@ import { MessagingPage } from "./pages/messaging/MessagingPage";
 import { SchedulesPage } from "./pages/schedules/SchedulesPage";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { MaintenancePage } from "./pages/MaintenancePage";
 
 const App: React.FC = () => {
   return (
@@ -37,6 +38,7 @@ const App: React.FC = () => {
               </RoleBasedRedirect>
             }
           />
+          <Route path="/maintenance" element={<MaintenancePage />} />
 
           {/* Admin Routes */}
           <Route

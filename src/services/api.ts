@@ -60,6 +60,9 @@ apiClient.interceptors.response.use(
       localStorage.removeItem("user");
       window.location.href = "/login";
     }
+    if (error.response?.status === 503 && error.response?.data?.data?.code === 'MAINTENANCE_MODE_ACTIVE') {
+      window.location.href = "/maintenance";
+    }
     return Promise.reject(error);
   }
 );
