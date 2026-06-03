@@ -191,6 +191,7 @@ export const SchedulesPage: React.FC = () => {
   const [schedulesLoading, setSchedulesLoading] = useState(false);
   const [schedulePage, setSchedulePage] = useState(1);
   const [scheduleTotalPages, setScheduleTotalPages] = useState(1);
+  const [scheduleTotalItems, setScheduleTotalItems] = useState(0);
   const [scheduleSearch, setScheduleSearch] = useState("");
   const [scheduleMonthFilter, setScheduleMonthFilter] = useState("");
   const [scheduleWeekFilter, setScheduleWeekFilter] = useState("");
@@ -310,6 +311,7 @@ export const SchedulesPage: React.FC = () => {
 
       setMaintenanceSchedules(sortedItems);
       setScheduleTotalPages(result.pagination.totalPages);
+      setScheduleTotalItems(result.pagination.totalItems);
     } catch (err: any) {
       console.error("Failed to fetch maintenance schedules:", err);
     } finally {
@@ -529,6 +531,24 @@ export const SchedulesPage: React.FC = () => {
   };
 
   const weekStart = getWeekStart(currentDate);
+
+  // Get all tasks for the current visible period (week or month)
+  const currentPeriodTasks = filteredSchedules.filter((event) => {
+    if (!event.date) return false;
+    const parts = event.date.split("-");
+    if (parts.length !== 3) return false;
+    const eventTime = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).getTime();
+    
+    if (viewMode === "week") {
+      const start = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()).getTime();
+      const end = start + 7 * 24 * 60 * 60 * 1000;
+      return eventTime >= start && eventTime < end;
+    } else {
+      const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getTime();
+      const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1).getTime();
+      return eventTime >= start && eventTime < end;
+    }
+  });
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
     d.setDate(d.getDate() + i);
@@ -954,9 +974,9 @@ export const SchedulesPage: React.FC = () => {
                     <FiCalendar size={24} className="text-primary-600" />
                   </div>
                   <div>
-                    <p className="text-slate-600 text-sm">Total Schedules</p>
+                    <p className="text-slate-600 text-sm">Total Tasks (Active View)</p>
                     <p className="text-2xl font-bold text-slate-900">
-                      {filteredSchedules.length}
+                      {currentPeriodTasks.length}
                     </p>
                   </div>
                 </div>
@@ -964,19 +984,13 @@ export const SchedulesPage: React.FC = () => {
 
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-green-100 rounded-lg">
-                    <FiUsers size={24} className="text-green-600" />
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <FiClock size={24} className="text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-slate-600 text-sm">Scheduled Today</p>
+                    <p className="text-slate-600 text-sm">Pending (Active View)</p>
                     <p className="text-2xl font-bold text-slate-900">
-                      {
-                        filteredSchedules.filter(
-                          (s) =>
-                            s.date ===
-                            new Date().toISOString().split("T")[0]
-                        ).length
-                      }
+                      {currentPeriodTasks.filter((s) => s.status === "scheduled").length}
                     </p>
                   </div>
                 </div>
@@ -988,12 +1002,9 @@ export const SchedulesPage: React.FC = () => {
                     <FiClock size={24} className="text-yellow-600" />
                   </div>
                   <div>
-                    <p className="text-slate-600 text-sm">In Progress</p>
+                    <p className="text-slate-600 text-sm">In Progress (Active View)</p>
                     <p className="text-2xl font-bold text-slate-900">
-                      {
-                        filteredSchedules.filter((s) => s.status === "in-progress")
-                          .length
-                      }
+                      {currentPeriodTasks.filter((s) => s.status === "in-progress").length}
                     </p>
                   </div>
                 </div>
@@ -1005,12 +1016,9 @@ export const SchedulesPage: React.FC = () => {
                     <FiCheckCircle size={24} className="text-green-600" />
                   </div>
                   <div>
-                    <p className="text-slate-600 text-sm">Completed</p>
+                    <p className="text-slate-600 text-sm">Completed (Active View)</p>
                     <p className="text-2xl font-bold text-slate-900">
-                      {
-                        filteredSchedules.filter((s) => s.status === "completed")
-                          .length
-                      }
+                      {currentPeriodTasks.filter((s) => s.status === "completed").length}
                     </p>
                   </div>
                 </div>
@@ -1022,8 +1030,13 @@ export const SchedulesPage: React.FC = () => {
         {/* Tab 2: Yearly Maintenance Schedules */}
         {activeTab === "yearly" && (
           <Card padding="none">
-            <div className="p-5 border-b border-slate-200 bg-white flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-slate-900">Yearly Maintenance Schedules</h2>
+            <div className="p-5 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900">Yearly Maintenance Schedules</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Total: <span className="font-semibold text-slate-800">{scheduleTotalItems}</span> schedules matching filters
+                </p>
+              </div>
               {canEdit && (
                 <Button size="sm" onClick={() => { resetScheduleForm(); setShowCreateModal(true); }}>
                   <FiPlus className="mr-1" /> Create Schedule
