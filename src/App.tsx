@@ -16,95 +16,98 @@ import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
 import { PublicReportPage } from "./pages/PublicReportPage";
+import { NotificationProvider } from "./context/NotificationContext";
 
 const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route
-            path="/"
-            element={
-              <RoleBasedRedirect>
-                <LandingPage />
-              </RoleBasedRedirect>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <RoleBasedRedirect>
-                <LoginPage />
-              </RoleBasedRedirect>
-            }
-          />
-          <Route path="/maintenance" element={<MaintenancePage />} />
-          <Route path="/public/report/:card_no" element={<PublicReportPage />} />
+        <NotificationProvider>
+          <Routes>
+            {/* Public Routes */}
+            <Route
+              path="/"
+              element={
+                <RoleBasedRedirect>
+                  <LandingPage />
+                </RoleBasedRedirect>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <RoleBasedRedirect>
+                  <LoginPage />
+                </RoleBasedRedirect>
+              }
+            />
+            <Route path="/maintenance" element={<MaintenancePage />} />
+            <Route path="/public/report/:card_no" element={<PublicReportPage />} />
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin/*"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Admin Routes */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Manager Routes */}
-          <Route
-            path="/manager/*"
-            element={
-              <ProtectedRoute requiredRole="manager">
-                <ManagerDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Manager Routes */}
+            <Route
+              path="/manager/*"
+              element={
+                <ProtectedRoute requiredRole="manager">
+                  <ManagerDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Engineer Routes */}
-          <Route
-            path="/engineer/*"
-            element={
-              <ProtectedRoute requiredRole="engineer">
-                <EngineerDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Engineer Routes */}
+            <Route
+              path="/engineer/*"
+              element={
+                <ProtectedRoute requiredRole="engineer">
+                  <EngineerDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Staff Routes */}
-          <Route
-            path="/staff/*"
-            element={
-              <ProtectedRoute requiredRole="staff">
-                <StaffDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Staff Routes */}
+            <Route
+              path="/staff/*"
+              element={
+                <ProtectedRoute requiredRole="staff">
+                  <StaffDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Messaging Routes */}
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <MessagingPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Messaging Routes */}
+            <Route
+              path="/messages"
+              element={
+                <ProtectedRoute>
+                  <MessagingPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Schedules Routes */}
-          <Route
-            path="/schedules"
-            element={
-              <ProtectedRoute>
-                <SchedulesPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Schedules Routes */}
+            <Route
+              path="/schedules"
+              element={
+                <ProtectedRoute>
+                  <SchedulesPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* 404 - Page Not Found */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+            {/* 404 - Page Not Found */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   FiBell, 
@@ -13,8 +13,8 @@ import {
   FiInfo,
   FiUserPlus
 } from "react-icons/fi";
-import { useAuth } from "../../context/AuthContext";
-import { notificationService, AppNotification } from "../../services/notificationService";
+import { useNotifications } from "../../context/NotificationContext";
+import { AppNotification } from "../../services/notificationService";
 
 interface NavbarProps {
   userName?: string;
@@ -35,37 +35,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const { user } = useAuth();
-
-  const fetchNotifications = async () => {
-    if (user?.id) {
-      const data = await notificationService.getNotifications(user.id);
-      setNotifications(data);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [user?.id]);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const { notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications } = useNotifications();
 
   const handleNotificationClick = async (notif: AppNotification) => {
     if (!notif.read) {
-      await notificationService.markAsRead(notif.id);
-      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+      await markAsRead(notif.id);
     }
     setShowNotifications(false);
   };
 
   const handleMarkAllAsRead = async () => {
-    if (user?.id) {
-      const success = await notificationService.markAllAsRead(user.id);
-      if (success) {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      }
-    }
+    await markAllAsRead();
   };
 
   const getIconBg = (type: string) => {

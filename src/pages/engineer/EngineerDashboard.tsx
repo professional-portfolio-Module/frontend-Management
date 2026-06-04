@@ -13,7 +13,7 @@ import { AnalyticsPage } from "../analytics/AnalyticsPage";
 import apiClient from "../../services/api";
 import { scheduledTaskService, ScheduledTask } from "../../services/scheduledTaskService";
 import { manualTaskService, ManualTask } from "../../services/manualTaskService";
-import { notificationService, AppNotification } from "../../services/notificationService";
+import { useNotifications } from "../../context/NotificationContext";
 
 export const EngineerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export const EngineerDashboard: React.FC = () => {
   const [selectedHotelId, setSelectedHotelId] = useState<string>("");
   const [scheduledTasks, setScheduledTasks] = useState<ScheduledTask[]>([]);
   const [manualTasks, setManualTasks] = useState<ManualTask[]>([]);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const { notifications, markAsRead, markAllAsRead } = useNotifications();
   const [scheduledTasksLoading, setScheduledTasksLoading] = useState(false);
   const [manualTasksLoading, setManualTasksLoading] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<"scheduled" | "manual">("scheduled");
@@ -126,15 +126,7 @@ export const EngineerDashboard: React.FC = () => {
     }
   };
 
-  const fetchNotifications = async () => {
-    if (!user?.id) return;
-    try {
-      const data = await notificationService.getNotifications(user.id);
-      setNotifications(data);
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    }
-  };
+
 
   // Trigger tasks fetch when selectedHotelId or filters change
   useEffect(() => {
@@ -144,12 +136,7 @@ export const EngineerDashboard: React.FC = () => {
     }
   }, [selectedHotelId, scheduledStatusFilter, manualStatusFilter]);
 
-  // Fetch notifications
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
+
 
   const handleOpenReview = (task: any, type: "scheduled" | "manual") => {
     setSelectedTask(task);
@@ -585,10 +572,7 @@ export const EngineerDashboard: React.FC = () => {
             <h2 className="text-2xl font-bold text-slate-900">Notifications</h2>
             {unreadNotifications.length > 0 && (
               <Button size="sm" variant="secondary" onClick={async () => {
-                if (user?.id) {
-                  await notificationService.markAllAsRead(user.id);
-                  fetchNotifications();
-                }
+                await markAllAsRead();
               }}>
                 Mark All as Read
               </Button>
@@ -601,8 +585,7 @@ export const EngineerDashboard: React.FC = () => {
                 className={`p-4 rounded-lg border transition-all cursor-pointer ${notif.read ? "bg-slate-50 border-slate-200" : "bg-blue-50/70 border-blue-200 shadow-sm"}`}
                 onClick={async () => {
                   if (!notif.read) {
-                    await notificationService.markAsRead(notif.id);
-                    fetchNotifications();
+                    await markAsRead(notif.id);
                   }
                 }}
               >

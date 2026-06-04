@@ -15,7 +15,7 @@ import { categoryService, Category } from "../../services/categoryService";
 import { assetService, Asset } from "../../services/assetService";
 import { manualTaskService, ManualTask } from "../../services/manualTaskService";
 import { scheduledTaskService, ScheduledTask } from "../../services/scheduledTaskService";
-import { notificationService, AppNotification } from "../../services/notificationService";
+import { useNotifications } from "../../context/NotificationContext";
 import apiClient from "../../services/api";
 import { AnalyticsPage } from "../analytics/AnalyticsPage";
 
@@ -222,7 +222,7 @@ export const ManagerDashboard: React.FC = () => {
   const [editScheduledTaskError, setEditScheduledTaskError] = useState("");
 
   // Notifications state
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const { notifications, markAsRead, markAllAsRead, fetchNotifications } = useNotifications();
 
 
 
@@ -326,15 +326,7 @@ export const ManagerDashboard: React.FC = () => {
     }
   };
 
-  const fetchNotifications = async () => {
-    if (!user?.id) return;
-    try {
-      const data = await notificationService.getNotifications(user.id);
-      setNotifications(data);
-    } catch (err: any) {
-      console.error("Failed to fetch notifications:", err);
-    }
-  };
+
 
   const fetchAllAssetsForTask = async () => {
     try {
@@ -483,11 +475,7 @@ export const ManagerDashboard: React.FC = () => {
     }
   }, [activeTab]);
 
-  React.useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
+
 
   const unreadNotifications = notifications.filter(n => !n.read);
 
@@ -1878,10 +1866,7 @@ export const ManagerDashboard: React.FC = () => {
             <h2 className="text-2xl font-bold text-slate-900">Notifications</h2>
             {unreadNotifications.length > 0 && (
               <Button size="sm" variant="secondary" onClick={async () => {
-                if (user?.id) {
-                  await notificationService.markAllAsRead(user.id);
-                  fetchNotifications();
-                }
+                await markAllAsRead();
               }}>
                 Mark All as Read
               </Button>
@@ -1894,8 +1879,7 @@ export const ManagerDashboard: React.FC = () => {
                 className={`p-4 rounded-lg border transition-all cursor-pointer ${notif.read ? "bg-slate-50 border-slate-200" : "bg-blue-50/70 border-blue-200 shadow-sm"}`}
                 onClick={async () => {
                   if (!notif.read) {
-                    await notificationService.markAsRead(notif.id);
-                    fetchNotifications();
+                    await markAsRead(notif.id);
                   }
                 }}
               >

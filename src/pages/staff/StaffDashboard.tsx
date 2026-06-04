@@ -9,7 +9,7 @@ import { Modal } from "../../components/common/Modal";
 import { Input, Select, TextArea } from "../../components/common/Form";
 import { useAuth } from "../../context/AuthContext";
 import { categoryService, Category } from "../../services/categoryService";
-import { notificationService, AppNotification } from "../../services/notificationService";
+import { useNotifications } from "../../context/NotificationContext";
 import { assetService, Asset } from "../../services/assetService";
 import apiClient from "../../services/api";
 import { userService } from "../../services/userService";
@@ -150,20 +150,12 @@ export const StaffDashboard: React.FC = () => {
   const [schedAssignedTechs, setSchedAssignedTechs] = useState<string[]>([]);
   const [schedIsActive, setSchedIsActive] = useState(true);
 
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const { notifications, markAsRead, markAllAsRead } = useNotifications();
   const [totalAssets, setTotalAssets] = useState(0);
 
   const unreadNotifications = notifications.filter((n) => !n.read);
 
-  const fetchNotifications = async () => {
-    if (!user?.id) return;
-    try {
-      const data = await notificationService.getNotifications(user.id);
-      setNotifications(data);
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    }
-  };
+
   const handleUpdateProfile = async () => {
     if (!profileName.trim()) {
       alert("Name is required");
@@ -433,11 +425,7 @@ export const StaffDashboard: React.FC = () => {
     }
   }, [selectedHotelId, schedulePage, scheduleSearch, scheduleMonthFilter, scheduleWeekFilter, scheduleAssetFilter]);
 
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
+
 
   const sidebarItems = [
     { icon: <FiBell />, label: "Dashboard", active: activeTab === "overview", onClick: () => setActiveTab("overview") },
@@ -884,8 +872,7 @@ export const StaffDashboard: React.FC = () => {
               <Button
                 size="sm"
                 onClick={async () => {
-                  await notificationService.markAllAsRead(user!.id);
-                  fetchNotifications();
+                  await markAllAsRead();
                 }}
               >
                 Mark all as read
@@ -903,8 +890,7 @@ export const StaffDashboard: React.FC = () => {
                 }`}
                 onClick={async () => {
                   if (!notif.read) {
-                    await notificationService.markAsRead(notif.id);
-                    fetchNotifications();
+                    await markAsRead(notif.id);
                   }
                 }}
               >
