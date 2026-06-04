@@ -128,13 +128,13 @@ export const EngineerDashboard: React.FC = () => {
 
 
 
-  // Trigger tasks fetch when selectedHotelId or filters change
+  // Trigger tasks fetch when selectedHotelId, filters or notifications change
   useEffect(() => {
     if (selectedHotelId) {
       fetchScheduledTasks();
       fetchManualTasks();
     }
-  }, [selectedHotelId, scheduledStatusFilter, manualStatusFilter]);
+  }, [selectedHotelId, scheduledStatusFilter, manualStatusFilter, notifications]);
 
 
 

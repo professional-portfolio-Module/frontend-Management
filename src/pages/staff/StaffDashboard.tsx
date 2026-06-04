@@ -417,13 +417,13 @@ export const StaffDashboard: React.FC = () => {
     if (selectedHotelId) {
       fetchAssets();
     }
-  }, [selectedHotelId, assetPage, assetSearch, assetCategory, assetStatus]);
+  }, [selectedHotelId, assetPage, assetSearch, assetCategory, assetStatus, notifications]);
 
   useEffect(() => {
     if (selectedHotelId) {
       fetchMaintenanceSchedules();
     }
-  }, [selectedHotelId, schedulePage, scheduleSearch, scheduleMonthFilter, scheduleWeekFilter, scheduleAssetFilter]);
+  }, [selectedHotelId, schedulePage, scheduleSearch, scheduleMonthFilter, scheduleWeekFilter, scheduleAssetFilter, notifications]);
 
 
 

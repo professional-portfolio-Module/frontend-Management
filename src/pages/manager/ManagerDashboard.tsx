@@ -470,10 +470,13 @@ export const ManagerDashboard: React.FC = () => {
   }, [activeTab, scheduledTaskStatus, scheduledTaskPriority, selectedHotelId]);
 
   React.useEffect(() => {
-    if (activeTab === "notifications") {
-      fetchNotifications();
-    }
+    fetchNotifications();
   }, [activeTab]);
+
+  React.useEffect(() => {
+    fetchManualTasks();
+    fetchScheduledTasks();
+  }, [notifications]);
 
 
 
