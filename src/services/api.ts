@@ -55,7 +55,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized
+      // Handle unauthorized but do not redirect if on a public path
+      if (window.location.pathname.startsWith("/public/")) {
+        return Promise.reject(error);
+      }
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
       window.location.href = "/login";

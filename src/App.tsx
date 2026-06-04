@@ -15,6 +15,7 @@ import { SchedulesPage } from "./pages/schedules/SchedulesPage";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
+import { PublicReportPage } from "./pages/PublicReportPage";
 
 const App: React.FC = () => {
   return (
@@ -39,6 +40,7 @@ const App: React.FC = () => {
             }
           />
           <Route path="/maintenance" element={<MaintenancePage />} />
+          <Route path="/public/report/:card_no" element={<PublicReportPage />} />
 
           {/* Admin Routes */}
           <Route
