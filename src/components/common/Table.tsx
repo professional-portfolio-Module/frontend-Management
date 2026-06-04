@@ -22,20 +22,58 @@ export const Table: React.FC<TableProps> = ({
   className = "",
   onRowClick,
 }) => {
-  if (loading) {
+  // If loading and there is no existing data, render a beautiful skeleton layout
+  if (loading && data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <svg className="animate-spin h-8 w-8 text-primary-600" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-        <p className="text-sm text-slate-500 font-medium">Loading data…</p>
+      <div className={`overflow-x-auto rounded-lg border border-slate-200/80 ${className}`}>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-slate-50/80 border-b border-slate-200">
+              {columns.map((column) => (
+                <th
+                  key={column.key}
+                  className={`px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider ${column.width || ""}`}
+                >
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {[...Array(5)].map((_, rowIndex) => (
+              <tr key={rowIndex} className="animate-pulse">
+                {columns.map((column) => (
+                  <td key={column.key} className="px-4 py-4">
+                    <div className="h-4 bg-slate-200/80 rounded w-5/6"></div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }
 
   return (
-    <div className={`overflow-x-auto rounded-lg border border-slate-200/80 ${className}`}>
+    <div className={`relative overflow-x-auto rounded-lg border border-slate-200/80 bg-white ${className}`}>
+      {/* Subtle loader bar at the top edge for background real-time sync updates */}
+      {loading && (
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary-100/20 overflow-hidden z-10">
+          <style>{`
+            @keyframes loadingBar {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(100%); }
+            }
+          `}</style>
+          <div 
+            className="h-full bg-primary-600 w-1/2"
+            style={{
+              animation: 'loadingBar 1.5s infinite ease-in-out',
+            }}
+          ></div>
+        </div>
+      )}
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-slate-50/80 border-b border-slate-200">
@@ -49,7 +87,7 @@ export const Table: React.FC<TableProps> = ({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className={`divide-y divide-slate-100 transition-opacity duration-200 ${loading ? 'opacity-70' : 'opacity-100'}`}>
           {data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="px-4 py-12 text-center">
