@@ -33,6 +33,8 @@ export const AdminDashboard: React.FC = () => {
   const [maintenanceActive, setMaintenanceActive] = useState<boolean>(false);
   const [maintenanceLoading, setMaintenanceLoading] = useState<boolean>(false);
   const [showMaintenanceConfirmModal, setShowMaintenanceConfirmModal] = useState<boolean>(false);
+  const [proximityBypassed, setProximityBypassed] = useState<boolean>(false);
+  const [proximityLoading, setProximityLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -70,16 +72,21 @@ export const AdminDashboard: React.FC = () => {
     if (activeTab === "settings") {
       setScannerLoading(true);
       setMaintenanceLoading(true);
+      setProximityLoading(true);
       Promise.all([
         apiClient.get("/Main/router-backend/api/scheduled-tasks/scanner-status"),
-        apiClient.get("/Main/router-backend/api/system/maintenance-status")
+        apiClient.get("/Main/router-backend/api/system/maintenance-status"),
+        apiClient.get("/Main/router-backend/api/scheduled-tasks/proximity-status")
       ])
-        .then(([scannerRes, maintenanceRes]) => {
+        .then(([scannerRes, maintenanceRes, proximityRes]) => {
           if (scannerRes.data && scannerRes.data.success) {
             setScannerPaused(scannerRes.data.data.paused);
           }
           if (maintenanceRes.data && maintenanceRes.data.success) {
             setMaintenanceActive(maintenanceRes.data.data.enabled);
+          }
+          if (proximityRes.data && proximityRes.data.success) {
+            setProximityBypassed(proximityRes.data.data.bypassed);
           }
         })
         .catch((err) => {
@@ -88,6 +95,7 @@ export const AdminDashboard: React.FC = () => {
         .finally(() => {
           setScannerLoading(false);
           setMaintenanceLoading(false);
+          setProximityLoading(false);
         });
     }
   }, [activeTab]);
@@ -147,6 +155,25 @@ export const AdminDashboard: React.FC = () => {
       alert(err.response?.data?.message || "Failed to toggle maintenance status");
     } finally {
       setMaintenanceLoading(false);
+    }
+  };
+
+  const executeToggleProximity = async (newVal: boolean) => {
+    setProximityLoading(true);
+    try {
+      const res = await apiClient.post("/Main/router-backend/api/scheduled-tasks/proximity-toggle", {
+        bypassed: newVal
+      });
+      if (res.data && res.data.success) {
+        setProximityBypassed(newVal);
+      } else {
+        alert(res.data.message || "Failed to update proximity verification status");
+      }
+    } catch (err: any) {
+      console.error("Failed to toggle proximity verification:", err);
+      alert(err.response?.data?.message || "Failed to toggle proximity verification status");
+    } finally {
+      setProximityLoading(false);
     }
   };
 
@@ -796,6 +823,29 @@ export const AdminDashboard: React.FC = () => {
                     <span
                       className={`w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-all ${
                         scannerPaused ? "left-1" : "right-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between py-3 border-b border-slate-100">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Proximity Verification Bypass</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {proximityBypassed 
+                        ? "🔓 Active: Technicians can scan QR codes and perform updates from any distance." 
+                        : "Enforced: Technicians must be physically near (within 500m of) the hotel."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => executeToggleProximity(!proximityBypassed)}
+                    disabled={proximityLoading}
+                    className={`w-11 h-6 rounded-full relative transition-colors focus:outline-none ${
+                      proximityBypassed ? "bg-amber-500" : "bg-slate-200"
+                    } ${proximityLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <span
+                      className={`w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-all ${
+                        proximityBypassed ? "right-1" : "left-1"
                       }`}
                     />
                   </button>
