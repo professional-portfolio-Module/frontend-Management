@@ -14,6 +14,7 @@ import apiClient from "../../services/api";
 import { scheduledTaskService, ScheduledTask } from "../../services/scheduledTaskService";
 import { manualTaskService, ManualTask } from "../../services/manualTaskService";
 import { useNotifications } from "../../context/NotificationContext";
+import { SecureImage } from "../../components/common";
 
 const getImageUrl = (url: string | null | undefined): string => {
   if (!url) return "";
@@ -684,16 +685,11 @@ export const EngineerDashboard: React.FC = () => {
             {selectedTask.attachment_url && (
               <div>
                 <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Evidence Image</p>
-                <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50 max-h-60 flex items-center justify-center">
-                  <img
-                    src={getImageUrl(selectedTask.attachment_url)}
-                    alt="Evidence of completion"
-                    className="max-h-60 object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
+                <SecureImage
+                  src={getImageUrl(selectedTask.attachment_url)}
+                  alt="Evidence of completion"
+                  className="max-h-60 object-contain mx-auto"
+                />
               </div>
             )}
 

@@ -16,6 +16,7 @@ import { assetService, Asset } from "../../services/assetService";
 import { manualTaskService, ManualTask } from "../../services/manualTaskService";
 import { scheduledTaskService, ScheduledTask } from "../../services/scheduledTaskService";
 import { useNotifications } from "../../context/NotificationContext";
+import { SecureImage } from "../../components/common";
 import apiClient from "../../services/api";
 import { AnalyticsPage } from "../analytics/AnalyticsPage";
 
@@ -2446,18 +2447,11 @@ export const ManagerDashboard: React.FC = () => {
           {selectedManualTask?.attachment_url && (
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Photo Evidence</label>
-              <a 
-                href={getImageUrl(selectedManualTask.attachment_url)} 
-                target="_blank" 
-                rel="noreferrer"
-                className="block hover:opacity-95 transition-opacity"
-              >
-                <img 
-                  src={getImageUrl(selectedManualTask.attachment_url)} 
-                  alt="Work Evidence" 
-                  className="max-h-60 object-contain rounded-md border border-slate-200" 
-                />
-              </a>
+              <SecureImage
+                src={getImageUrl(selectedManualTask.attachment_url)}
+                alt="Work Evidence"
+                className="max-h-60 object-contain mx-auto rounded-md"
+              />
             </div>
           )}
 
@@ -2550,18 +2544,11 @@ export const ManagerDashboard: React.FC = () => {
           {selectedScheduledTask?.attachment_url && (
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Photo Evidence</label>
-              <a 
-                href={getImageUrl(selectedScheduledTask.attachment_url)} 
-                target="_blank" 
-                rel="noreferrer"
-                className="block hover:opacity-95 transition-opacity"
-              >
-                <img 
-                  src={getImageUrl(selectedScheduledTask.attachment_url)} 
-                  alt="Work Evidence" 
-                  className="max-h-60 object-contain rounded-md border border-slate-200" 
-                />
-              </a>
+              <SecureImage
+                src={getImageUrl(selectedScheduledTask.attachment_url)}
+                alt="Work Evidence"
+                className="max-h-60 object-contain mx-auto rounded-md"
+              />
             </div>
           )}
 
