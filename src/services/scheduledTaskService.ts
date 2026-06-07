@@ -16,6 +16,7 @@ export interface ScheduledTask {
   status: 'pending' | 'in-progress' | 'under_review' | 'completed' | 'rejected' | 'expired';
   priority: 'normal' | 'emergency';
   attachment_url?: string | null;
+  engineer_attachment_url?: string | null;
   created_at: string;
   updated_at: string;
   completed_at?: string | null;
@@ -51,6 +52,7 @@ export const scheduledTaskService = {
       technician_remarks?: string;
       engineer_remarks?: string;
       attachment_url?: string;
+      engineer_attachment_url?: string;
       done_by?: string;
       checked_by?: string;
       priority?: string;

@@ -2446,10 +2446,21 @@ export const ManagerDashboard: React.FC = () => {
 
           {selectedManualTask?.attachment_url && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Photo Evidence</label>
+              <label className="text-sm font-semibold text-slate-700">Technician Photo Evidence</label>
               <SecureImage
                 src={getImageUrl(selectedManualTask.attachment_url)}
-                alt="Work Evidence"
+                alt="Technician Work Evidence"
+                className="max-h-60 object-contain mx-auto rounded-md"
+              />
+            </div>
+          )}
+
+          {selectedManualTask?.engineer_attachment_url && (
+            <div className="flex flex-col gap-1.5 mt-3">
+              <label className="text-sm font-semibold text-slate-700">Engineer/Manager Photo Evidence</label>
+              <SecureImage
+                src={getImageUrl(selectedManualTask.engineer_attachment_url)}
+                alt="Engineer Work Evidence"
                 className="max-h-60 object-contain mx-auto rounded-md"
               />
             </div>
@@ -2543,10 +2554,21 @@ export const ManagerDashboard: React.FC = () => {
 
           {selectedScheduledTask?.attachment_url && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Photo Evidence</label>
+              <label className="text-sm font-semibold text-slate-700">Technician Photo Evidence</label>
               <SecureImage
                 src={getImageUrl(selectedScheduledTask.attachment_url)}
-                alt="Work Evidence"
+                alt="Technician Work Evidence"
+                className="max-h-60 object-contain mx-auto rounded-md"
+              />
+            </div>
+          )}
+
+          {selectedScheduledTask?.engineer_attachment_url && (
+            <div className="flex flex-col gap-1.5 mt-3">
+              <label className="text-sm font-semibold text-slate-700">Engineer/Manager Photo Evidence</label>
+              <SecureImage
+                src={getImageUrl(selectedScheduledTask.engineer_attachment_url)}
+                alt="Engineer Work Evidence"
                 className="max-h-60 object-contain mx-auto rounded-md"
               />
             </div>

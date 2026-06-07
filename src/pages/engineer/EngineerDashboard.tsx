@@ -684,10 +684,21 @@ export const EngineerDashboard: React.FC = () => {
 
             {selectedTask.attachment_url && (
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Evidence Image</p>
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Technician Evidence Image</p>
                 <SecureImage
                   src={getImageUrl(selectedTask.attachment_url)}
-                  alt="Evidence of completion"
+                  alt="Technician completion evidence"
+                  className="max-h-60 object-contain mx-auto"
+                />
+              </div>
+            )}
+
+            {selectedTask.engineer_attachment_url && (
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-2 mt-3">Engineer Verification Image</p>
+                <SecureImage
+                  src={getImageUrl(selectedTask.engineer_attachment_url)}
+                  alt="Engineer verification evidence"
                   className="max-h-60 object-contain mx-auto"
                 />
               </div>

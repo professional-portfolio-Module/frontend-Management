@@ -16,6 +16,7 @@ export interface ManualTask {
   status: 'pending' | 'in-progress' | 'under_review' | 'completed' | 'rejected' | 'expired';
   priority: 'normal' | 'emergency';
   attachment_url?: string | null;
+  engineer_attachment_url?: string | null;
   created_at?: string | null;
   due_date?: string | null;
   completed_at?: string | null;
