@@ -92,6 +92,7 @@ export const authService = {
       console.error("Logout failed", error);
     } finally {
       localStorage.removeItem("user");
+      localStorage.removeItem("authToken");
     }
   },
 
@@ -120,6 +121,7 @@ export const authService = {
   // Clear auth data
   clearAuthData(): void {
     localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
   },
 
   // Forgot password - Request OTP
