@@ -15,6 +15,16 @@ import { scheduledTaskService, ScheduledTask } from "../../services/scheduledTas
 import { manualTaskService, ManualTask } from "../../services/manualTaskService";
 import { useNotifications } from "../../context/NotificationContext";
 
+const getImageUrl = (url: string | null | undefined): string => {
+  if (!url) return "";
+  if (url.includes("/api/uploads/")) {
+    const filename = url.split("/api/uploads/").pop();
+    const base = apiClient.defaults.baseURL || "";
+    return `${base.replace(/\/$/, "")}/Main/router-backend/api/uploads/${filename}`;
+  }
+  return url;
+};
+
 export const EngineerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -676,7 +686,7 @@ export const EngineerDashboard: React.FC = () => {
                 <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Evidence Image</p>
                 <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50 max-h-60 flex items-center justify-center">
                   <img
-                    src={selectedTask.attachment_url}
+                    src={getImageUrl(selectedTask.attachment_url)}
                     alt="Evidence of completion"
                     className="max-h-60 object-contain"
                     onError={(e) => {

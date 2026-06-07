@@ -99,6 +99,16 @@ const SearchableAssetDropdown: React.FC<{
   );
 };
 
+const getImageUrl = (url: string | null | undefined): string => {
+  if (!url) return "";
+  if (url.includes("/api/uploads/")) {
+    const filename = url.split("/api/uploads/").pop();
+    const base = apiClient.defaults.baseURL || "";
+    return `${base.replace(/\/$/, "")}/Main/router-backend/api/uploads/${filename}`;
+  }
+  return url;
+};
+
 export const ManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -2437,13 +2447,13 @@ export const ManagerDashboard: React.FC = () => {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Photo Evidence</label>
               <a 
-                href={selectedManualTask.attachment_url} 
+                href={getImageUrl(selectedManualTask.attachment_url)} 
                 target="_blank" 
                 rel="noreferrer"
                 className="block hover:opacity-95 transition-opacity"
               >
                 <img 
-                  src={selectedManualTask.attachment_url} 
+                  src={getImageUrl(selectedManualTask.attachment_url)} 
                   alt="Work Evidence" 
                   className="max-h-60 object-contain rounded-md border border-slate-200" 
                 />
@@ -2541,13 +2551,13 @@ export const ManagerDashboard: React.FC = () => {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Photo Evidence</label>
               <a 
-                href={selectedScheduledTask.attachment_url} 
+                href={getImageUrl(selectedScheduledTask.attachment_url)} 
                 target="_blank" 
                 rel="noreferrer"
                 className="block hover:opacity-95 transition-opacity"
               >
                 <img 
-                  src={selectedScheduledTask.attachment_url} 
+                  src={getImageUrl(selectedScheduledTask.attachment_url)} 
                   alt="Work Evidence" 
                   className="max-h-60 object-contain rounded-md border border-slate-200" 
                 />
