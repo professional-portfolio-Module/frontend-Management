@@ -58,6 +58,8 @@ export const EngineerDashboard: React.FC = () => {
   const [selectedTaskType, setSelectedTaskType] = useState<"scheduled" | "manual" | null>(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [engineerRemarks, setEngineerRemarks] = useState("");
+  const [engineerEvidenceImage, setEngineerEvidenceImage] = useState<string | null>(null);
+  const [engineerEvidenceBase64, setEngineerEvidenceBase64] = useState<string | null>(null);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // Profile Modal State Sync
@@ -153,6 +155,8 @@ export const EngineerDashboard: React.FC = () => {
     setSelectedTask(task);
     setSelectedTaskType(type);
     setEngineerRemarks(type === "scheduled" ? task.engineer_remarks || "" : task.eng_remarks || "");
+    setEngineerEvidenceImage(null);
+    setEngineerEvidenceBase64(null);
     setReviewModalOpen(true);
   };
 
@@ -160,11 +164,25 @@ export const EngineerDashboard: React.FC = () => {
     if (!selectedTask || !selectedTaskType) return;
     setIsSubmittingReview(true);
     try {
+      let uploadedUrl = null;
+      if (engineerEvidenceBase64) {
+        // Upload the image first to our system upload API
+        const filename = "engineer_verification.jpg";
+        const uploadRes = await apiClient.post("/Main/router-backend/api/system/upload", {
+          image: engineerEvidenceBase64,
+          filename: filename
+        });
+        if (uploadRes.data && uploadRes.data.success && uploadRes.data.data?.url) {
+          uploadedUrl = uploadRes.data.data.url;
+        }
+      }
+
       if (selectedTaskType === "scheduled") {
         await scheduledTaskService.updateScheduledTask(selectedTask.task_id, {
           status: newStatus,
           engineer_remarks: engineerRemarks,
-          checked_by: user?.id
+          checked_by: user?.id,
+          engineer_attachment_url: uploadedUrl || selectedTask.engineer_attachment_url
         });
         alert(`Scheduled task ${newStatus === 'completed' ? 'approved' : 'rejected'} successfully.`);
         fetchScheduledTasks();
@@ -172,7 +190,8 @@ export const EngineerDashboard: React.FC = () => {
         await manualTaskService.updateManualTask(selectedTask.manual_task_id, {
           status: newStatus,
           eng_remarks: engineerRemarks,
-          checked_by: user?.id
+          checked_by: user?.id,
+          engineer_attachment_url: uploadedUrl || selectedTask.engineer_attachment_url
         });
         alert(`Manual task ${newStatus === 'completed' ? 'approved' : 'rejected'} successfully.`);
         fetchManualTasks();
@@ -180,6 +199,8 @@ export const EngineerDashboard: React.FC = () => {
       setReviewModalOpen(false);
       setSelectedTask(null);
       setSelectedTaskType(null);
+      setEngineerEvidenceImage(null);
+      setEngineerEvidenceBase64(null);
     } catch (err: any) {
       alert(err.message || "Failed to update task status.");
     } finally {
@@ -714,6 +735,30 @@ export const EngineerDashboard: React.FC = () => {
                     className="input-field min-h-[80px]"
                     placeholder="Add feedback, approval notes, or reasons for rejection..."
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Verification Photo Evidence</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setEngineerEvidenceImage(reader.result as string);
+                          setEngineerEvidenceBase64(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                  />
+                  {engineerEvidenceImage && (
+                    <div className="mt-2">
+                      <img src={engineerEvidenceImage} alt="Verification preview" className="max-h-40 object-contain rounded border mx-auto" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-3">
                   <Button
